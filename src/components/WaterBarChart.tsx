@@ -16,38 +16,25 @@ interface WaterBarChartProps {
 }
 
 export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result }) => {
+  // Exactly the 3 bars requested: "Rain that fell" vs "Water saved" vs "Water wasted"
   const chartData = [
     {
-      name: 'Potential Rain',
-      shortName: 'Potential',
+      name: 'Rain that fell',
       volume: result.potentialWater,
-      fill: '#0284c7', // Sky-600
-      description: 'Theoretical water falling on roof',
-      category: 'Meteorological',
+      fill: '#0284c7', // Sky blue
+      description: 'Total rain that landed on your roof',
     },
     {
-      name: 'Harvestable Rain',
-      shortName: 'Harvestable',
-      volume: result.harvestableWater,
-      fill: '#0d9488', // Teal-600
-      description: 'Water captured after efficiency losses',
-      category: 'Capture',
-    },
-    {
-      name: 'Actually Harvested',
-      shortName: 'Harvested',
+      name: 'Water saved',
       volume: result.actuallyHarvested,
-      fill: '#16a34a', // Green-600 (green accent)
-      description: 'Saved inside your storage tank',
-      category: 'Saved',
+      fill: '#16a34a', // Emerald green
+      description: 'Saved inside your water tank',
     },
     {
-      name: 'Wasted Overflow',
-      shortName: 'Wasted',
+      name: 'Water wasted',
       volume: result.wastedWater,
-      fill: '#f59e0b', // Amber-500 / warm red-amber (visually prominent)
-      description: 'Water lost to tank overflow',
-      category: 'Lost',
+      fill: '#dc2626', // Warm red / amber-red for emotional contrast
+      description: 'Lost because your tank was full',
     },
   ];
 
@@ -55,18 +42,18 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-slate-900 text-white p-3 rounded-xl shadow-lg border border-slate-700 text-xs sm:text-sm">
+        <div className="bg-slate-900 text-white p-3 rounded-xl shadow-lg border border-slate-700 text-sm">
           <div className="flex items-center gap-2 mb-1">
             <span
-              className="w-2.5 h-2.5 rounded-full"
+              className="w-3 h-3 rounded-full"
               style={{ backgroundColor: data.fill }}
             />
-            <span className="font-semibold">{data.name}</span>
+            <span className="font-bold">{data.name}</span>
           </div>
-          <div className="text-lg font-bold font-['Outfit',sans-serif]">
-            {data.volume.toLocaleString()} Litres
+          <div className="text-xl font-bold font-['Outfit',sans-serif]">
+            {data.volume.toLocaleString()} litres
           </div>
-          <div className="text-slate-400 text-xs mt-1">{data.description}</div>
+          <div className="text-slate-300 text-xs mt-0.5">{data.description}</div>
         </div>
       );
     }
@@ -74,63 +61,60 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result }) => {
   };
 
   return (
-    <div className="w-full bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6">
+    <div className="w-full bg-white rounded-3xl border border-slate-200 p-5 sm:p-7 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
-          <h3 className="font-['Outfit',sans-serif] font-bold text-slate-900 text-base sm:text-lg">
-            Rainwater Volume Comparison
+          <h3 className="font-['Outfit',sans-serif] font-bold text-slate-900 text-lg sm:text-xl">
+            Rain Comparison
           </h3>
-          <p className="text-xs text-slate-500">
-            Comparing Potential vs Harvestable vs Actually Harvested vs Wasted (Litres)
+          <p className="text-sm text-slate-600">
+            See how much rain fell compared to what you kept and what was lost
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 text-[11px] sm:text-xs">
+        {/* Simple Legend with plain language */}
+        <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm">
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-[#0284c7]" />
-            <span className="text-slate-600">Potential</span>
+            <span className="w-3.5 h-3.5 rounded-full bg-[#0284c7]" />
+            <span className="text-slate-700">Rain that fell</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-[#0d9488]" />
-            <span className="text-slate-600">Harvestable</span>
+            <span className="w-3.5 h-3.5 rounded-full bg-[#16a34a]" />
+            <span className="text-emerald-800 font-bold">Water saved</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-[#16a34a]" />
-            <span className="text-slate-700 font-medium">Harvested</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-[#f59e0b]" />
-            <span className="text-amber-800 font-medium">Wasted</span>
+            <span className="w-3.5 h-3.5 rounded-full bg-[#dc2626]" />
+            <span className="text-rose-800 font-bold">Water wasted</span>
           </div>
         </div>
       </div>
 
-      <div className="w-full h-72 sm:h-80">
+      <div className="w-full h-64 sm:h-72">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={chartData}
-            margin={{ top: 15, right: 10, left: 10, bottom: 25 }}
+            margin={{ top: 15, right: 10, left: 10, bottom: 20 }}
           >
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
             <XAxis
-              dataKey="shortName"
+              dataKey="name"
               tickLine={false}
               axisLine={{ stroke: '#cbd5e1' }}
-              tick={{ fill: '#475569', fontSize: 12, fontWeight: 500 }}
+              tick={{ fill: '#334155', fontSize: 13, fontWeight: 600 }}
               dy={10}
             />
             <YAxis
               tickLine={false}
               axisLine={{ stroke: '#cbd5e1' }}
-              tick={{ fill: '#64748b', fontSize: 11 }}
-              tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}kL` : `${v}L`)}
-              width={55}
+              tick={{ fill: '#64748b', fontSize: 12 }}
+              tickFormatter={(v) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k L` : `${v} L`)}
+              width={60}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(241, 245, 249, 0.6)' }} />
             <Bar
               dataKey="volume"
-              radius={[8, 8, 0, 0]}
-              animationDuration={1000}
+              radius={[10, 10, 0, 0]}
+              animationDuration={800}
               animationEasing="ease-out"
             >
               {chartData.map((entry, index) => (

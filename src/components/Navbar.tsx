@@ -35,7 +35,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </div>
             <p className="text-[11px] text-slate-500 hidden sm:block">
-              Harvesting Potential & Overflow Loss
+              Save rain, stop wasting water
             </p>
           </div>
         </button>

@@ -1,26 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
 import { 
   ArrowLeft, 
   RotateCcw, 
-  Share2, 
-  Check, 
-  Droplet, 
-  AlertTriangle, 
-  Home, 
-  CloudRain, 
-  Recycle, 
-  CheckCircle2, 
-  ShieldAlert, 
-  Container, 
-  Calendar,
-  Sparkles,
-  Info
+  Info,
+  CheckCircle2,
+  AlertTriangle,
+  Share2,
+  Check
 } from 'lucide-react';
 import { CalculationResult } from '../types';
 import { AnimatedCounter } from './AnimatedCounter';
 import { WaterBarChart } from './WaterBarChart';
-import { TankVisualizer } from './TankVisualizer';
 import { EducationalSection } from './EducationalSection';
 
 interface ResultsPageProps {
@@ -34,19 +25,20 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({
   onAdjustInputs,
   onReset,
 }) => {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = React.useState(false);
 
-  const handleCopySummary = () => {
-    const text = `RainWise Rainwater Harvest Report:
-• Roof Area: ${result.roofArea} m²
-• Rainfall: ${result.rainfall} mm
-• Potential Water: ${result.potentialWater.toLocaleString()} L
-• Harvestable Water: ${result.harvestableWater.toLocaleString()} L
-• Actually Harvested: ${result.actuallyHarvested.toLocaleString()} L
-• Wasted to Overflow: ${result.wastedWater.toLocaleString()} L
-• Tank Capacity: ${result.tankCapacity.toLocaleString()} L
-${result.supplyDays ? `• Water Supply Days: ${result.supplyDays} days (${result.dailyRequirement}L/day)` : ''}
-${result.summarySentence}`;
+  const handleCopy = () => {
+    const text = `RainWise Rainwater Harvest Results:
+• Roof Size: ${result.roofArea} m²
+• Rain Fell: ${result.rainfall} mm
+• Total Rain on Roof: ${result.potentialWater.toLocaleString()} litres
+• Water You Can Save: ${result.actuallyHarvested.toLocaleString()} litres
+• Water You're Losing: ${result.wastedWater.toLocaleString()} litres
+• Tank Size: ${result.tankCapacity.toLocaleString()} litres
+${result.supplyDays ? `• Days Water Will Last: ${result.supplyDays} days` : ''}
+
+${result.summarySentence}
+${result.suggestionLine}`;
 
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
@@ -55,34 +47,34 @@ ${result.summarySentence}`;
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-7">
       
       {/* Top Action Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <button
           id="results-adjust-btn"
           onClick={onAdjustInputs}
-          className="inline-flex items-center gap-2 text-sm font-medium text-teal-800 bg-teal-50 hover:bg-teal-100/80 px-3.5 py-2 rounded-xl border border-teal-200/80 transition-colors"
+          className="inline-flex items-center gap-2 text-base font-semibold text-teal-900 bg-white hover:bg-teal-50 px-4 py-2.5 rounded-xl border border-slate-200 shadow-2xs transition-colors cursor-pointer min-h-[44px]"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Adjust Inputs / Recalculate</span>
+          <ArrowLeft className="w-5 h-5 text-teal-700" />
+          <span>Change Measurements</span>
         </button>
 
         <div className="flex items-center gap-2">
           <button
-            id="results-copy-summary-btn"
-            onClick={handleCopySummary}
-            className="inline-flex items-center gap-2 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200/90 px-3.5 py-2 rounded-xl transition-colors shadow-2xs"
+            id="results-copy-btn"
+            onClick={handleCopy}
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl transition-colors shadow-2xs cursor-pointer min-h-[44px]"
           >
             {copied ? (
               <>
                 <Check className="w-4 h-4 text-emerald-600" />
-                <span className="text-emerald-700">Copied to Clipboard</span>
+                <span className="text-emerald-700">Copied</span>
               </>
             ) : (
               <>
                 <Share2 className="w-4 h-4 text-slate-500" />
-                <span>Copy Summary</span>
+                <span>Share Results</span>
               </>
             )}
           </button>
@@ -90,7 +82,7 @@ ${result.summarySentence}`;
           <button
             id="results-start-over-btn"
             onClick={onReset}
-            className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200/90 px-3.5 py-2 rounded-xl transition-colors shadow-2xs"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-950 bg-white hover:bg-slate-50 border border-slate-200 px-3.5 py-2 rounded-xl transition-colors shadow-2xs cursor-pointer min-h-[44px]"
           >
             <RotateCcw className="w-4 h-4 text-slate-400" />
             <span>Start Over</span>
@@ -98,220 +90,179 @@ ${result.summarySentence}`;
         </div>
       </div>
 
-      {/* Auto-Generated Summary Banner */}
+      {/* Plain Language Summary Sentence at Top */}
       <motion.div
-        initial={{ opacity: 0, y: 15 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className={`p-6 sm:p-7 rounded-3xl border shadow-xs relative overflow-hidden ${
+        transition={{ duration: 0.25 }}
+        className={`p-6 sm:p-7 rounded-3xl border shadow-xs ${
           result.wastedWater > 0
-            ? 'bg-gradient-to-br from-amber-500/10 via-white to-slate-50 border-amber-300/80'
-            : 'bg-gradient-to-br from-teal-500/10 via-white to-slate-50 border-teal-300/80'
+            ? 'bg-amber-50/90 border-amber-200/90'
+            : 'bg-emerald-50/90 border-emerald-200/90'
         }`}
       >
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start gap-4">
+          <div className="text-3xl shrink-0">
+            {result.wastedWater > 0 ? '⚠️' : '🎉'}
+          </div>
           <div>
-            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full mb-2 bg-white/90 border shadow-2xs">
-              <Sparkles className="w-3.5 h-3.5 text-teal-700" />
-              <span className="text-slate-800">Harvest Analysis Summary</span>
-            </div>
             <h2 className="text-xl sm:text-2xl font-bold font-['Outfit',sans-serif] text-slate-900 leading-snug">
               {result.summarySentence}
             </h2>
-          </div>
-
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="text-center px-4 py-2.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
-              <span className="text-[11px] text-slate-500 block uppercase font-medium">Harvest Rate</span>
-              <span className="text-xl font-bold font-['Outfit',sans-serif] text-emerald-600">
-                <AnimatedCounter value={result.harvestEfficiencyRate} suffix="%" />
-              </span>
-            </div>
-            <div className="text-center px-4 py-2.5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs">
-              <span className="text-[11px] text-slate-500 block uppercase font-medium">Tank Fill</span>
-              <span className="text-xl font-bold font-['Outfit',sans-serif] text-teal-700">
-                <AnimatedCounter value={result.storageUtilizationRate} suffix="%" />
-              </span>
-            </div>
+            {result.suggestionLine && (
+              <p className="text-base sm:text-lg text-slate-700 font-medium mt-2">
+                {result.suggestionLine}
+              </p>
+            )}
           </div>
         </div>
       </motion.div>
 
-      {/* The 8 Clean Stat Cards */}
-      <div>
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-bold font-['Outfit',sans-serif] text-slate-900">
-            Harvesting Metrics & Calculations
-          </h3>
-          <span className="text-xs text-slate-500">Live animated totals</span>
+      {/* The Two Emotional Highlights: "Water You Can Save" vs "Water You're Losing" */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        
+        {/* ✅ "Water You Can Save" (Green, Large, Most Prominent Number) */}
+        <div className="p-6 sm:p-7 rounded-3xl bg-emerald-50 border-2 border-emerald-500 shadow-sm flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-base sm:text-lg font-bold text-emerald-900 flex items-center gap-2">
+              <span className="text-2xl">✅</span>
+              <span>Water You Can Save</span>
+            </span>
+            <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-200/70 text-emerald-900">
+              Safe In Tank
+            </span>
+          </div>
+
+          <div className="my-2">
+            <div className="text-4xl sm:text-5xl font-extrabold font-['Outfit',sans-serif] text-emerald-800 tracking-tight">
+              <AnimatedCounter value={result.actuallyHarvested} suffix=" litres" />
+            </div>
+            <p className="text-sm text-emerald-700 font-medium mt-2">
+              Stored safely in your {result.tankCapacity.toLocaleString()}L tank ready for use.
+            </p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          {/* Card 1: 🏠 Roof Area */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Roof Area</span>
-              <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700">
-                <Home className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="text-2xl sm:text-3xl font-bold font-['Outfit',sans-serif] text-slate-900">
-              <AnimatedCounter value={result.roofArea} decimals={1} suffix=" m²" />
-            </div>
-            <p className="text-[12px] text-slate-500 mt-1">Catchment plane surface</p>
-          </div>
-
-          {/* Card 2: 🌧️ Rainfall */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Rainfall</span>
-              <div className="w-8 h-8 rounded-xl bg-sky-50 flex items-center justify-center text-sky-700">
-                <CloudRain className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="text-2xl sm:text-3xl font-bold font-['Outfit',sans-serif] text-slate-900">
-              <AnimatedCounter value={result.rainfall} suffix=" mm" />
-            </div>
-            <p className="text-[12px] text-slate-500 mt-1">Total depth of rain event</p>
-          </div>
-
-          {/* Card 3: 💧 Potential Rainwater */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Potential Rainwater</span>
-              <div className="w-8 h-8 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-700">
-                <Droplet className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="text-2xl sm:text-3xl font-bold font-['Outfit',sans-serif] text-cyan-900">
-              <AnimatedCounter value={result.potentialWater} suffix=" L" />
-            </div>
-            <p className="text-[12px] text-slate-500 mt-1">100% theoretical precipitation</p>
-          </div>
-
-          {/* Card 4: ♻️ Harvestable Rainwater */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Harvestable Rainwater</span>
-              <div className="w-8 h-8 rounded-xl bg-teal-50 flex items-center justify-center text-teal-700">
-                <Recycle className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="text-2xl sm:text-3xl font-bold font-['Outfit',sans-serif] text-teal-900">
-              <AnimatedCounter value={result.harvestableWater} suffix=" L" />
-            </div>
-            <p className="text-[12px] text-slate-500 mt-1">{result.efficiency}% collection efficiency</p>
-          </div>
-
-          {/* Card 5: ✅ Actually Harvested (green accent) */}
-          <div className="bg-gradient-to-b from-emerald-50/50 to-white p-5 rounded-2xl border-2 border-emerald-500/80 shadow-xs hover:shadow-sm transition-all">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
-                <span>Actually Harvested</span>
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center shadow-xs">
-                <CheckCircle2 className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="text-2xl sm:text-3xl font-bold font-['Outfit',sans-serif] text-emerald-800">
-              <AnimatedCounter value={result.actuallyHarvested} suffix=" L" />
-            </div>
-            <p className="text-[12px] text-emerald-700/90 mt-1 font-medium">
-              Saved safely in reservoir
-            </p>
-          </div>
-
-          {/* Card 6: 🚫 Wasted Water (red/amber accent — visually prominent) */}
-          <div className={`p-5 rounded-2xl border-2 shadow-xs hover:shadow-sm transition-all ${
-            result.wastedWater > 0
-              ? 'bg-gradient-to-b from-amber-50/90 to-white border-amber-500 ring-2 ring-amber-500/15'
-              : 'bg-white border-slate-200/80'
-          }`}>
-            <div className="flex items-center justify-between mb-3">
-              <span className={`text-xs font-semibold uppercase tracking-wider flex items-center gap-1 ${
-                result.wastedWater > 0 ? 'text-amber-900 font-bold' : 'text-slate-500'
-              }`}>
-                <span>Wasted Water</span>
-                {result.wastedWater > 0 && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-200 text-amber-950 font-bold">
-                    OVERFLOW
-                  </span>
-                )}
-              </span>
-              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${
-                result.wastedWater > 0 ? 'bg-amber-500 text-white shadow-xs' : 'bg-slate-100 text-slate-500'
-              }`}>
-                <ShieldAlert className="w-4 h-4" />
-              </div>
-            </div>
-            <div className={`text-2xl sm:text-3xl font-bold font-['Outfit',sans-serif] ${
-              result.wastedWater > 0 ? 'text-amber-900 font-extrabold' : 'text-slate-700'
+        {/* 🚫 "Water You're Losing" (Orange/Red, Second Most Prominent — Emotional Highlight) */}
+        <div className={`p-6 sm:p-7 rounded-3xl border-2 shadow-sm flex flex-col justify-between ${
+          result.wastedWater > 0
+            ? 'bg-rose-50 border-rose-500'
+            : 'bg-slate-50 border-slate-200'
+        }`}>
+          <div className="flex items-center justify-between mb-3">
+            <span className={`text-base sm:text-lg font-bold flex items-center gap-2 ${
+              result.wastedWater > 0 ? 'text-rose-900' : 'text-slate-800'
             }`}>
-              <AnimatedCounter value={result.wastedWater} suffix=" L" />
-            </div>
-            <p className={`text-[12px] mt-1 font-medium ${
-              result.wastedWater > 0 ? 'text-amber-800' : 'text-slate-500'
+              <span className="text-2xl">🚫</span>
+              <span>Water You&apos;re Losing</span>
+            </span>
+            {result.wastedWater > 0 ? (
+              <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-rose-200 text-rose-900">
+                Overflowing
+              </span>
+            ) : (
+              <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">
+                Zero Loss
+              </span>
+            )}
+          </div>
+
+          <div className="my-2">
+            <div className={`text-4xl sm:text-5xl font-extrabold font-['Outfit',sans-serif] tracking-tight ${
+              result.wastedWater > 0 ? 'text-rose-700' : 'text-slate-700'
             }`}>
-              {result.wastedWater > 0 ? 'Lost due to tank capacity limit' : 'Zero overflow loss!'}
+              <AnimatedCounter value={result.wastedWater} suffix=" litres" />
+            </div>
+            <p className={`text-sm font-medium mt-2 ${
+              result.wastedWater > 0 ? 'text-rose-800' : 'text-slate-600'
+            }`}>
+              {result.wastedWater > 0
+                ? 'Water spilled away because your tank was full.'
+                : 'Great! All of the collectable rain fits inside your tank.'}
             </p>
           </div>
-
-          {/* Card 7: 🛢️ Tank Capacity */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Tank Capacity</span>
-              <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700">
-                <Container className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="text-2xl sm:text-3xl font-bold font-['Outfit',sans-serif] text-slate-900">
-              <AnimatedCounter value={result.tankCapacity} suffix=" L" />
-            </div>
-            <p className="text-[12px] text-slate-500 mt-1">
-              {result.storageUtilizationRate}% utilized in this rain event
-            </p>
-          </div>
-
-          {/* Card 8: 📅 Water Supply Days */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs hover:shadow-xs transition-shadow">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">Water Supply Days</span>
-              <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center text-purple-700">
-                <Calendar className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="text-2xl sm:text-3xl font-bold font-['Outfit',sans-serif] text-purple-950">
-              {result.supplyDays !== undefined ? (
-                <AnimatedCounter value={result.supplyDays} decimals={1} suffix=" days" />
-              ) : (
-                <span className="text-slate-400 text-xl font-normal">Not specified</span>
-              )}
-            </div>
-            <p className="text-[12px] text-slate-500 mt-1">
-              {result.dailyRequirement 
-                ? `@ ${result.dailyRequirement}L/day requirement`
-                : 'Enter daily usage to calculate'}
-            </p>
-          </div>
-
         </div>
+
       </div>
 
-      {/* Visual Bar Chart Section */}
+      {/* Supporting Cards with Plain Language Labels */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        
+        {/* 🏠 Your Roof Size */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+          <div className="text-2xl mb-1">🏠</div>
+          <div className="text-xs sm:text-sm font-semibold text-slate-500">
+            Your Roof Size
+          </div>
+          <div className="text-xl sm:text-2xl font-bold font-['Outfit',sans-serif] text-slate-900 mt-1">
+            <AnimatedCounter value={result.roofArea} decimals={1} suffix=" m²" />
+          </div>
+        </div>
+
+        {/* 🌧️ Rain That Fell */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+          <div className="text-2xl mb-1">🌧️</div>
+          <div className="text-xs sm:text-sm font-semibold text-slate-500">
+            Rain That Fell
+          </div>
+          <div className="text-xl sm:text-2xl font-bold font-['Outfit',sans-serif] text-slate-900 mt-1">
+            <AnimatedCounter value={result.rainfall} suffix=" mm" />
+          </div>
+        </div>
+
+        {/* 💧 Total Rain on Your Roof */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+          <div className="text-2xl mb-1">💧</div>
+          <div className="text-xs sm:text-sm font-semibold text-slate-500">
+            Total Rain on Your Roof
+          </div>
+          <div className="text-xl sm:text-2xl font-bold font-['Outfit',sans-serif] text-slate-900 mt-1">
+            <AnimatedCounter value={result.potentialWater} suffix=" L" />
+          </div>
+        </div>
+
+        {/* 🛢️ Your Tank Size */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+          <div className="text-2xl mb-1">🛢️</div>
+          <div className="text-xs sm:text-sm font-semibold text-slate-500">
+            Your Tank Size
+          </div>
+          <div className="text-xl sm:text-2xl font-bold font-['Outfit',sans-serif] text-slate-900 mt-1">
+            <AnimatedCounter value={result.tankCapacity} suffix=" L" />
+          </div>
+        </div>
+
+      </div>
+
+      {/* 📅 This Water Will Last You ___ Days (if daily need entered) */}
+      {result.supplyDays !== undefined && (
+        <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs flex items-center gap-4">
+          <div className="text-3xl shrink-0">📅</div>
+          <div>
+            <div className="text-sm font-semibold text-slate-500">
+              How Long This Water Lasts
+            </div>
+            <div className="text-2xl sm:text-3xl font-bold font-['Outfit',sans-serif] text-slate-900 mt-0.5">
+              This Water Will Last You <span className="text-teal-800">{result.supplyDays} Days</span>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Based on roughly {result.dailyRequirement} litres used per day.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* ONE Simple Bar Chart: "Rain that fell" vs "Water saved" vs "Water wasted" */}
       <WaterBarChart result={result} />
 
-      {/* Storage Tank Cutaway Visualizer */}
-      <TankVisualizer result={result} />
-
-      {/* Educational Section ("The Math Behind It") */}
+      {/* Expandable "How This Works" Section */}
       <EducationalSection result={result} />
 
-      {/* Disclaimer */}
-      <div className="p-4 rounded-2xl bg-slate-100/80 border border-slate-200/70 flex items-start gap-3 text-xs text-slate-500">
-        <Info className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
-        <p className="leading-relaxed">
-          <strong>Technical Disclaimer:</strong> Calculations provide theoretical engineering estimates based on projected roof area and entered precipitation depth. Actual water collection varies depending on roof surface material (e.g., corrugated metal vs. asphalt shingles), slope angle, first-flush diverter diversion volumes, gutter cleaning maintenance, wind drift loss, and localized microclimate patterns.
+      {/* Plain Language Note */}
+      <div className="p-4 rounded-2xl bg-slate-100/90 border border-slate-200 text-slate-600 text-xs sm:text-sm flex items-start gap-2.5">
+        <Info className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
+        <p>
+          <strong>Please note:</strong> Actual water collected may vary depending on your roof and pipes.
         </p>
       </div>
 

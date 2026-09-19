@@ -1,6 +1,7 @@
 {
   "name": "RainWise",
-  "description": "A rainwater harvesting calculator that estimates harvestable water, storage utilization, and overflow waste.",
+  "description": "A simple rainwater harvesting calculator for farmers and everyday people to find out how much rain they can save and how much they are losing.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
+

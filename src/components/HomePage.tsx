@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, type Variants } from 'motion/react';
-import { ArrowRight, Droplet, ShieldAlert, Sparkles, Waves, BarChart2, Layers } from 'lucide-react';
+import { ArrowRight, Droplet, Home as HomeIcon, CloudRain, Container, Check, Sparkles } from 'lucide-react';
 import { PRESET_SCENARIOS } from '../utils/calculations';
 import { PresetScenario } from '../types';
 
@@ -13,160 +13,153 @@ export const HomePage: React.FC<HomePageProps> = ({
   onStartCalculate,
   onSelectPreset,
 }) => {
-  // Stagger variants for entrance
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.12,
-        delayChildren: 0.05,
+        staggerChildren: 0.08,
       },
     },
   };
 
   const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 18 },
+    hidden: { opacity: 0, y: 12 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.5,
-        ease: 'easeInOut',
+        duration: 0.25,
+        ease: 'easeOut',
       },
     },
   };
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center px-4 sm:px-6 py-12">
+    <div className="relative min-h-[calc(100vh-4.5rem)] flex flex-col justify-center items-center px-4 sm:px-6 py-8 sm:py-12">
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="w-full max-w-4xl mx-auto text-center flex flex-col items-center"
+        className="w-full max-w-3xl mx-auto text-center flex flex-col items-center"
       >
-        {/* Soft Droplet Accent Badge */}
+        {/* Friendly Top Badge */}
         <motion.div
           variants={itemVariants}
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-100/70 border border-teal-200/80 text-teal-800 text-xs sm:text-sm font-medium shadow-xs mb-6"
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-sm font-medium shadow-2xs mb-4"
         >
-          <span className="w-2 h-2 rounded-full bg-teal-600 animate-ping" />
-          <Droplet className="w-3.5 h-3.5 text-teal-700" />
-          <span>Intelligent Rainwater Mensuration & Loss Calculator</span>
+          <Droplet className="w-4 h-4 text-emerald-600 fill-emerald-600" />
+          <span>Simple Rainwater Calculator</span>
         </motion.div>
 
-        {/* Title */}
+        {/* Large Friendly App Name */}
         <motion.h1
           variants={itemVariants}
-          className="text-4xl sm:text-6xl lg:text-7xl font-bold font-['Outfit',sans-serif] tracking-tight text-slate-900 leading-[1.1] mb-6"
+          className="text-5xl sm:text-6xl md:text-7xl font-bold font-['Outfit',sans-serif] tracking-tight text-slate-900 leading-tight mb-4"
         >
           Rain<span className="text-teal-700">Wise</span>
         </motion.h1>
 
-        {/* Short Tagline */}
+        {/* One simple line requested */}
         <motion.p
           variants={itemVariants}
-          className="text-lg sm:text-2xl text-slate-600 max-w-2xl mx-auto font-normal leading-relaxed mb-10"
+          className="text-xl sm:text-2xl text-slate-700 font-normal leading-relaxed max-w-xl mx-auto mb-8"
         >
-          Discover your true rainwater harvesting potential — calculate exact harvestable yields and quantify water wasted to tank overflow.
+          Find out how much rain you can save — and how much you&apos;re losing.
         </motion.p>
 
-        {/* The Two Core Questions Cards */}
-        <motion.div
-          variants={itemVariants}
-          className="w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-4 mb-10 text-left"
-        >
-          {/* Harvested card */}
-          <div className="p-5 rounded-2xl bg-white/90 border border-teal-200/70 shadow-xs relative overflow-hidden group hover:border-teal-300 transition-colors">
-            <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center mb-3">
-              <Droplet className="w-5 h-5" />
-            </div>
-            <h3 className="font-['Outfit',sans-serif] font-semibold text-slate-900 text-base mb-1 flex items-center gap-2">
-              <span>Harvestable Rainwater</span>
-              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Saved</span>
-            </h3>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              Calculate the actual litres you can capture from your roof footprint based on real rainfall, runoff efficiency, and storage limits.
-            </p>
-          </div>
-
-          {/* Wasted card */}
-          <div className="p-5 rounded-2xl bg-white/90 border border-amber-200/70 shadow-xs relative overflow-hidden group hover:border-amber-300 transition-colors">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center mb-3">
-              <ShieldAlert className="w-5 h-5" />
-            </div>
-            <h3 className="font-['Outfit',sans-serif] font-semibold text-slate-900 text-base mb-1 flex items-center gap-2">
-              <span>Wasted Runoff Overflow</span>
-              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">Overflow</span>
-            </h3>
-            <p className="text-sm text-slate-600 leading-relaxed">
-              Identify lost water volume when rain events exceed your tank capacity, helping you optimize reservoir sizing.
-            </p>
-          </div>
-        </motion.div>
-
-        {/* Single Prominent CTA Button: "Calculate →" */}
-        <motion.div variants={itemVariants} className="mb-14">
+        {/* ONE BIG OBVIOUS BUTTON: "Check My Water" */}
+        <motion.div variants={itemVariants} className="mb-10 w-full sm:w-auto">
           <button
             id="home-calculate-cta"
             onClick={onStartCalculate}
-            className="group relative inline-flex items-center gap-3 px-8 py-4 text-base sm:text-lg font-semibold text-white bg-gradient-to-r from-teal-700 via-teal-800 to-slate-800 rounded-2xl shadow-md shadow-teal-900/20 hover:shadow-lg hover:shadow-teal-900/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 focus:outline-none focus-visible:ring-4 focus-visible:ring-teal-500/40"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-10 py-5 text-xl font-bold text-white bg-teal-800 hover:bg-teal-900 active:bg-teal-950 rounded-2xl shadow-lg shadow-teal-900/20 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer min-h-[64px]"
           >
-            <span>Calculate</span>
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform duration-200" />
-            {/* Subtle animated water shine */}
-            <span className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-              <span className="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/15 to-transparent skew-x-12 group-hover:left-full transition-all duration-700" />
-            </span>
+            <span>Check My Water</span>
+            <ArrowRight className="w-6 h-6" />
           </button>
         </motion.div>
 
-        {/* Quick Presets / Examples for fast exploring */}
-        <motion.div variants={itemVariants} className="w-full max-w-2xl">
-          <div className="flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
-            <Sparkles className="w-3.5 h-3.5 text-teal-600" />
-            <span>Or test with a representative scenario</span>
+        {/* Pictorial Flow Cards (Roof -> Rain -> Tank) so meaning is clear even with low literacy */}
+        <motion.div
+          variants={itemVariants}
+          className="w-full grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-10 text-left"
+        >
+          {/* Card 1: The Roof */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs flex flex-col items-start">
+            <div className="w-12 h-12 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-700 mb-3 text-2xl">
+              🏠
+            </div>
+            <h3 className="font-['Outfit',sans-serif] font-bold text-slate-900 text-lg mb-1">
+              1. Your Roof
+            </h3>
+            <p className="text-sm text-slate-600">
+              Measure how long and wide your roof is to see how much rain lands on it.
+            </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+
+          {/* Card 2: The Rain */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs flex flex-col items-start">
+            <div className="w-12 h-12 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-700 mb-3 text-2xl">
+              🌧️
+            </div>
+            <h3 className="font-['Outfit',sans-serif] font-bold text-slate-900 text-lg mb-1">
+              2. Rain Falling
+            </h3>
+            <p className="text-sm text-slate-600">
+              Enter the rainfall from your rain gauge or local weather forecast.
+            </p>
+          </div>
+
+          {/* Card 3: The Tank */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs flex flex-col items-start">
+            <div className="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-700 mb-3 text-2xl">
+              🛢️
+            </div>
+            <h3 className="font-['Outfit',sans-serif] font-bold text-slate-900 text-lg mb-1">
+              3. Water Saved
+            </h3>
+            <p className="text-sm text-slate-600">
+              See what your tank can hold, and see if any water is overflowing and wasted.
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Quick Example Scenarios for instant testing */}
+        <motion.div variants={itemVariants} className="w-full max-w-xl">
+          <div className="flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
+            <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+            <span>Or pick a quick example to see how it works</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {PRESET_SCENARIOS.map((preset) => (
               <button
                 key={preset.id}
                 id={`home-preset-${preset.id}`}
                 onClick={() => onSelectPreset(preset)}
-                className="flex flex-col items-center p-3 rounded-xl bg-white/70 hover:bg-white border border-slate-200/80 hover:border-teal-300 shadow-2xs hover:shadow-xs transition-all text-center group"
+                className="flex items-center gap-3 p-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/90 text-left transition-all group min-h-[52px]"
               >
-                <span className="text-xl mb-1 group-hover:scale-110 transition-transform">
-                  {preset.icon}
-                </span>
-                <span className="text-xs font-semibold text-slate-800">
-                  {preset.name}
-                </span>
-                <span className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
-                  {preset.inputs.tankCapacity}L tank • {preset.inputs.rainfall}mm
-                </span>
+                <span className="text-2xl">{preset.icon}</span>
+                <div>
+                  <span className="text-sm font-semibold text-slate-800 block">
+                    {preset.name.split(' ')[0]}
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    {preset.inputs.tankCapacity}L tank
+                  </span>
+                </div>
               </button>
             ))}
           </div>
         </motion.div>
 
-        {/* Methodological reassurance footer */}
-        <motion.div
+        {/* Plain language note */}
+        <motion.p
           variants={itemVariants}
-          className="mt-12 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500"
+          className="mt-8 text-xs text-slate-500"
         >
-          <div className="flex items-center gap-1.5">
-            <Layers className="w-4 h-4 text-teal-700" />
-            <span>Mensuration (Roof Area m²)</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Waves className="w-4 h-4 text-teal-700" />
-            <span>Unit Conversion (1mm / 1m² ≈ 1 Litre)</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <BarChart2 className="w-4 h-4 text-teal-700" />
-            <span>Capacity & Supply Analysis</span>
-          </div>
-        </motion.div>
+          Actual water collected may vary depending on your roof and pipes.
+        </motion.p>
       </motion.div>
     </div>
   );

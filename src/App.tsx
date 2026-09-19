@@ -21,22 +21,20 @@ export default function App() {
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
-  // Transition variants (~300-400ms fade + slight slide)
+  // Transition variants (~250ms simple fade)
   const pageVariants: Variants = {
-    initial: { opacity: 0, y: 14 },
+    initial: { opacity: 0 },
     animate: { 
       opacity: 1, 
-      y: 0,
       transition: { 
-        duration: 0.35, 
+        duration: 0.25, 
         ease: 'easeInOut',
       }
     },
     exit: { 
       opacity: 0, 
-      y: -14,
       transition: { 
-        duration: 0.25, 
+        duration: 0.2, 
         ease: 'easeInOut',
       }
     },
@@ -157,17 +155,17 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-slate-200/80 bg-white/70 backdrop-blur-xs py-6 mt-auto">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+      <footer className="relative z-10 border-t border-slate-200 bg-white/80 py-5 mt-auto">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs text-slate-500 text-center sm:text-left">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-slate-800 font-['Outfit',sans-serif]">RainWise</span>
+            <span className="font-bold text-slate-800 font-['Outfit',sans-serif]">RainWise</span>
             <span>•</span>
-            <span>Client-side Rainwater Harvesting & Mensuration Engine</span>
+            <span>Helping farmers and households save rainwater</span>
           </div>
-          <div className="flex items-center gap-4">
-            <span>1mm rainfall over 1m² = 1 Litre</span>
+          <div className="flex items-center gap-3">
+            <span>1mm rain on 1m² = 1 litre</span>
             <span>•</span>
-            <span className="text-teal-700 font-medium">100% Client-side Calculation</span>
+            <span className="text-teal-800 font-medium">No login required</span>
           </div>
         </div>
       </footer>
