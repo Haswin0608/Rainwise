@@ -79,3 +79,24 @@ export interface PresetScenario {
   icon: string;
   inputs: CalculatorInputs;
 }
+
+export interface SavedBuilding {
+  id: string;
+  userId: string;
+  nickname: string;
+  locationLabel?: string;
+  roofs: RoofSection[];
+  tankCapacity: string;
+  efficiency: string;
+  dailyRequirement?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AuthUser {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  isAnonymous?: boolean;
+}
+

@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidUser(data, userId) {
+      return data.keys().hasAll(['uid', 'email']) &&
+        data.keys().hasOnly(['uid', 'email', 'displayName', 'createdAt', 'updatedAt']) &&
+        data.uid == userId &&
+        data.email is string &&
+        data.email.size() <= 256;
+    }
+
+    function isValidBuilding(data, userId) {
+      return data.keys().hasAll(['userId', 'nickname', 'roofs', 'tankCapacity', 'efficiency']) &&
+        data.keys().hasOnly(['id', 'userId', 'nickname', 'locationLabel', 'roofs', 'tankCapacity', 'efficiency', 'dailyRequirement', 'createdAt', 'updatedAt']) &&
+        data.userId == userId &&
+        data.nickname is string &&
+        data.nickname.size() >= 1 &&
+        data.nickname.size() <= 100 &&
+        data.roofs is list &&
+        data.roofs.size() >= 1 &&
+        data.roofs.size() <= 20 &&
+        data.tankCapacity is string &&
+        data.tankCapacity.size() <= 20 &&
+        data.efficiency is string &&
+        data.efficiency.size() <= 10;
+    }
+
+    match /test/{connectionDoc} {
+      allow get: if true;
+    }
+
+    match /users/{userId} {
+      allow get: if isUser(userId);
+      allow list: if isUser(userId);
+      allow create: if isUser(userId) && isValidId(userId) && isValidUser(request.resource.data, userId);
+      allow update: if isUser(userId) && isValidId(userId) && isValidUser(request.resource.data, userId);
+      allow delete: if isUser(userId) && isValidId(userId);
+
+      match /buildings/{buildingId} {
+        allow get: if isUser(userId) && isValidId(buildingId);
+        allow list: if isUser(userId);
+        allow create: if isUser(userId) && isValidId(buildingId) && isValidBuilding(request.resource.data, userId);
+        allow update: if isUser(userId) && isValidId(buildingId) && isValidBuilding(request.resource.data, userId);
+        allow delete: if isUser(userId) && isValidId(buildingId);
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

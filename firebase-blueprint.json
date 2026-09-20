@@ -1,0 +1,88 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile document",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth UID"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "User display name"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Account creation timestamp"
+        }
+      },
+      "required": ["uid", "email"]
+    },
+    "Building": {
+      "title": "Building",
+      "description": "Saved building profile containing fixed dimensions and storage details",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique building document ID"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user UID"
+        },
+        "nickname": {
+          "type": "string",
+          "description": "Short friendly nickname for the building",
+          "maxLength": 60
+        },
+        "locationLabel": {
+          "type": "string",
+          "description": "Optional city/area label",
+          "maxLength": 100
+        },
+        "roofs": {
+          "type": "array",
+          "description": "List of roof sections with length and width"
+        },
+        "tankCapacity": {
+          "type": "string",
+          "description": "Storage tank size in litres"
+        },
+        "efficiency": {
+          "type": "string",
+          "description": "Collection efficiency percentage"
+        },
+        "dailyRequirement": {
+          "type": "string",
+          "description": "Optional daily water usage in litres"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last updated timestamp"
+        }
+      },
+      "required": ["userId", "nickname", "roofs", "tankCapacity", "efficiency"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile document for storing basic profile information"
+    },
+    "/users/{userId}/buildings/{buildingId}": {
+      "schema": "Building",
+      "description": "User saved buildings for rainwater harvesting measurements"
+    }
+  }
+}

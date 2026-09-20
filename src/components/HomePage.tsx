@@ -1,17 +1,32 @@
 import React from 'react';
 import { motion, type Variants } from 'motion/react';
-import { ArrowRight, Droplet, Home as HomeIcon, CloudRain, Container, Check, Sparkles } from 'lucide-react';
+import { ArrowRight, Droplet, Sparkles } from 'lucide-react';
 import { PRESET_SCENARIOS } from '../utils/calculations';
-import { PresetScenario } from '../types';
+import { PresetScenario, SavedBuilding, AuthUser } from '../types';
+import { SavedBuildingsSection } from './SavedBuildingsSection';
 
 interface HomePageProps {
   onStartCalculate: () => void;
   onSelectPreset: (preset: PresetScenario) => void;
+  currentUser: AuthUser | null;
+  savedBuildings: SavedBuilding[];
+  isLoadingBuildings: boolean;
+  onSelectBuilding: (building: SavedBuilding) => void;
+  onEditBuilding: (building: SavedBuilding) => void;
+  onDeleteBuilding: (buildingId: string) => Promise<void>;
+  onNewBlankBuilding: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
   onStartCalculate,
   onSelectPreset,
+  currentUser,
+  savedBuildings,
+  isLoadingBuildings,
+  onSelectBuilding,
+  onEditBuilding,
+  onDeleteBuilding,
+  onNewBlankBuilding,
 }) => {
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
@@ -41,7 +56,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="w-full max-w-3xl mx-auto text-center flex flex-col items-center"
+        className="w-full max-w-4xl mx-auto text-center flex flex-col items-center"
       >
         {/* Friendly Top Badge */}
         <motion.div
@@ -68,6 +83,22 @@ export const HomePage: React.FC<HomePageProps> = ({
           Find out how much rain you can save — and how much you&apos;re losing.
         </motion.p>
 
+        {/* ═══════════════════════════════════════
+            SAVED BUILDINGS SECTION (FOR SIGNED-IN USERS)
+            ═══════════════════════════════════════ */}
+        {currentUser && (
+          <motion.div variants={itemVariants} className="w-full">
+            <SavedBuildingsSection
+              buildings={savedBuildings}
+              isLoading={isLoadingBuildings}
+              onSelectBuilding={onSelectBuilding}
+              onEditBuilding={onEditBuilding}
+              onDeleteBuilding={onDeleteBuilding}
+              onNewBlankBuilding={onNewBlankBuilding}
+            />
+          </motion.div>
+        )}
+
         {/* ONE BIG OBVIOUS BUTTON: "Check My Water" */}
         <motion.div variants={itemVariants} className="mb-10 w-full sm:w-auto">
           <button
@@ -80,7 +111,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           </button>
         </motion.div>
 
-        {/* Pictorial Flow Cards (Roof -> Rain -> Tank) so meaning is clear even with low literacy */}
+        {/* Pictorial Flow Cards (Roof -> Rain -> Tank) */}
         <motion.div
           variants={itemVariants}
           className="w-full grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-10 text-left"
@@ -107,7 +138,7 @@ export const HomePage: React.FC<HomePageProps> = ({
               2. Rain Falling
             </h3>
             <p className="text-sm text-slate-600">
-              Enter the rainfall from your rain gauge or local weather forecast.
+              Enter rainfall manually or auto-fetch today&apos;s rain for your location.
             </p>
           </div>
 
@@ -137,7 +168,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 key={preset.id}
                 id={`home-preset-${preset.id}`}
                 onClick={() => onSelectPreset(preset)}
-                className="flex items-center gap-3 p-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/90 text-left transition-all group min-h-[52px]"
+                className="flex items-center gap-3 p-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/90 text-left transition-all group min-h-[52px] cursor-pointer"
               >
                 <span className="text-2xl">{preset.icon}</span>
                 <div>

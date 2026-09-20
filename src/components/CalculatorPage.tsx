@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Droplet, Plus, Trash2, Info, Layers, Loader2 } from 'lucide-react';
-import { CalculatorInputs, FormErrors, PresetScenario, RoofSection } from '../types';
+import { ArrowLeft, Droplet, Plus, Trash2, Info, Layers, Loader2, Save, Sparkles, RefreshCw } from 'lucide-react';
+import { CalculatorInputs, FormErrors, PresetScenario, RoofSection, AuthUser, SavedBuilding } from '../types';
 import { validateInputs, PRESET_SCENARIOS } from '../utils/calculations';
 import { StepperNumberInput } from './StepperNumberInput';
 import { CitySearchModal } from './CitySearchModal';
@@ -13,6 +13,10 @@ interface CalculatorPageProps {
   onCalculate: () => void;
   onBack: () => void;
   isCalculating: boolean;
+  currentUser: AuthUser | null;
+  activeBuilding: SavedBuilding | null;
+  onOpenSaveModal: () => void;
+  onClearActiveBuilding?: () => void;
 }
 
 export const CalculatorPage: React.FC<CalculatorPageProps> = ({
@@ -21,6 +25,10 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
   onCalculate,
   onBack,
   isCalculating,
+  currentUser,
+  activeBuilding,
+  onOpenSaveModal,
+  onClearActiveBuilding,
 }) => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -275,15 +283,73 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
       {/* Main Form Card */}
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8">
         
-        {/* Form Title & Introduction */}
-        <div className="mb-6 border-b border-slate-100 pb-5">
-          <h2 className="text-2xl sm:text-3xl font-bold font-['Outfit',sans-serif] text-slate-900">
-            Rainwater Calculator
-          </h2>
-          <p className="text-slate-600 text-base mt-1">
-            Fill in your roof measurements and local rainfall to see how much rain you can save.
-          </p>
+        {/* Form Title & Introduction + Save This Building action */}
+        <div className="mb-6 border-b border-slate-100 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold font-['Outfit',sans-serif] text-slate-900">
+              Rainwater Calculator
+            </h2>
+            <p className="text-slate-600 text-sm sm:text-base mt-1">
+              Fill in your roof measurements and local rainfall to see how much rain you can save.
+            </p>
+          </div>
+
+          {/* "Save This Building" button */}
+          <div className="shrink-0 flex items-center gap-2">
+            <button
+              type="button"
+              id="calc-save-building-btn"
+              onClick={onOpenSaveModal}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-50 hover:bg-teal-100 active:bg-teal-200 border border-teal-300 text-teal-900 font-bold text-sm shadow-2xs hover:shadow-xs transition-all cursor-pointer min-h-[44px]"
+            >
+              <Save className="w-4 h-4 text-teal-700" />
+              <span>💾 Save This Building</span>
+            </button>
+          </div>
         </div>
+
+        {/* Active Loaded Building Banner if a building was loaded from saved list */}
+        {activeBuilding && (
+          <div className="mb-6 p-4 rounded-2xl bg-slate-50 border border-teal-300/70 text-slate-800 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <span className="text-xl">🏡</span>
+              <div>
+                <span className="text-xs uppercase font-extrabold tracking-wide text-teal-700 block">
+                  Currently Loaded Building:
+                </span>
+                <span className="font-bold text-base text-slate-900">
+                  {activeBuilding.nickname}
+                </span>
+                {activeBuilding.locationLabel && (
+                  <span className="text-xs text-slate-500 ml-2">
+                    ({activeBuilding.locationLabel})
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                id="calc-update-saved-building-btn"
+                onClick={onOpenSaveModal}
+                className="text-xs font-bold px-3 py-1.5 rounded-lg bg-teal-700 text-white hover:bg-teal-800 transition cursor-pointer"
+              >
+                Update Building
+              </button>
+              {onClearActiveBuilding && (
+                <button
+                  type="button"
+                  id="calc-clear-active-building-btn"
+                  onClick={onClearActiveBuilding}
+                  className="text-xs font-semibold px-2.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition cursor-pointer"
+                >
+                  Unlink
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Mini weather summary near top once location is fetched */}
         {inputs.weatherInfo && (
