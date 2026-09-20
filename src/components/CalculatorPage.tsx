@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Droplet, Plus, Trash2, Info, Layers, Loader2, Save, Sparkles, RefreshCw } from 'lucide-react';
-import { CalculatorInputs, FormErrors, PresetScenario, RoofSection, AuthUser, SavedBuilding } from '../types';
+import { ArrowLeft, Droplet, Plus, Trash2, Info, Layers, Save } from 'lucide-react';
+import { CalculatorInputs, FormErrors, PresetScenario, RoofSection, AuthUser, SavedBuilding, FullWeatherData, UnitSystem } from '../types';
 import { validateInputs, PRESET_SCENARIOS } from '../utils/calculations';
 import { StepperNumberInput } from './StepperNumberInput';
-import { CitySearchModal } from './CitySearchModal';
-import { reverseGeocodeCoords, fetchRainfallFromOpenMeteo, CitySearchResult } from '../utils/weather';
+import { WeatherLocationSection } from './WeatherLocationSection';
+import { useAppSettings } from '../context/AppSettingsContext';
+import { convertInputs, mmToInches } from '../utils/units';
 
 interface CalculatorPageProps {
   inputs: CalculatorInputs;
@@ -32,14 +33,22 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
 }) => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [isFetchingWeather, setIsFetchingWeather] = useState(false);
-  const [weatherError, setWeatherError] = useState<string | null>(null);
-  const [showCityModal, setShowCityModal] = useState(false);
+  const { unit, setUnit, labels, formatArea, formatLength } = useAppSettings();
+
+  const isImperial = unit === 'imperial';
 
   // Ensure there is always at least one roof
   const roofs: RoofSection[] = inputs.roofs && inputs.roofs.length > 0
     ? inputs.roofs
-    : [{ id: '1', name: 'Roof 1', length: '15', width: '10' }];
+    : [{ id: '1', name: 'Roof 1', length: isImperial ? '50' : '15', width: isImperial ? '30' : '10' }];
+
+  const handleUnitSwitch = (targetUnit: UnitSystem) => {
+    if (targetUnit === unit) return;
+    const converted = convertInputs(inputs, unit, targetUnit);
+    setUnit(targetUnit);
+    onChange(converted);
+    setErrors({});
+  };
 
   const handleRoofChange = (id: string, field: 'length' | 'width', value: string) => {
     const updatedRoofs = roofs.map((roof) =>
@@ -50,7 +59,7 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
 
     const touchKey = `roof_${id}_${field}`;
     if (touched[touchKey]) {
-      const validation = validateInputs(updatedInputs);
+      const validation = validateInputs(updatedInputs, unit);
       setErrors((prev) => ({
         ...prev,
         roofs: validation.errors.roofs,
@@ -61,7 +70,7 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
   const handleRoofBlur = (id: string, field: 'length' | 'width') => {
     const touchKey = `roof_${id}_${field}`;
     setTouched((prev) => ({ ...prev, [touchKey]: true }));
-    const validation = validateInputs(inputs);
+    const validation = validateInputs(inputs, unit);
     setErrors((prev) => ({
       ...prev,
       roofs: validation.errors.roofs,
@@ -73,22 +82,21 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
     const newRoof: RoofSection = {
       id: Date.now().toString(),
       name: `Roof ${newIndex}`,
-      length: '10',
-      width: '8',
+      length: isImperial ? '30' : '10',
+      width: isImperial ? '25' : '8',
     };
     const updatedInputs = { ...inputs, roofs: [...roofs, newRoof] };
     onChange(updatedInputs);
   };
 
   const handleRemoveRoof = (id: string) => {
-    if (roofs.length <= 1) return; // Don't allow removing Roof 1
+    if (roofs.length <= 1) return;
     const updatedRoofs = roofs
       .filter((r) => r.id !== id)
-      .map((r, idx) => ({ ...r, name: `Roof ${idx + 1}` })); // keep Roof 1, Roof 2 sequence clear
+      .map((r, idx) => ({ ...r, name: `Roof ${idx + 1}` }));
     const updatedInputs = { ...inputs, roofs: updatedRoofs };
     onChange(updatedInputs);
 
-    // Clean up touched & errors for deleted roof
     const nextErrors = { ...errors };
     if (nextErrors.roofs) {
       delete nextErrors.roofs[id];
@@ -100,20 +108,22 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
     let updatedWeatherInfo = inputs.weatherInfo;
     if (field === 'rainfall') {
       if (inputs.weatherInfo) {
-        const isStillAuto = String(inputs.weatherInfo.rainfallMm) === value;
+        const expectedStr = isImperial
+          ? Number(mmToInches(inputs.weatherInfo.rainfallMm).toFixed(2)).toString()
+          : String(inputs.weatherInfo.rainfallMm);
+        const isStillAuto = expectedStr === value;
         updatedWeatherInfo = {
           ...inputs.weatherInfo,
           isAutoFetched: isStillAuto,
         };
       }
-      setWeatherError(null);
     }
 
     const updated = { ...inputs, [field]: value, weatherInfo: updatedWeatherInfo };
     onChange(updated);
 
     if (touched[field]) {
-      const validation = validateInputs(updated);
+      const validation = validateInputs(updated, unit);
       setErrors((prev) => ({
         ...prev,
         [field]: validation.errors[field],
@@ -121,93 +131,31 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
     }
   };
 
-  const handleCheckRainfall = () => {
-    setWeatherError(null);
+  const handleWeatherRainfallAutoFill = (rainfallMm: number, locationName: string, fullWeather: FullWeatherData) => {
+    const rainfallVal = isImperial
+      ? Number(mmToInches(rainfallMm).toFixed(2)).toString()
+      : String(rainfallMm);
 
-    if (typeof window === 'undefined' || !navigator.geolocation) {
-      setShowCityModal(true);
-      return;
-    }
-
-    setIsFetchingWeather(true);
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          const locationName = await reverseGeocodeCoords(latitude, longitude);
-          const result = await fetchRainfallFromOpenMeteo(latitude, longitude, locationName);
-
-          const updated = {
-            ...inputs,
-            rainfall: String(result.rainfallMm),
-            weatherInfo: {
-              locationName: result.locationName,
-              rainfallMm: result.rainfallMm,
-              dateStr: result.dateStr,
-              isAutoFetched: true,
-            },
-          };
-          onChange(updated);
-          setErrors((prev) => ({ ...prev, rainfall: undefined }));
-          setWeatherError(null);
-        } catch {
-          // Do not fabricate rainfall numbers if the API fails — leave the field blank for manual entry instead
-          setWeatherError("Couldn't fetch rainfall automatically — please enter it manually");
-        } finally {
-          setIsFetchingWeather(false);
-        }
+    const updated = {
+      ...inputs,
+      rainfall: rainfallVal,
+      weatherInfo: {
+        locationName,
+        rainfallMm,
+        dateStr: fullWeather.dateStr,
+        isAutoFetched: true,
+        latitude: fullWeather.latitude,
+        longitude: fullWeather.longitude,
+        fullWeather,
       },
-      () => {
-        // Geolocation denied, unavailable, or error -> show city search fallback
-        setIsFetchingWeather(false);
-        setShowCityModal(true);
-      },
-      {
-        enableHighAccuracy: false,
-        timeout: 9000,
-        maximumAge: 300000,
-      }
-    );
-  };
-
-  const handleCitySelected = async (city: CitySearchResult) => {
-    setShowCityModal(false);
-    setIsFetchingWeather(true);
-    setWeatherError(null);
-
-    try {
-      const locName = [city.name, city.admin1, city.country].filter(Boolean).slice(0, 2).join(', ');
-      const result = await fetchRainfallFromOpenMeteo(city.latitude, city.longitude, locName);
-
-      const updated = {
-        ...inputs,
-        rainfall: String(result.rainfallMm),
-        weatherInfo: {
-          locationName: result.locationName,
-          rainfallMm: result.rainfallMm,
-          dateStr: result.dateStr,
-          isAutoFetched: true,
-        },
-      };
-      onChange(updated);
-      setErrors((prev) => ({ ...prev, rainfall: undefined }));
-      setWeatherError(null);
-    } catch {
-      setWeatherError("Couldn't fetch rainfall automatically — please enter it manually");
-    } finally {
-      setIsFetchingWeather(false);
-    }
-  };
-
-  const handleEnterManually = () => {
-    setShowCityModal(false);
-    setWeatherError("Couldn't fetch rainfall automatically — please enter it manually");
+    };
+    onChange(updated);
+    setErrors((prev) => ({ ...prev, rainfall: undefined }));
   };
 
   const handleSharedBlur = (field: 'rainfall' | 'efficiency' | 'tankCapacity' | 'dailyRequirement') => {
     setTouched((prev) => ({ ...prev, [field]: true }));
-    const validation = validateInputs(inputs);
+    const validation = validateInputs(inputs, unit);
     setErrors((prev) => ({
       ...prev,
       [field]: validation.errors[field],
@@ -228,7 +176,7 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
     });
     setTouched(allTouched);
 
-    const validation = validateInputs(inputs);
+    const validation = validateInputs(inputs, unit);
     setErrors(validation.errors);
 
     if (validation.isValid) {
@@ -237,7 +185,13 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
   };
 
   const applyPreset = (preset: PresetScenario) => {
-    onChange(preset.inputs);
+    // Presets are authored in metric; convert if currently in imperial
+    if (unit === 'imperial') {
+      const converted = convertInputs(preset.inputs, 'metric', 'imperial');
+      onChange(converted);
+    } else {
+      onChange(preset.inputs);
+    }
     setErrors({});
     setTouched({});
   };
@@ -251,28 +205,57 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
-      {/* Top Bar with Back and Quick Presets */}
+      {/* Top Bar with Back, Unit Toggle, and Quick Presets */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <button
           id="calc-back-btn"
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-2 text-base font-semibold text-slate-700 hover:text-slate-950 transition-colors px-3.5 py-2 rounded-xl bg-white border border-slate-200 shadow-2xs cursor-pointer min-h-[44px]"
+          className="inline-flex items-center gap-2 text-base font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white transition-colors px-3.5 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xs cursor-pointer min-h-[44px]"
         >
           <ArrowLeft className="w-5 h-5" />
           <span>Back</span>
         </button>
 
+        {/* Units Switch directly at top of Calculator page */}
+        <div className="flex items-center gap-2 p-1 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xs">
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 pl-2">Units:</span>
+          <button
+            type="button"
+            id="calc-unit-metric-toggle"
+            onClick={() => handleUnitSwitch('metric')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              unit === 'metric'
+                ? 'bg-teal-700 text-white shadow-2xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            Metric (m, mm, L)
+          </button>
+          <button
+            type="button"
+            id="calc-unit-imperial-toggle"
+            onClick={() => handleUnitSwitch('imperial')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              unit === 'imperial'
+                ? 'bg-teal-700 text-white shadow-2xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            Imperial (ft, in, gal)
+          </button>
+        </div>
+
         {/* Quick Example Presets */}
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-xs text-slate-500 font-medium mr-1">Quick examples:</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium mr-1">Quick examples:</span>
           {PRESET_SCENARIOS.map((p) => (
             <button
               key={p.id}
               type="button"
               id={`calc-preset-chip-${p.id}`}
               onClick={() => applyPreset(p)}
-              className="text-xs px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:border-teal-700 hover:text-teal-900 transition-all font-semibold shadow-2xs cursor-pointer"
+              className="text-xs px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-teal-700 hover:text-teal-900 dark:hover:text-teal-300 transition-all font-semibold shadow-2xs cursor-pointer"
             >
               {p.icon} {p.name.split(' ')[0]}
             </button>
@@ -281,15 +264,15 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
       </div>
 
       {/* Main Form Card */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 sm:p-8">
         
         {/* Form Title & Introduction + Save This Building action */}
-        <div className="mb-6 border-b border-slate-100 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="mb-6 border-b border-slate-100 dark:border-slate-800 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold font-['Outfit',sans-serif] text-slate-900">
+            <h2 className="text-2xl sm:text-3xl font-bold font-['Outfit',sans-serif] text-slate-900 dark:text-white">
               Rainwater Calculator
             </h2>
-            <p className="text-slate-600 text-sm sm:text-base mt-1">
+            <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base mt-1">
               Fill in your roof measurements and local rainfall to see how much rain you can save.
             </p>
           </div>
@@ -300,9 +283,9 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
               type="button"
               id="calc-save-building-btn"
               onClick={onOpenSaveModal}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-50 hover:bg-teal-100 active:bg-teal-200 border border-teal-300 text-teal-900 font-bold text-sm shadow-2xs hover:shadow-xs transition-all cursor-pointer min-h-[44px]"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/60 hover:bg-teal-100 dark:hover:bg-teal-900 border border-teal-300 dark:border-teal-700 text-teal-900 dark:text-teal-200 font-bold text-sm shadow-2xs hover:shadow-xs transition-all cursor-pointer min-h-[44px]"
             >
-              <Save className="w-4 h-4 text-teal-700" />
+              <Save className="w-4 h-4 text-teal-700 dark:text-teal-400" />
               <span>💾 Save This Building</span>
             </button>
           </div>
@@ -310,18 +293,18 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
 
         {/* Active Loaded Building Banner if a building was loaded from saved list */}
         {activeBuilding && (
-          <div className="mb-6 p-4 rounded-2xl bg-slate-50 border border-teal-300/70 text-slate-800 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+          <div className="mb-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-teal-300/70 dark:border-teal-700 text-slate-800 dark:text-slate-200 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
             <div className="flex items-center gap-2.5">
               <span className="text-xl">🏡</span>
               <div>
-                <span className="text-xs uppercase font-extrabold tracking-wide text-teal-700 block">
+                <span className="text-xs uppercase font-extrabold tracking-wide text-teal-700 dark:text-teal-400 block">
                   Currently Loaded Building:
                 </span>
-                <span className="font-bold text-base text-slate-900">
+                <span className="font-bold text-base text-slate-900 dark:text-white">
                   {activeBuilding.nickname}
                 </span>
                 {activeBuilding.locationLabel && (
-                  <span className="text-xs text-slate-500 ml-2">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 ml-2">
                     ({activeBuilding.locationLabel})
                   </span>
                 )}
@@ -342,7 +325,7 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
                   type="button"
                   id="calc-clear-active-building-btn"
                   onClick={onClearActiveBuilding}
-                  className="text-xs font-semibold px-2.5 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition cursor-pointer"
+                  className="text-xs font-semibold px-2.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
                 >
                   Unlink
                 </button>
@@ -351,36 +334,13 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
           </div>
         )}
 
-        {/* Mini weather summary near top once location is fetched */}
-        {inputs.weatherInfo && (
-          <div className="mb-6 p-4 rounded-2xl bg-teal-50/90 border border-teal-200 text-teal-950 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
-            <div className="flex items-center gap-2.5 flex-wrap text-sm sm:text-base font-bold">
-              <span className="text-xl">📍</span>
-              <span className="text-teal-950">{inputs.weatherInfo.locationName}</span>
-              <span className="text-teal-400 font-normal">—</span>
-              <span className="text-teal-900 flex items-center gap-1.5">
-                <span>🌧️ Rain Today:</span>
-                <strong className="text-lg font-extrabold text-teal-950 font-['Outfit',sans-serif]">
-                  {inputs.weatherInfo.rainfallMm} mm
-                </strong>
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white border border-teal-200 text-teal-800">
-                {inputs.weatherInfo.dateStr}
-              </span>
-              <button
-                type="button"
-                id="calc-recheck-rainfall-top-btn"
-                onClick={handleCheckRainfall}
-                disabled={isFetchingWeather}
-                className="text-xs font-bold text-teal-800 hover:text-teal-950 underline cursor-pointer"
-              >
-                {isFetchingWeather ? 'Checking...' : 'Check Again'}
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Weather & Location Section (Track vs. Type + Today's Weather + 7-Day Outlook) */}
+        <div id="weather-location-section" className="mb-7">
+          <WeatherLocationSection
+            currentRainfallValue={inputs.rainfall}
+            onRainfallAutoFill={handleWeatherRainfallAutoFill}
+          />
+        </div>
 
         <form onSubmit={handleSubmit} noValidate className="space-y-7">
           
@@ -392,17 +352,17 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
               <div className="flex items-center gap-2">
                 <span className="text-2xl">🏠</span>
                 <div>
-                  <h3 className="text-lg sm:text-xl font-bold font-['Outfit',sans-serif] text-slate-900">
+                  <h3 className="text-lg sm:text-xl font-bold font-['Outfit',sans-serif] text-slate-900 dark:text-white">
                     Roof Measurements
                   </h3>
-                  <p className="text-xs sm:text-sm text-slate-500">
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                     Add each roof or building section that catches rainwater
                   </p>
                 </div>
               </div>
 
               {roofs.length > 1 && (
-                <span className="text-xs font-semibold px-2.5 py-1 bg-teal-50 text-teal-800 border border-teal-200/80 rounded-full">
+                <span className="text-xs font-semibold px-2.5 py-1 bg-teal-50 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-200/80 dark:border-teal-800 rounded-full">
                   {roofs.length} roofs added
                 </span>
               )}
@@ -427,17 +387,17 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95, y: -10 }}
                       transition={{ duration: 0.25, ease: 'easeOut' }}
-                      className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 border border-slate-200/90 shadow-2xs space-y-4"
+                      className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700 shadow-2xs space-y-4"
                     >
                       {/* Roof Header: Name + Optional Remove Button */}
-                      <div className="flex items-center justify-between border-b border-slate-200/60 pb-3">
+                      <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700 pb-3">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-800 text-base">
+                          <span className="font-bold text-slate-800 dark:text-slate-200 text-base">
                             {roof.name || `Roof ${index + 1}`}
                           </span>
                           {roofArea > 0 && (
-                            <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600">
-                              {roofArea.toFixed(1)} m²
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300">
+                              {roofArea.toFixed(1)} {isImperial ? 'sq ft' : 'm²'}
                             </span>
                           )}
                         </div>
@@ -448,7 +408,7 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
                             type="button"
                             id={`remove-roof-${roof.id}`}
                             onClick={() => handleRemoveRoof(roof.id)}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 px-2.5 py-1.5 rounded-lg border border-rose-200/60 transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 px-2.5 py-1.5 rounded-lg border border-rose-200/60 dark:border-rose-800 transition-colors cursor-pointer"
                             aria-label={`Remove ${roof.name}`}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -462,17 +422,21 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
                         <StepperNumberInput
                           id={`input-roof-${roof.id}-length`}
                           label={`${roof.name} length`}
-                          unit="in metres"
+                          unit={`in ${labels.length}`}
                           helperText="Measure the longer side of this roof"
                           value={roof.length}
                           onChange={(val) => handleRoofChange(roof.id, 'length', val)}
                           onBlur={() => handleRoofBlur(roof.id, 'length')}
-                          step={1}
+                          step={isImperial ? 5 : 1}
                           min={0.5}
-                          placeholder="15"
+                          placeholder={isImperial ? '50' : '15'}
                           error={lengthError}
                           icon="📏"
-                          quickChips={[
+                          quickChips={isImperial ? [
+                            { label: '25 ft', value: '25' },
+                            { label: '40 ft', value: '40' },
+                            { label: '50 ft', value: '50' },
+                          ] : [
                             { label: '8m', value: '8' },
                             { label: '12m', value: '12' },
                             { label: '15m', value: '15' },
@@ -482,17 +446,21 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
                         <StepperNumberInput
                           id={`input-roof-${roof.id}-width`}
                           label={`${roof.name} width`}
-                          unit="in metres"
+                          unit={`in ${labels.length}`}
                           helperText="Measure the shorter side of this roof"
                           value={roof.width}
                           onChange={(val) => handleRoofChange(roof.id, 'width', val)}
                           onBlur={() => handleRoofBlur(roof.id, 'width')}
-                          step={1}
+                          step={isImperial ? 5 : 1}
                           min={0.5}
-                          placeholder="10"
+                          placeholder={isImperial ? '30' : '10'}
                           error={widthError}
                           icon="📐"
-                          quickChips={[
+                          quickChips={isImperial ? [
+                            { label: '20 ft', value: '20' },
+                            { label: '25 ft', value: '25' },
+                            { label: '30 ft', value: '30' },
+                          ] : [
                             { label: '6m', value: '6' },
                             { label: '8m', value: '8' },
                             { label: '10m', value: '10' },
@@ -505,12 +473,12 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
               </AnimatePresence>
             </div>
 
-            {/* "+ Add Another Roof" Button — directly below last roof block */}
+            {/* "+ Add Another Roof" Button */}
             <button
               type="button"
               id="add-roof-btn"
               onClick={handleAddRoof}
-              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border-2 border-dashed border-teal-700/60 text-teal-800 hover:bg-teal-50/70 hover:border-teal-700 font-bold text-sm sm:text-base transition-all cursor-pointer min-h-[50px]"
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl border-2 border-dashed border-teal-700/60 dark:border-teal-500/60 text-teal-800 dark:text-teal-300 hover:bg-teal-50/70 dark:hover:bg-slate-800 font-bold text-sm sm:text-base transition-all cursor-pointer min-h-[50px]"
             >
               <Plus className="w-5 h-5 stroke-[2.5]" />
               <span>+ Add Another Roof</span>
@@ -518,21 +486,21 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
 
             {/* Live Combined Roof Area Badge */}
             {calculatedTotalArea > 0 && (
-              <div className="p-3.5 rounded-xl bg-teal-50/90 border border-teal-200 text-teal-950 flex items-center justify-between text-sm font-semibold">
+              <div className="p-3.5 rounded-xl bg-teal-50/90 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 text-teal-950 dark:text-teal-200 flex items-center justify-between text-sm font-semibold">
                 <div className="flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-teal-700 shrink-0" />
+                  <Layers className="w-4 h-4 text-teal-700 dark:text-teal-400 shrink-0" />
                   <span>
-                    Total Combined Roof Area: <strong>{calculatedTotalArea.toFixed(1)} m²</strong>
+                    Total Combined Roof Area: <strong>{calculatedTotalArea.toFixed(1)} {isImperial ? 'sq ft' : 'm²'}</strong>
                   </span>
                 </div>
-                <span className="text-xs text-teal-700 font-normal">
+                <span className="text-xs text-teal-700 dark:text-teal-400 font-normal">
                   ({roofs.length} {roofs.length === 1 ? 'roof section' : 'roof sections'})
                 </span>
               </div>
             )}
           </div>
 
-          <hr className="border-slate-200/80 my-2" />
+          <hr className="border-slate-200/80 dark:border-slate-800 my-2" />
 
           {/* ═══════════════════════════════════════
               SHARED PROPERTY INPUTS
@@ -542,55 +510,52 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
           <StepperNumberInput
             id="input-rainfall"
             label="Rainfall"
-            unit="in mm"
+            unit={`in ${labels.rainfall}`}
             helperText="How much rain fell? (Auto-filled from weather, or check your rain gauge)"
             value={inputs.rainfall}
             onChange={(val) => handleSharedChange('rainfall', val)}
             onBlur={() => handleSharedBlur('rainfall')}
-            step={5}
+            step={isImperial ? 0.2 : 5}
             min={0}
-            placeholder="60"
+            placeholder={isImperial ? '2.0' : '50'}
             error={touched.rainfall ? errors.rainfall : undefined}
             icon="🌧️"
             headerAction={
-              <button
-                type="button"
-                id="check-today-rainfall-btn"
-                onClick={handleCheckRainfall}
-                disabled={isFetchingWeather}
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-teal-900 bg-teal-50 hover:bg-teal-100 active:bg-teal-200 border border-teal-300/90 px-3 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer min-h-[38px]"
-              >
-                {isFetchingWeather ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin text-teal-700" />
-                    <span>Checking...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>📍</span>
-                    <span>Check Today&apos;s Rainfall</span>
-                  </>
-                )}
-              </button>
+              inputs.weatherInfo ? (
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-900 dark:text-teal-200 bg-teal-50 dark:bg-teal-950/60 border border-teal-200/90 dark:border-teal-800 px-3 py-1.5 rounded-xl shadow-2xs">
+                  <span>📍</span>
+                  <span className="truncate max-w-[140px] sm:max-w-[220px]">{inputs.weatherInfo.locationName}</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  id="check-today-rainfall-btn"
+                  onClick={() => {
+                    const el = document.getElementById('weather-location-section');
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-teal-900 dark:text-teal-200 bg-teal-50 dark:bg-teal-950/60 hover:bg-teal-100 dark:hover:bg-teal-900 border border-teal-300/90 dark:border-teal-700 px-3 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer min-h-[38px]"
+                >
+                  <span>📍</span>
+                  <span>Set Location in Weather Card</span>
+                </button>
+              )
             }
             footerNote={
               inputs.weatherInfo ? (
-                <div className="mt-2.5 p-3 rounded-xl bg-teal-50/80 border border-teal-200 text-xs sm:text-sm text-teal-950 flex items-start gap-2.5">
+                <div className="mt-2.5 p-3 rounded-xl bg-teal-50/80 dark:bg-teal-950/50 border border-teal-200 dark:border-teal-800 text-xs sm:text-sm text-teal-950 dark:text-teal-200 flex items-start gap-2.5">
                   <span className="text-base shrink-0">ℹ️</span>
                   <p className="leading-relaxed">
-                    Rainfall auto-filled from weather data for <strong>{inputs.weatherInfo.locationName}</strong> on {inputs.weatherInfo.dateStr}. You can edit this if your own rain gauge shows a different amount.
-                  </p>
-                </div>
-              ) : weatherError ? (
-                <div className="mt-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900 flex items-start gap-2.5">
-                  <span className="text-base shrink-0">⚠️</span>
-                  <p className="leading-relaxed">
-                    {weatherError}
+                    Rainfall auto-filled from today&apos;s weather for <strong>{inputs.weatherInfo.locationName}</strong> on {inputs.weatherInfo.dateStr}. You can adjust this if your own rain gauge shows a different amount.
                   </p>
                 </div>
               ) : null
             }
-            quickChips={[
+            quickChips={isImperial ? [
+              { label: '1.0 in (light)', value: '1.0' },
+              { label: '2.0 in (steady)', value: '2.0' },
+              { label: '3.0 in (heavy)', value: '3.0' },
+            ] : [
               { label: '25mm (light)', value: '25' },
               { label: '50mm (steady)', value: '50' },
               { label: '80mm (heavy)', value: '80' },
@@ -623,17 +588,22 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
           <StepperNumberInput
             id="input-tank-capacity"
             label="Tank size"
-            unit="in litres"
+            unit={`in ${labels.volume}`}
             helperText="How much water can your storage tank hold?"
             value={inputs.tankCapacity}
             onChange={(val) => handleSharedChange('tankCapacity', val)}
             onBlur={() => handleSharedBlur('tankCapacity')}
-            step={500}
-            min={100}
-            placeholder="5000"
+            step={isImperial ? 250 : 500}
+            min={isImperial ? 25 : 100}
+            placeholder={isImperial ? '1300' : '5000'}
             error={touched.tankCapacity ? errors.tankCapacity : undefined}
             icon="🛢️"
-            quickChips={[
+            quickChips={isImperial ? [
+              { label: '250 gal', value: '250' },
+              { label: '500 gal', value: '500' },
+              { label: '1,300 gal', value: '1300' },
+              { label: '2,500 gal', value: '2500' },
+            ] : [
               { label: '1,000L', value: '1000' },
               { label: '2,000L', value: '2000' },
               { label: '5,000L', value: '5000' },
@@ -642,21 +612,25 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
           />
 
           {/* Field: Daily water need (optional) */}
-          <div className="pt-2 border-t border-slate-100">
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
             <StepperNumberInput
               id="input-daily-requirement"
               label="Daily water need"
-              unit="in litres (optional)"
+              unit={`in ${labels.volume} (optional)`}
               helperText="Roughly how much water do you use per day? (optional)"
               value={inputs.dailyRequirement}
               onChange={(val) => handleSharedChange('dailyRequirement', val)}
               onBlur={() => handleSharedBlur('dailyRequirement')}
-              step={25}
+              step={isImperial ? 10 : 25}
               min={0}
-              placeholder="e.g. 200"
+              placeholder={isImperial ? '50' : '200'}
               error={touched.dailyRequirement ? errors.dailyRequirement : undefined}
               icon="📅"
-              quickChips={[
+              quickChips={isImperial ? [
+                { label: '25 gal/day', value: '25' },
+                { label: '50 gal/day', value: '50' },
+                { label: '90 gal/day', value: '90' },
+              ] : [
                 { label: '100 L/day', value: '100' },
                 { label: '200 L/day', value: '200' },
                 { label: '350 L/day', value: '350' },
@@ -666,7 +640,7 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
 
           {/* Bottom Action with Loading Animation */}
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs text-slate-500 flex items-center gap-1.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
               <Info className="w-4 h-4 text-slate-400 shrink-0" />
               <span>Actual water collected may vary depending on your roof and pipes.</span>
             </p>
@@ -698,14 +672,6 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
 
         </form>
       </div>
-
-      {/* Fallback City / Town Search Modal */}
-      <CitySearchModal
-        isOpen={showCityModal}
-        onClose={() => setShowCityModal(false)}
-        onSelectCity={handleCitySelected}
-        onEnterManually={handleEnterManually}
-      />
     </div>
   );
 };

@@ -11,18 +11,22 @@ import { FirstVisitModal } from './components/FirstVisitModal';
 import { AuthModal } from './components/AuthModal';
 import { SaveBuildingModal } from './components/SaveBuildingModal';
 import { EditBuildingModal } from './components/EditBuildingModal';
+import { TipsModal } from './components/TipsModal';
+import { AppSettingsProvider, useAppSettings } from './context/AppSettingsContext';
 import { subscribeToAuth, logoutUser, getUserBuildings, deleteUserBuilding } from './lib/firebase';
 
-export default function App() {
+function RainWiseApp() {
   const [currentPage, setCurrentPage] = useState<PageView>('home');
+  const { unit } = useAppSettings();
+
   const [inputs, setInputs] = useState<CalculatorInputs>({
     roofs: [
       { id: '1', name: 'Roof 1', length: '15', width: '10' },
     ],
-    rainfall: '60',
+    rainfall: '50',
     efficiency: '80',
     tankCapacity: '5000',
-    dailyRequirement: '250',
+    dailyRequirement: '200',
   });
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -41,6 +45,15 @@ export default function App() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [editingBuilding, setEditingBuilding] = useState<SavedBuilding | null>(null);
 
+  // Tips Modal state
+  const [isTipsOpen, setIsTipsOpen] = useState(false);
+  const [selectedTipId, setSelectedTipId] = useState<string | undefined>(undefined);
+
+  const handleOpenTips = (tipId?: string) => {
+    setSelectedTipId(tipId);
+    setIsTipsOpen(true);
+  };
+
   // Toast notification for user confirmation (e.g., "Saved!", "Loaded Grandpa's Farm")
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -50,6 +63,14 @@ export default function App() {
       setToastMessage((current) => (current === msg ? null : current));
     }, 4000);
   };
+
+  // Re-calculate results whenever unit changes if a result is already on screen
+  useEffect(() => {
+    if (result) {
+      const recomputed = calculateHarvesting(inputs, unit);
+      setResult(recomputed);
+    }
+  }, [unit]);
 
   // Check first-visit state
   useEffect(() => {
@@ -116,10 +137,6 @@ export default function App() {
   // Selecting a saved building from Home Page
   const handleSelectBuilding = (building: SavedBuilding) => {
     setActiveBuilding(building);
-    // User requirement:
-    // "Tapping one instantly loads all its saved measurements into the Calculator page —
-    // user only needs to enter/fetch today's rainfall and press Calculate"
-    // "(Rainfall itself is NOT saved, since it changes every time — only the building's fixed details are saved)"
     setInputs({
       roofs: building.roofs && building.roofs.length > 0 ? building.roofs : [{ id: '1', name: 'Roof 1', length: '10', width: '10' }],
       rainfall: '',
@@ -133,7 +150,7 @@ export default function App() {
     showToast(`Loaded "${building.nickname}"! Just enter today's rainfall to calculate.`);
   };
 
-  // "+ Calculate a New Building" (starts with clean empty/default fields, unlinked)
+  // "+ Calculate a New Building"
   const handleNewBlankBuilding = () => {
     setActiveBuilding(null);
     setInputs({
@@ -159,7 +176,7 @@ export default function App() {
     showToast('Building removed from your saved list.');
   };
 
-  // Transition variants (~250ms simple fade)
+  // Transition variants
   const pageVariants: Variants = {
     initial: { opacity: 0 },
     animate: { 
@@ -186,7 +203,7 @@ export default function App() {
   const handleSelectPreset = (preset: PresetScenario) => {
     setActiveBuilding(null);
     setInputs(preset.inputs);
-    const res = calculateHarvesting(preset.inputs);
+    const res = calculateHarvesting(preset.inputs, unit);
     setResult(res);
     setCurrentPage('results');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -195,7 +212,7 @@ export default function App() {
   const handlePerformCalculation = () => {
     setIsCalculating(true);
     setTimeout(() => {
-      const computedResult = calculateHarvesting(inputs);
+      const computedResult = calculateHarvesting(inputs, unit);
       setResult(computedResult);
       setIsCalculating(false);
       setCurrentPage('results');
@@ -220,7 +237,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative selection:bg-teal-500/20 selection:text-teal-900 bg-[#f8fafc]">
+    <div className="min-h-screen flex flex-col relative selection:bg-teal-500/20 selection:text-teal-900 bg-[#f8fafc] dark:bg-[#0f172a] text-slate-900 dark:text-slate-100 transition-colors duration-200">
       {/* Background Animated Rain Motif */}
       <RaindropBackground intensity="light" />
 
@@ -231,7 +248,7 @@ export default function App() {
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-slate-900/90 backdrop-blur-md text-white font-medium text-xs sm:text-sm shadow-xl border border-slate-700/50 flex items-center gap-2"
+            className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-slate-900/90 dark:bg-slate-800/95 backdrop-blur-md text-white font-medium text-xs sm:text-sm shadow-xl border border-slate-700/50 dark:border-slate-650 flex items-center gap-2"
           >
             <span>🌧️</span>
             <span>{toastMessage}</span>
@@ -244,7 +261,7 @@ export default function App() {
         currentPage={currentPage}
         onNavigate={(page) => {
           if (page === 'results' && !result) {
-            const res = calculateHarvesting(inputs);
+            const res = calculateHarvesting(inputs, unit);
             setResult(res);
           }
           setCurrentPage(page);
@@ -259,6 +276,7 @@ export default function App() {
         }}
         onSignOut={handleSignOut}
         savedBuildingsCount={savedBuildings.length}
+        onOpenTips={() => handleOpenTips()}
       />
 
       {/* Main Page View with Animated Transitions */}
@@ -282,6 +300,7 @@ export default function App() {
                 onEditBuilding={(b) => setEditingBuilding(b)}
                 onDeleteBuilding={handleDeleteBuilding}
                 onNewBlankBuilding={handleNewBlankBuilding}
+                onOpenTips={() => handleOpenTips()}
               />
             </motion.div>
           )}
@@ -320,6 +339,7 @@ export default function App() {
                 result={result}
                 onAdjustInputs={() => setCurrentPage('calculator')}
                 onReset={handleReset}
+                onOpenTips={(tipId) => handleOpenTips(tipId)}
               />
             </motion.div>
           )}
@@ -382,18 +402,25 @@ export default function App() {
         }}
       />
 
+      {/* 5. Rainwater Practical Tips Modal */}
+      <TipsModal
+        isOpen={isTipsOpen}
+        onClose={() => setIsTipsOpen(false)}
+        highlightTipId={selectedTipId}
+      />
+
       {/* Footer */}
-      <footer className="relative z-10 border-t border-slate-200 bg-white/80 py-5 mt-auto">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs text-slate-500 text-center sm:text-left">
+      <footer className="relative z-10 border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs py-5 mt-auto">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs text-slate-500 dark:text-slate-400 text-center sm:text-left">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-800 font-['Outfit',sans-serif]">RainWise</span>
+            <span className="font-bold text-slate-800 dark:text-white font-['Outfit',sans-serif]">RainWise</span>
             <span>•</span>
             <span>Helping farmers and households save rainwater</span>
           </div>
           <div className="flex items-center gap-3">
-            <span>1mm rain on 1m² = 1 litre</span>
+            <span>{unit === 'imperial' ? '1 in rain on 1,000 sq ft ≈ 623 gallons' : '1mm rain on 1m² = 1 litre'}</span>
             <span>•</span>
-            <span className="text-teal-800 font-medium">
+            <span className="text-teal-800 dark:text-teal-400 font-medium">
               {currentUser ? `Signed in as ${currentUser.displayName || currentUser.email}` : 'Guest mode (no login required)'}
             </span>
           </div>
@@ -403,3 +430,10 @@ export default function App() {
   );
 }
 
+export default function App() {
+  return (
+    <AppSettingsProvider>
+      <RainWiseApp />
+    </AppSettingsProvider>
+  );
+}

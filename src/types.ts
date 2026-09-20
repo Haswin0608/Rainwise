@@ -5,11 +5,46 @@ export interface RoofSection {
   width: string;
 }
 
+export interface WeatherConditionInfo {
+  label: string;
+  icon: string;
+}
+
+export interface DailyForecastDay {
+  date: string; // e.g. "2026-09-20"
+  dayLabel: string; // e.g. "Today", "Mon", "Tue"
+  fullDayName: string; // e.g. "Monday", "Tuesday"
+  weatherCode: number;
+  conditionLabel: string; // e.g. "Sunny", "Partly Cloudy", "Rainy"
+  conditionIcon: string; // e.g. "☀️", "🌧️"
+  precipitationMm: number; // expected rainfall mm
+  tempMax: number; // °C
+  tempMin: number; // °C
+}
+
+export interface FullWeatherData {
+  locationName: string;
+  latitude: number;
+  longitude: number;
+  currentTemp: number; // °C
+  currentPrecipitation: number; // mm
+  currentWeatherCode: number;
+  currentConditionLabel: string;
+  currentConditionIcon: string;
+  rainfallTodayMm: number; // mm
+  dateStr: string;
+  dailyForecast: DailyForecastDay[];
+  heavyRainAlert?: string | null;
+}
+
 export interface WeatherTrackInfo {
   locationName: string;
   rainfallMm: number;
   dateStr: string;
   isAutoFetched: boolean;
+  latitude?: number;
+  longitude?: number;
+  fullWeather?: FullWeatherData;
 }
 
 export interface CalculatorInputs {
@@ -99,4 +134,7 @@ export interface AuthUser {
   displayName: string | null;
   isAnonymous?: boolean;
 }
+
+export type UnitSystem = 'metric' | 'imperial';
+
 
