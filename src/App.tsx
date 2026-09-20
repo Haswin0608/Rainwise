@@ -11,8 +11,9 @@ import { ResultsPage } from './components/ResultsPage';
 export default function App() {
   const [currentPage, setCurrentPage] = useState<PageView>('home');
   const [inputs, setInputs] = useState<CalculatorInputs>({
-    roofLength: '15',
-    roofWidth: '10',
+    roofs: [
+      { id: '1', name: 'Roof 1', length: '15', width: '10' },
+    ],
     rainfall: '60',
     efficiency: '80',
     tankCapacity: '5000',
@@ -68,8 +69,9 @@ export default function App() {
 
   const handleReset = () => {
     setInputs({
-      roofLength: '',
-      roofWidth: '',
+      roofs: [
+        { id: '1', name: 'Roof 1', length: '', width: '' },
+      ],
       rainfall: '',
       efficiency: '80',
       tankCapacity: '',

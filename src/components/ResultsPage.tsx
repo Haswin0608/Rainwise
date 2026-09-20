@@ -1,13 +1,14 @@
-import React from 'react';
-import { motion } from 'motion/react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowLeft, 
   RotateCcw, 
   Info,
-  CheckCircle2,
-  AlertTriangle,
   Share2,
-  Check
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Layers
 } from 'lucide-react';
 import { CalculationResult } from '../types';
 import { AnimatedCounter } from './AnimatedCounter';
@@ -25,13 +26,18 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({
   onAdjustInputs,
   onReset,
 }) => {
-  const [copied, setCopied] = React.useState(false);
+  const [copied, setCopied] = useState(false);
+  const [showRoofBreakdown, setShowRoofBreakdown] = useState(false);
 
   const handleCopy = () => {
+    const roofsText = result.roofs && result.roofs.length > 0
+      ? result.roofs.map(r => `${r.name}: ${r.area} m²`).join(', ')
+      : `${result.roofArea} m²`;
+
     const text = `RainWise Rainwater Harvest Results:
-• Roof Size: ${result.roofArea} m²
+• Total Roof Size: ${result.roofArea} m² (${roofsText})
 • Rain Fell: ${result.rainfall} mm
-• Total Rain on Roof: ${result.potentialWater.toLocaleString()} litres
+• Total Rain on Your Roof: ${result.potentialWater.toLocaleString()} litres
 • Water You Can Save: ${result.actuallyHarvested.toLocaleString()} litres
 • Water You're Losing: ${result.wastedWater.toLocaleString()} litres
 • Tank Size: ${result.tankCapacity.toLocaleString()} litres
@@ -45,6 +51,8 @@ ${result.suggestionLine}`;
       setTimeout(() => setCopied(false), 2500);
     });
   };
+
+  const hasMultipleRoofs = result.roofs && result.roofs.length > 1;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-7">
@@ -186,17 +194,69 @@ ${result.suggestionLine}`;
       </div>
 
       {/* Supporting Cards with Plain Language Labels */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         
-        {/* 🏠 Your Roof Size */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
-          <div className="text-2xl mb-1">🏠</div>
-          <div className="text-xs sm:text-sm font-semibold text-slate-500">
-            Your Roof Size
+        {/* 🏠 Your Roof Size with Expandable Multiple Roof Breakdown */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between">
+              <div className="text-2xl mb-1">🏠</div>
+              {hasMultipleRoofs && (
+                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-teal-50 text-teal-800 border border-teal-200">
+                  {result.roofs.length} roofs
+                </span>
+              )}
+            </div>
+            <div className="text-xs sm:text-sm font-semibold text-slate-500">
+              Your Roof Size
+            </div>
+            <div className="text-xl sm:text-2xl font-bold font-['Outfit',sans-serif] text-slate-900 mt-1">
+              <AnimatedCounter value={result.roofArea} decimals={1} suffix=" m²" />
+            </div>
           </div>
-          <div className="text-xl sm:text-2xl font-bold font-['Outfit',sans-serif] text-slate-900 mt-1">
-            <AnimatedCounter value={result.roofArea} decimals={1} suffix=" m²" />
-          </div>
+
+          {/* Small Expandable Breakdown */}
+          {result.roofs && result.roofs.length > 0 && (
+            <div className="mt-3 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                id="results-roof-breakdown-toggle"
+                onClick={() => setShowRoofBreakdown(!showRoofBreakdown)}
+                className="w-full text-left text-xs font-semibold text-teal-800 hover:text-teal-950 flex items-center justify-between py-1 cursor-pointer"
+              >
+                <span>{showRoofBreakdown ? 'Hide individual roofs' : 'See roof breakdown'}</span>
+                {showRoofBreakdown ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+
+              <AnimatePresence>
+                {showRoofBreakdown && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-1.5">
+                      {result.roofs.map((r, i) => (
+                        <div key={r.id || i} className="flex justify-between items-center text-slate-700">
+                          <span className="font-medium">{r.name}:</span>
+                          <span>
+                            <strong>{r.area} m²</strong>{' '}
+                            <span className="text-slate-400 text-[10px]">({r.length}×{r.width}m)</span>
+                          </span>
+                        </div>
+                      ))}
+                      <div className="pt-1.5 border-t border-slate-200 font-bold text-slate-900 flex justify-between">
+                        <span>Total:</span>
+                        <span>{result.roofArea} m²</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
 
         {/* 🌧️ Rain That Fell */}

@@ -1,14 +1,15 @@
-import { CalculatorInputs, CalculationResult, FormErrors, PresetScenario } from '../types';
+import { CalculatorInputs, CalculationResult, FormErrors, PresetScenario, RoofAreaBreakdown, RoofError } from '../types';
 
 export const PRESET_SCENARIOS: PresetScenario[] = [
   {
     id: 'suburban',
     name: 'Standard Suburban Home',
-    description: '15m × 10m roof, 60mm storm event, 5,000L tank',
+    description: 'Single roof: 15m × 10m, 60mm storm event, 5,000L tank',
     icon: '🏠',
     inputs: {
-      roofLength: '15',
-      roofWidth: '10',
+      roofs: [
+        { id: '1', name: 'Roof 1', length: '15', width: '10' },
+      ],
       rainfall: '60',
       efficiency: '80',
       tankCapacity: '5000',
@@ -18,11 +19,12 @@ export const PRESET_SCENARIOS: PresetScenario[] = [
   {
     id: 'urban',
     name: 'Compact Urban Townhouse',
-    description: '10m × 7m roof, 45mm rain, 2,000L slimline tank',
+    description: 'Single roof: 10m × 7m, 45mm rain, 2,000L slimline tank',
     icon: '🏢',
     inputs: {
-      roofLength: '10',
-      roofWidth: '7',
+      roofs: [
+        { id: '1', name: 'Roof 1', length: '10', width: '7' },
+      ],
       rainfall: '45',
       efficiency: '85',
       tankCapacity: '2000',
@@ -31,12 +33,14 @@ export const PRESET_SCENARIOS: PresetScenario[] = [
   },
   {
     id: 'rural',
-    name: 'Rural Shed / Homestead',
-    description: '24m × 12m metal roof, 80mm rainfall, 15,000L tank',
+    name: 'Rural Farmhouse & Shed',
+    description: '2 roofs: House (16m × 10m) + Shed (12m × 8m), 80mm rain, 15,000L tank',
     icon: '🌾',
     inputs: {
-      roofLength: '24',
-      roofWidth: '12',
+      roofs: [
+        { id: '1', name: 'Roof 1 (House)', length: '16', width: '10' },
+        { id: '2', name: 'Roof 2 (Shed)', length: '12', width: '8' },
+      ],
       rainfall: '80',
       efficiency: '90',
       tankCapacity: '15000',
@@ -47,23 +51,41 @@ export const PRESET_SCENARIOS: PresetScenario[] = [
 
 export function validateInputs(inputs: CalculatorInputs): { errors: FormErrors; isValid: boolean } {
   const errors: FormErrors = {};
+  const roofErrors: Record<string, RoofError> = {};
+  let hasRoofErrors = false;
 
-  const length = parseFloat(inputs.roofLength);
-  if (!inputs.roofLength.trim()) {
-    errors.roofLength = 'Please enter the length of your roof';
-  } else if (isNaN(length) || length <= 0) {
-    errors.roofLength = 'Please enter a number greater than 0';
-  } else if (length > 1000) {
-    errors.roofLength = 'Please enter a roof length under 1,000 metres';
-  }
+  const roofs = inputs.roofs && inputs.roofs.length > 0
+    ? inputs.roofs
+    : [{ id: '1', name: 'Roof 1', length: '', width: '' }];
 
-  const width = parseFloat(inputs.roofWidth);
-  if (!inputs.roofWidth.trim()) {
-    errors.roofWidth = 'Please enter the width of your roof';
-  } else if (isNaN(width) || width <= 0) {
-    errors.roofWidth = 'Please enter a number greater than 0';
-  } else if (width > 1000) {
-    errors.roofWidth = 'Please enter a roof width under 1,000 metres';
+  roofs.forEach((roof) => {
+    const rErr: RoofError = {};
+    const length = parseFloat(roof.length);
+    if (!roof.length.trim()) {
+      rErr.length = 'Please enter the length of this roof';
+    } else if (isNaN(length) || length <= 0) {
+      rErr.length = 'Please enter a number greater than 0';
+    } else if (length > 1000) {
+      rErr.length = 'Please enter a roof length under 1,000 metres';
+    }
+
+    const width = parseFloat(roof.width);
+    if (!roof.width.trim()) {
+      rErr.width = 'Please enter the width of this roof';
+    } else if (isNaN(width) || width <= 0) {
+      rErr.width = 'Please enter a number greater than 0';
+    } else if (width > 1000) {
+      rErr.width = 'Please enter a roof width under 1,000 metres';
+    }
+
+    if (rErr.length || rErr.width) {
+      roofErrors[roof.id] = rErr;
+      hasRoofErrors = true;
+    }
+  });
+
+  if (hasRoofErrors) {
+    errors.roofs = roofErrors;
   }
 
   const rain = parseFloat(inputs.rainfall);
@@ -102,38 +124,58 @@ export function validateInputs(inputs: CalculatorInputs): { errors: FormErrors; 
     }
   }
 
+  const isValid = !hasRoofErrors &&
+    !errors.rainfall &&
+    !errors.efficiency &&
+    !errors.tankCapacity &&
+    !errors.dailyRequirement;
+
   return {
     errors,
-    isValid: Object.keys(errors).length === 0,
+    isValid,
   };
 }
 
 export function calculateHarvesting(inputs: CalculatorInputs): CalculationResult {
-  const length = Math.max(0, parseFloat(inputs.roofLength) || 0);
-  const width = Math.max(0, parseFloat(inputs.roofWidth) || 0);
   const rainfall = Math.max(0, parseFloat(inputs.rainfall) || 0);
   const efficiency = Math.min(100, Math.max(0, parseFloat(inputs.efficiency) || 80));
   const tankCapacity = Math.max(0, parseFloat(inputs.tankCapacity) || 0);
   const dailyRequirement = inputs.dailyRequirement.trim() ? Math.max(0, parseFloat(inputs.dailyRequirement) || 0) : undefined;
 
-  // 1. Roof Area = Length × Width (m²)
-  const roofArea = Number((length * width).toFixed(2));
+  // Calculate the area of each roof separately:
+  // Roof Area (per roof) = Length × Width
+  const roofsBreakdown: RoofAreaBreakdown[] = (inputs.roofs || []).map((roof, index) => {
+    const l = Math.max(0, parseFloat(roof.length) || 0);
+    const w = Math.max(0, parseFloat(roof.width) || 0);
+    const a = Number((l * w).toFixed(2));
+    return {
+      id: roof.id,
+      name: roof.name || `Roof ${index + 1}`,
+      length: l,
+      width: w,
+      area: a,
+    };
+  });
 
-  // 2. Total Rain That Falls (litres) = Roof Area × Rainfall
+  // Total Roof Area = sum of all roof areas added
+  const totalRoofArea = Number(
+    roofsBreakdown.reduce((sum, r) => sum + r.area, 0).toFixed(2)
+  );
+
+  // Total Rain That Falls (litres) = Total Roof Area × Rainfall
   // (1mm of rain on 1m² of roof = about 1 litre of water)
-  const potentialWater = Math.round(roofArea * rainfall);
+  const potentialWater = Math.round(totalRoofArea * rainfall);
 
-  // 3. Rain You Can Actually Collect (litres) = Total Rain × (Efficiency / 100)
+  // Rain You Can Actually Collect (litres) = Total Rain × (Efficiency / 100)
   const harvestableWater = Math.round(potentialWater * (efficiency / 100));
 
-  // 4. Water You Can Save (litres) = MIN(Rain You Can Collect, Tank Size)
+  // Water You Can Save (litres) = MIN(Rain You Can Collect, Tank Size)
   const actuallyHarvested = Math.min(harvestableWater, tankCapacity);
 
-  // 5. Water Wasted (litres) = Rain You Can Collect − Water You Can Save
-  // (if your tank is big enough, this is 0)
+  // Water Wasted (litres) = Rain You Can Collect − Water You Can Save
   const wastedWater = Math.max(0, harvestableWater - actuallyHarvested);
 
-  // 6. Days This Water Will Last (optional) = Water You Can Save / Daily Water Need
+  // Days This Water Will Last (optional) = Water You Can Save / Daily Water Need
   let supplyDays: number | undefined = undefined;
   if (dailyRequirement && dailyRequirement > 0) {
     supplyDays = Number((actuallyHarvested / dailyRequirement).toFixed(1));
@@ -143,7 +185,6 @@ export function calculateHarvesting(inputs: CalculatorInputs): CalculationResult
   const harvestEfficiencyRate = harvestableWater > 0 ? Math.round((actuallyHarvested / harvestableWater) * 100) : 100;
 
   // Plain-language summary sentence:
-  // e.g.: "Out of the rain that fell on your roof, you can save about 6,400 litres. About 1,400 litres will be wasted because your tank isn't big enough."
   let summarySentence = '';
   let suggestionLine = '';
 
@@ -166,7 +207,8 @@ export function calculateHarvesting(inputs: CalculatorInputs): CalculationResult
   }
 
   return {
-    roofArea,
+    roofs: roofsBreakdown,
+    roofArea: totalRoofArea,
     rainfall,
     potentialWater,
     harvestableWater,

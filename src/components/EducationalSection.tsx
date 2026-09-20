@@ -53,7 +53,7 @@ export const EducationalSection: React.FC<EducationalSectionProps> = ({ result }
                 Step 1 • Roof Area
               </span>
               <p className="text-xs text-slate-600">
-                {result.roofArea} m² of roof caught the rain.
+                {result.roofArea} m² {result.roofs && result.roofs.length > 1 ? `across ${result.roofs.length} roofs ` : ''}caught the rain.
               </p>
             </div>
 
@@ -89,7 +89,7 @@ export const EducationalSection: React.FC<EducationalSectionProps> = ({ result }
 
             {showFormulas && (
               <div className="mt-3 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm space-y-2 text-slate-600 font-mono">
-                <div>• <strong>Roof Area:</strong> {result.roofArea} m² (Length × Width)</div>
+                <div>• <strong>Roof Area:</strong> {result.roofArea} m² {result.roofs && result.roofs.length > 1 ? `(Combined: ${result.roofs.map(r => `${r.name} = ${r.area}m²`).join(', ')})` : '(Length × Width)'}</div>
                 <div>• <strong>Total Rain:</strong> {result.potentialWater.toLocaleString()} litres (1mm rain over 1m² = 1 litre)</div>
                 <div>• <strong>Actual Collectable Rain:</strong> {result.harvestableWater.toLocaleString()} litres ({result.efficiency}% efficiency after small filter/gutter losses)</div>
                 <div>• <strong>Saved in Tank:</strong> {result.actuallyHarvested.toLocaleString()} litres (the smaller of your tank size and collected rain)</div>

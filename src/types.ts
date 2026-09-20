@@ -1,14 +1,29 @@
+export interface RoofSection {
+  id: string;
+  name: string;
+  length: string;
+  width: string;
+}
+
 export interface CalculatorInputs {
-  roofLength: string;
-  roofWidth: string;
+  roofs: RoofSection[];
   rainfall: string;
   efficiency: string;
   tankCapacity: string;
   dailyRequirement: string;
 }
 
+export interface RoofAreaBreakdown {
+  id: string;
+  name: string;
+  length: number;
+  width: number;
+  area: number;
+}
+
 export interface CalculationResult {
-  roofArea: number; // m²
+  roofs: RoofAreaBreakdown[];
+  roofArea: number; // Combined total m²
   rainfall: number; // mm
   potentialWater: number; // L (Total Rain That Falls)
   harvestableWater: number; // L (Rain You Can Actually Collect)
@@ -26,9 +41,13 @@ export interface CalculationResult {
 
 export type PageView = 'home' | 'calculator' | 'results';
 
+export interface RoofError {
+  length?: string;
+  width?: string;
+}
+
 export interface FormErrors {
-  roofLength?: string;
-  roofWidth?: string;
+  roofs?: Record<string, RoofError>;
   rainfall?: string;
   efficiency?: string;
   tankCapacity?: string;
