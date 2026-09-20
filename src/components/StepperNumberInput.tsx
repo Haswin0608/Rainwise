@@ -16,6 +16,8 @@ interface StepperNumberInputProps {
   error?: string;
   icon?: React.ReactNode;
   quickChips?: Array<{ label: string; value: string }>;
+  headerAction?: React.ReactNode;
+  footerNote?: React.ReactNode;
 }
 
 export const StepperNumberInput: React.FC<StepperNumberInputProps> = ({
@@ -33,6 +35,8 @@ export const StepperNumberInput: React.FC<StepperNumberInputProps> = ({
   error,
   icon,
   quickChips,
+  headerAction,
+  footerNote,
 }) => {
   const numVal = parseFloat(value) || 0;
 
@@ -47,8 +51,8 @@ export const StepperNumberInput: React.FC<StepperNumberInputProps> = ({
 
   return (
     <div className="space-y-1.5 w-full">
-      {/* Label and Unit */}
-      <div className="flex items-center justify-between">
+      {/* Label and Unit / Header Action */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <label 
           htmlFor={id} 
           className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2 cursor-pointer"
@@ -56,9 +60,12 @@ export const StepperNumberInput: React.FC<StepperNumberInputProps> = ({
           {icon && <span className="text-xl leading-none">{icon}</span>}
           <span>{label}</span>
         </label>
-        <span className="text-xs sm:text-sm font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
-          {unit}
-        </span>
+        <div className="flex items-center gap-2">
+          {headerAction}
+          <span className="text-xs sm:text-sm font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
+            {unit}
+          </span>
+        </div>
       </div>
 
       {/* Stepper & Input Container */}
@@ -132,6 +139,9 @@ export const StepperNumberInput: React.FC<StepperNumberInputProps> = ({
           {helperText}
         </p>
       )}
+
+      {/* Optional footer note (e.g. weather auto-fill info) */}
+      {footerNote}
     </div>
   );
 };

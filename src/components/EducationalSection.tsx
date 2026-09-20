@@ -88,15 +88,42 @@ export const EducationalSection: React.FC<EducationalSectionProps> = ({ result }
             </button>
 
             {showFormulas && (
-              <div className="mt-3 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm space-y-2 text-slate-600 font-mono">
-                <div>• <strong>Roof Area:</strong> {result.roofArea} m² {result.roofs && result.roofs.length > 1 ? `(Combined: ${result.roofs.map(r => `${r.name} = ${r.area}m²`).join(', ')})` : '(Length × Width)'}</div>
-                <div>• <strong>Total Rain:</strong> {result.potentialWater.toLocaleString()} litres (1mm rain over 1m² = 1 litre)</div>
-                <div>• <strong>Actual Collectable Rain:</strong> {result.harvestableWater.toLocaleString()} litres ({result.efficiency}% efficiency after small filter/gutter losses)</div>
-                <div>• <strong>Saved in Tank:</strong> {result.actuallyHarvested.toLocaleString()} litres (the smaller of your tank size and collected rain)</div>
-                <div>• <strong>Water Wasted:</strong> {result.wastedWater.toLocaleString()} litres (water that overflowed your tank)</div>
-                {result.supplyDays !== undefined && (
-                  <div>• <strong>Days Water Lasts:</strong> {result.supplyDays} days ({result.actuallyHarvested.toLocaleString()}L ÷ {result.dailyRequirement}L per day)</div>
-                )}
+              <div className="mt-3 space-y-3">
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm space-y-2 text-slate-600 font-mono">
+                  <div>• <strong>Roof Area:</strong> {result.roofArea} m² {result.roofs && result.roofs.length > 1 ? `(Combined: ${result.roofs.map(r => `${r.name} = ${r.area}m²`).join(', ')})` : '(Length × Width)'}</div>
+                  <div>• <strong>Total Rain:</strong> {result.potentialWater.toLocaleString()} litres (1mm rain over 1m² = 1 litre)</div>
+                  <div>• <strong>Actual Collectable Rain:</strong> {result.harvestableWater.toLocaleString()} litres ({result.efficiency}% efficiency after small filter/gutter losses)</div>
+                  <div>• <strong>Saved in Tank:</strong> {result.actuallyHarvested.toLocaleString()} litres (the smaller of your tank size and collected rain)</div>
+                  <div>• <strong>Water Wasted:</strong> {result.wastedWater.toLocaleString()} litres (water that overflowed your tank)</div>
+                  {result.supplyDays !== undefined && (
+                    <div>• <strong>Days Water Lasts:</strong> {result.supplyDays} days ({result.actuallyHarvested.toLocaleString()}L ÷ {result.dailyRequirement}L per day)</div>
+                  )}
+                </div>
+
+                {/* Everyday Water Scale Reference */}
+                <div className="p-4 rounded-2xl bg-teal-50/60 border border-teal-200/70 text-xs sm:text-sm">
+                  <div className="font-bold text-teal-950 mb-2 flex items-center gap-1.5">
+                    <span>📏 Everyday Water Volume Reference:</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-slate-700">
+                    <div className="p-2 rounded-xl bg-white/80 border border-teal-100">
+                      <span className="font-semibold text-slate-900 block">🥛 1 Glass</span>
+                      <span className="text-slate-500">≈ 0.25 Litres</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-white/80 border border-teal-100">
+                      <span className="font-semibold text-slate-900 block">🪣 1 Bucket</span>
+                      <span className="text-slate-500">≈ 15 Litres</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-white/80 border border-teal-100">
+                      <span className="font-semibold text-slate-900 block">🛁 1 Bathtub</span>
+                      <span className="text-slate-500">≈ 150 Litres</span>
+                    </div>
+                    <div className="p-2 rounded-xl bg-white/80 border border-teal-100">
+                      <span className="font-semibold text-slate-900 block">🚛 1 Water Tanker</span>
+                      <span className="text-slate-500">≈ 1,000 Litres</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>

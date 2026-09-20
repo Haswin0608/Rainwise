@@ -1,7 +1,7 @@
 {
   "name": "RainWise",
   "description": "A simple rainwater harvesting calculator for farmers and everyday people to find out how much rain they can save and how much they are losing.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
 

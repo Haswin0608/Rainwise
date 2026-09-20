@@ -36,10 +36,10 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({
 
     const text = `RainWise Rainwater Harvest Results:
 • Total Roof Size: ${result.roofArea} m² (${roofsText})
-• Rain Fell: ${result.rainfall} mm
+• Rain Fell: ${result.rainfall} mm ${result.weatherInfo?.isAutoFetched ? `(Auto-fetched for ${result.weatherInfo.locationName})` : result.weatherInfo ? `(Edited from weather data for ${result.weatherInfo.locationName})` : '(Manually entered)'}
 • Total Rain on Your Roof: ${result.potentialWater.toLocaleString()} litres
-• Water You Can Save: ${result.actuallyHarvested.toLocaleString()} litres
-• Water You're Losing: ${result.wastedWater.toLocaleString()} litres
+• Water You Can Save: ${result.actuallyHarvested.toLocaleString()} litres (${result.savedComparison.primaryText})
+• Water You're Losing: ${result.wastedWater.toLocaleString()} litres (${result.wastedComparison.primaryText})
 • Tank Size: ${result.tankCapacity.toLocaleString()} litres
 ${result.supplyDays ? `• Days Water Will Last: ${result.supplyDays} days` : ''}
 
@@ -141,11 +141,27 @@ ${result.suggestionLine}`;
             </span>
           </div>
 
-          <div className="my-2">
-            <div className="text-4xl sm:text-5xl font-extrabold font-['Outfit',sans-serif] text-emerald-800 tracking-tight">
-              <AnimatedCounter value={result.actuallyHarvested} suffix=" litres" />
+          <div className="my-2 space-y-3">
+            <div>
+              <div className="text-4xl sm:text-5xl font-extrabold font-['Outfit',sans-serif] text-emerald-800 tracking-tight">
+                <AnimatedCounter value={result.actuallyHarvested} suffix=" litres" />
+              </div>
+
+              {/* Relatable Comparison Subtext directly under main number */}
+              <div className="mt-2.5 px-3 py-2 rounded-xl bg-emerald-100/70 border border-emerald-300/80 text-emerald-950">
+                <div className="flex items-start gap-2 text-sm sm:text-base font-semibold">
+                  <span className="text-lg leading-tight shrink-0">{result.savedComparison.icon}</span>
+                  <span>{result.savedComparison.primaryText}</span>
+                </div>
+                {result.savedComparison.dailyNeedText && (
+                  <p className="text-xs text-emerald-800 font-medium mt-1 pl-6">
+                    {result.savedComparison.dailyNeedText}
+                  </p>
+                )}
+              </div>
             </div>
-            <p className="text-sm text-emerald-700 font-medium mt-2">
+
+            <p className="text-sm text-emerald-700 font-medium">
               Stored safely in your {result.tankCapacity.toLocaleString()}L tank ready for use.
             </p>
           </div>
@@ -175,13 +191,33 @@ ${result.suggestionLine}`;
             )}
           </div>
 
-          <div className="my-2">
-            <div className={`text-4xl sm:text-5xl font-extrabold font-['Outfit',sans-serif] tracking-tight ${
-              result.wastedWater > 0 ? 'text-rose-700' : 'text-slate-700'
-            }`}>
-              <AnimatedCounter value={result.wastedWater} suffix=" litres" />
+          <div className="my-2 space-y-3">
+            <div>
+              <div className={`text-4xl sm:text-5xl font-extrabold font-['Outfit',sans-serif] tracking-tight ${
+                result.wastedWater > 0 ? 'text-rose-700' : 'text-slate-700'
+              }`}>
+                <AnimatedCounter value={result.wastedWater} suffix=" litres" />
+              </div>
+
+              {/* Relatable Comparison Subtext directly under main number */}
+              <div className={`mt-2.5 px-3 py-2 rounded-xl border text-sm ${
+                result.wastedWater > 0
+                  ? 'bg-rose-100/70 border-rose-300/80 text-rose-950'
+                  : 'bg-white/80 border-slate-200 text-slate-700'
+              }`}>
+                <div className="flex items-start gap-2 text-sm sm:text-base font-semibold">
+                  <span className="text-lg leading-tight shrink-0">{result.wastedComparison.icon}</span>
+                  <span>{result.wastedComparison.primaryText}</span>
+                </div>
+                {result.wastedComparison.dailyNeedText && (
+                  <p className="text-xs text-rose-800 font-medium mt-1 pl-6">
+                    {result.wastedComparison.dailyNeedText}
+                  </p>
+                )}
+              </div>
             </div>
-            <p className={`text-sm font-medium mt-2 ${
+
+            <p className={`text-sm font-medium ${
               result.wastedWater > 0 ? 'text-rose-800' : 'text-slate-600'
             }`}>
               {result.wastedWater > 0
@@ -259,14 +295,33 @@ ${result.suggestionLine}`;
           )}
         </div>
 
-        {/* 🌧️ Rain That Fell */}
-        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
-          <div className="text-2xl mb-1">🌧️</div>
-          <div className="text-xs sm:text-sm font-semibold text-slate-500">
-            Rain That Fell
+        {/* 🌧️ Rain That Fell (with note if auto-fetched or manually entered) */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between">
+          <div>
+            <div className="text-2xl mb-1">🌧️</div>
+            <div className="text-xs sm:text-sm font-semibold text-slate-500">
+              Rain That Fell
+            </div>
+            <div className="text-xl sm:text-2xl font-bold font-['Outfit',sans-serif] text-slate-900 mt-1">
+              <AnimatedCounter value={result.rainfall} suffix=" mm" />
+            </div>
           </div>
-          <div className="text-xl sm:text-2xl font-bold font-['Outfit',sans-serif] text-slate-900 mt-1">
-            <AnimatedCounter value={result.rainfall} suffix=" mm" />
+
+          <div className="mt-2.5 pt-2 border-t border-slate-100 text-[11px] font-medium text-slate-600">
+            {result.weatherInfo?.isAutoFetched ? (
+              <span className="text-teal-800 font-semibold flex items-center gap-1">
+                <span>📍 Auto-fetched from weather</span>
+                <span className="truncate">({result.weatherInfo.locationName})</span>
+              </span>
+            ) : result.weatherInfo ? (
+              <span className="text-slate-500">
+                ✏️ Edited from weather ({result.weatherInfo.locationName})
+              </span>
+            ) : (
+              <span className="text-slate-500">
+                ✏️ Manually entered
+              </span>
+            )}
           </div>
         </div>
 

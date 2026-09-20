@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Droplet, Plus, Trash2, Info, Layers } from 'lucide-react';
+import { ArrowLeft, Droplet, Plus, Trash2, Info, Layers, Loader2 } from 'lucide-react';
 import { CalculatorInputs, FormErrors, PresetScenario, RoofSection } from '../types';
 import { validateInputs, PRESET_SCENARIOS } from '../utils/calculations';
 import { StepperNumberInput } from './StepperNumberInput';
+import { CitySearchModal } from './CitySearchModal';
+import { reverseGeocodeCoords, fetchRainfallFromOpenMeteo, CitySearchResult } from '../utils/weather';
 
 interface CalculatorPageProps {
   inputs: CalculatorInputs;
@@ -22,6 +24,9 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
 }) => {
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [isFetchingWeather, setIsFetchingWeather] = useState(false);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
+  const [showCityModal, setShowCityModal] = useState(false);
 
   // Ensure there is always at least one roof
   const roofs: RoofSection[] = inputs.roofs && inputs.roofs.length > 0
@@ -84,7 +89,19 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
   };
 
   const handleSharedChange = (field: 'rainfall' | 'efficiency' | 'tankCapacity' | 'dailyRequirement', value: string) => {
-    const updated = { ...inputs, [field]: value };
+    let updatedWeatherInfo = inputs.weatherInfo;
+    if (field === 'rainfall') {
+      if (inputs.weatherInfo) {
+        const isStillAuto = String(inputs.weatherInfo.rainfallMm) === value;
+        updatedWeatherInfo = {
+          ...inputs.weatherInfo,
+          isAutoFetched: isStillAuto,
+        };
+      }
+      setWeatherError(null);
+    }
+
+    const updated = { ...inputs, [field]: value, weatherInfo: updatedWeatherInfo };
     onChange(updated);
 
     if (touched[field]) {
@@ -94,6 +111,90 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
         [field]: validation.errors[field],
       }));
     }
+  };
+
+  const handleCheckRainfall = () => {
+    setWeatherError(null);
+
+    if (typeof window === 'undefined' || !navigator.geolocation) {
+      setShowCityModal(true);
+      return;
+    }
+
+    setIsFetchingWeather(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const locationName = await reverseGeocodeCoords(latitude, longitude);
+          const result = await fetchRainfallFromOpenMeteo(latitude, longitude, locationName);
+
+          const updated = {
+            ...inputs,
+            rainfall: String(result.rainfallMm),
+            weatherInfo: {
+              locationName: result.locationName,
+              rainfallMm: result.rainfallMm,
+              dateStr: result.dateStr,
+              isAutoFetched: true,
+            },
+          };
+          onChange(updated);
+          setErrors((prev) => ({ ...prev, rainfall: undefined }));
+          setWeatherError(null);
+        } catch {
+          // Do not fabricate rainfall numbers if the API fails — leave the field blank for manual entry instead
+          setWeatherError("Couldn't fetch rainfall automatically — please enter it manually");
+        } finally {
+          setIsFetchingWeather(false);
+        }
+      },
+      () => {
+        // Geolocation denied, unavailable, or error -> show city search fallback
+        setIsFetchingWeather(false);
+        setShowCityModal(true);
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 9000,
+        maximumAge: 300000,
+      }
+    );
+  };
+
+  const handleCitySelected = async (city: CitySearchResult) => {
+    setShowCityModal(false);
+    setIsFetchingWeather(true);
+    setWeatherError(null);
+
+    try {
+      const locName = [city.name, city.admin1, city.country].filter(Boolean).slice(0, 2).join(', ');
+      const result = await fetchRainfallFromOpenMeteo(city.latitude, city.longitude, locName);
+
+      const updated = {
+        ...inputs,
+        rainfall: String(result.rainfallMm),
+        weatherInfo: {
+          locationName: result.locationName,
+          rainfallMm: result.rainfallMm,
+          dateStr: result.dateStr,
+          isAutoFetched: true,
+        },
+      };
+      onChange(updated);
+      setErrors((prev) => ({ ...prev, rainfall: undefined }));
+      setWeatherError(null);
+    } catch {
+      setWeatherError("Couldn't fetch rainfall automatically — please enter it manually");
+    } finally {
+      setIsFetchingWeather(false);
+    }
+  };
+
+  const handleEnterManually = () => {
+    setShowCityModal(false);
+    setWeatherError("Couldn't fetch rainfall automatically — please enter it manually");
   };
 
   const handleSharedBlur = (field: 'rainfall' | 'efficiency' | 'tankCapacity' | 'dailyRequirement') => {
@@ -175,7 +276,7 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8">
         
         {/* Form Title & Introduction */}
-        <div className="mb-8 border-b border-slate-100 pb-5">
+        <div className="mb-6 border-b border-slate-100 pb-5">
           <h2 className="text-2xl sm:text-3xl font-bold font-['Outfit',sans-serif] text-slate-900">
             Rainwater Calculator
           </h2>
@@ -183,6 +284,37 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
             Fill in your roof measurements and local rainfall to see how much rain you can save.
           </p>
         </div>
+
+        {/* Mini weather summary near top once location is fetched */}
+        {inputs.weatherInfo && (
+          <div className="mb-6 p-4 rounded-2xl bg-teal-50/90 border border-teal-200 text-teal-950 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-2.5 flex-wrap text-sm sm:text-base font-bold">
+              <span className="text-xl">📍</span>
+              <span className="text-teal-950">{inputs.weatherInfo.locationName}</span>
+              <span className="text-teal-400 font-normal">—</span>
+              <span className="text-teal-900 flex items-center gap-1.5">
+                <span>🌧️ Rain Today:</span>
+                <strong className="text-lg font-extrabold text-teal-950 font-['Outfit',sans-serif]">
+                  {inputs.weatherInfo.rainfallMm} mm
+                </strong>
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-white border border-teal-200 text-teal-800">
+                {inputs.weatherInfo.dateStr}
+              </span>
+              <button
+                type="button"
+                id="calc-recheck-rainfall-top-btn"
+                onClick={handleCheckRainfall}
+                disabled={isFetchingWeather}
+                className="text-xs font-bold text-teal-800 hover:text-teal-950 underline cursor-pointer"
+              >
+                {isFetchingWeather ? 'Checking...' : 'Check Again'}
+              </button>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} noValidate className="space-y-7">
           
@@ -345,15 +477,53 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
             id="input-rainfall"
             label="Rainfall"
             unit="in mm"
-            helperText="How much rain fell? (Check local weather report or rain gauge)"
+            helperText="How much rain fell? (Auto-filled from weather, or check your rain gauge)"
             value={inputs.rainfall}
             onChange={(val) => handleSharedChange('rainfall', val)}
             onBlur={() => handleSharedBlur('rainfall')}
             step={5}
-            min={1}
+            min={0}
             placeholder="60"
             error={touched.rainfall ? errors.rainfall : undefined}
             icon="🌧️"
+            headerAction={
+              <button
+                type="button"
+                id="check-today-rainfall-btn"
+                onClick={handleCheckRainfall}
+                disabled={isFetchingWeather}
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-teal-900 bg-teal-50 hover:bg-teal-100 active:bg-teal-200 border border-teal-300/90 px-3 py-1.5 rounded-xl transition-all shadow-2xs cursor-pointer min-h-[38px]"
+              >
+                {isFetchingWeather ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-teal-700" />
+                    <span>Checking...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>📍</span>
+                    <span>Check Today&apos;s Rainfall</span>
+                  </>
+                )}
+              </button>
+            }
+            footerNote={
+              inputs.weatherInfo ? (
+                <div className="mt-2.5 p-3 rounded-xl bg-teal-50/80 border border-teal-200 text-xs sm:text-sm text-teal-950 flex items-start gap-2.5">
+                  <span className="text-base shrink-0">ℹ️</span>
+                  <p className="leading-relaxed">
+                    Rainfall auto-filled from weather data for <strong>{inputs.weatherInfo.locationName}</strong> on {inputs.weatherInfo.dateStr}. You can edit this if your own rain gauge shows a different amount.
+                  </p>
+                </div>
+              ) : weatherError ? (
+                <div className="mt-2.5 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs sm:text-sm text-amber-900 flex items-start gap-2.5">
+                  <span className="text-base shrink-0">⚠️</span>
+                  <p className="leading-relaxed">
+                    {weatherError}
+                  </p>
+                </div>
+              ) : null
+            }
             quickChips={[
               { label: '25mm (light)', value: '25' },
               { label: '50mm (steady)', value: '50' },
@@ -462,6 +632,14 @@ export const CalculatorPage: React.FC<CalculatorPageProps> = ({
 
         </form>
       </div>
+
+      {/* Fallback City / Town Search Modal */}
+      <CitySearchModal
+        isOpen={showCityModal}
+        onClose={() => setShowCityModal(false)}
+        onSelectCity={handleCitySelected}
+        onEnterManually={handleEnterManually}
+      />
     </div>
   );
 };

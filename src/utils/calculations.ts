@@ -206,6 +206,20 @@ export function calculateHarvesting(inputs: CalculatorInputs): CalculationResult
     suggestionLine = `Your tank caught all the rain without any water going to waste.`;
   }
 
+  const savedComparison = getRelatableWaterComparison(
+    actuallyHarvested,
+    'saved',
+    dailyRequirement,
+    tankCapacity
+  );
+
+  const wastedComparison = getRelatableWaterComparison(
+    wastedWater,
+    'wasted',
+    dailyRequirement,
+    tankCapacity
+  );
+
   return {
     roofs: roofsBreakdown,
     roofArea: totalRoofArea,
@@ -222,6 +236,113 @@ export function calculateHarvesting(inputs: CalculatorInputs): CalculationResult
     harvestEfficiencyRate,
     summarySentence,
     suggestionLine,
+    savedComparison,
+    wastedComparison,
+    weatherInfo: inputs.weatherInfo,
+  };
+}
+
+export function getRelatableWaterComparison(
+  amount: number,
+  type: 'saved' | 'wasted',
+  dailyNeed?: number,
+  userTankCapacity?: number
+): { primaryText: string; icon: string; dailyNeedText?: string } {
+  if (amount <= 0) {
+    if (type === 'wasted') {
+      return {
+        primaryText: 'Zero waste! Not a single drop lost — your tank caught all the rain.',
+        icon: '🎉',
+      };
+    }
+    return {
+      primaryText: 'Enter measurements above to see your water savings.',
+      icon: '💧',
+    };
+  }
+
+  let primaryText = '';
+  let icon = '🪣';
+
+  // Logic matching the reference table:
+  // - Under 10 L → show in glasses
+  // - 10 L – 150 L → show in buckets
+  // - 150 L – 1,000 L → show in bathtubs (or buckets + bathtubs)
+  // - 1,000 L – 5,000 L → show in water tankers or medium tanks
+  // - 5,000 L – 50,000 L → show as a fraction/multiple of a medium tank (or tankers)
+  // - Above 50,000 L → show as a small pond/lake or swimming pool
+  if (amount < 10) {
+    const glasses = Math.round(amount / 0.25);
+    primaryText = `That's about ${glasses} ${glasses === 1 ? 'glass' : 'glasses'} of drinking water!`;
+    icon = '🥛';
+  } else if (amount < 150) {
+    const buckets = Math.max(1, Math.round(amount / 15));
+    primaryText = `That's about ${buckets} ${buckets === 1 ? 'bucket' : 'buckets'} of water!`;
+    icon = '🪣';
+  } else if (amount < 1000) {
+    const bathtubs = Math.max(1, Math.round(amount / 150));
+    const buckets = Math.round(amount / 15);
+    primaryText = `That's about ${buckets} buckets of water, or almost ${bathtubs} full ${bathtubs === 1 ? 'bathtub' : 'bathtubs'}!`;
+    icon = '🛁';
+  } else if (amount <= 5000) {
+    const tankers = Math.round(amount / 1000);
+    const bathtubs = Math.round(amount / 150);
+    const buckets = Math.round(amount / 15);
+    if (amount <= 2000) {
+      primaryText = `That's about ${buckets} buckets of water, or almost ${bathtubs} full bathtubs!`;
+      icon = '🛁';
+    } else {
+      primaryText = `That's enough to fill about ${tankers} full water tankers (or almost ${bathtubs} full bathtubs)!`;
+      icon = '🚛';
+    }
+  } else if (amount <= 50000) {
+    const tankers = Math.round(amount / 1000);
+    if (userTankCapacity && userTankCapacity > 0 && Math.abs(amount - userTankCapacity) < 100) {
+      primaryText = `That's enough to fill your entire ${formatNumber(userTankCapacity)}L tank to the brim (about ${tankers} water tankers)!`;
+      icon = '🛢️';
+    } else if (userTankCapacity && userTankCapacity >= 1000 && amount > userTankCapacity) {
+      const tankMultiple = Math.round(amount / userTankCapacity);
+      if (tankMultiple >= 2) {
+        primaryText = `That's about ${tankMultiple} tanks like the one you have (or ${tankers} water tankers)!`;
+        icon = '🛢️';
+      } else {
+        primaryText = `That's enough to fill more than 1 full water tanker (about ${tankers} tankers total)!`;
+        icon = '🚛';
+      }
+    } else {
+      const mediumTanks = Math.max(1, Math.round(amount / 5000));
+      if (amount < 7000) {
+        primaryText = `That's enough to fill more than 1 full water tanker (about ${tankers} tankers total)!`;
+      } else {
+        primaryText = `That's about ${mediumTanks} standard medium tanks (or ${tankers} water tankers)!`;
+      }
+      icon = '🚛';
+    }
+  } else if (amount < 200000) {
+    const tankers = Math.round(amount / 1000);
+    primaryText = `That's enough water to fill a small village pond (over ${formatNumber(tankers)} water tankers)!`;
+    icon = '🏞️';
+  } else {
+    const pools = (amount / 250000).toFixed(1);
+    const tankers = Math.round(amount / 1000);
+    primaryText = `That's about ${pools} standard swimming pools (over ${formatNumber(tankers)} water tankers)!`;
+    icon = '🏊';
+  }
+
+  let dailyNeedText: string | undefined = undefined;
+  if (dailyNeed && dailyNeed > 0) {
+    const days = Math.round(amount / dailyNeed);
+    if (type === 'wasted') {
+      dailyNeedText = `This wasted water could have covered your daily needs for ${days} ${days === 1 ? 'day' : 'days'}.`;
+    } else {
+      dailyNeedText = `This saved water can cover your household daily needs for ${days} ${days === 1 ? 'day' : 'days'}!`;
+    }
+  }
+
+  return {
+    primaryText,
+    icon,
+    dailyNeedText,
   };
 }
 

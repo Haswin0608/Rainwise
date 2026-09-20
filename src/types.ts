@@ -5,12 +5,20 @@ export interface RoofSection {
   width: string;
 }
 
+export interface WeatherTrackInfo {
+  locationName: string;
+  rainfallMm: number;
+  dateStr: string;
+  isAutoFetched: boolean;
+}
+
 export interface CalculatorInputs {
   roofs: RoofSection[];
   rainfall: string;
   efficiency: string;
   tankCapacity: string;
   dailyRequirement: string;
+  weatherInfo?: WeatherTrackInfo;
 }
 
 export interface RoofAreaBreakdown {
@@ -19,6 +27,13 @@ export interface RoofAreaBreakdown {
   length: number;
   width: number;
   area: number;
+}
+
+export interface WaterComparison {
+  primaryText: string;
+  secondaryText?: string;
+  dailyNeedText?: string;
+  icon: string;
 }
 
 export interface CalculationResult {
@@ -37,6 +52,9 @@ export interface CalculationResult {
   harvestEfficiencyRate: number; // % of harvestable saved
   summarySentence: string;
   suggestionLine: string;
+  savedComparison: WaterComparison;
+  wastedComparison: WaterComparison;
+  weatherInfo?: WeatherTrackInfo;
 }
 
 export type PageView = 'home' | 'calculator' | 'results';
