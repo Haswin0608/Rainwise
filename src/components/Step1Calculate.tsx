@@ -27,6 +27,7 @@ import { WaterDropVisual } from './WaterDropVisual';
 import { useAppSettings } from '../context/AppSettingsContext';
 import { sqMetersToSqFeet, sqFeetToSqMeters } from '../utils/units';
 import { WEATHER_STRINGS } from '../utils/weather';
+import { toBuckets } from '../utils/calculations';
 
 interface Step1CalculateProps {
   inputs: CalculatorInputs;
@@ -465,6 +466,9 @@ export const Step1Calculate: React.FC<Step1CalculateProps> = ({
                 This week you could collect about{' '}
                 <span className="text-teal-800 dark:text-teal-400 underline decoration-teal-300 dark:decoration-teal-600 underline-offset-4">
                   {result.weeklyHarvestableWater.toLocaleString()} litres
+                </span>
+                <span className="block sm:inline sm:ml-2 text-base sm:text-lg font-bold text-teal-700 dark:text-teal-300">
+                  (about {toBuckets(result.weeklyHarvestableWater, inputs.assumptions?.conversions?.bucketSizeL || 15).toLocaleString()} buckets 🪣)
                 </span>
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 font-mono">

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, RotateCcw, Check, Sliders, Info } from 'lucide-react';
-import { PlanningAssumptions, ROOF_TYPES, RoofTypeKey } from '../types';
-import { DEFAULT_ASSUMPTIONS } from '../utils/calculations';
+import { X, RotateCcw, Check, Sliders, Info, Droplet } from 'lucide-react';
+import { PlanningAssumptions, ROOF_TYPES, RoofTypeKey, EverydayConversionFactors } from '../types';
+import { DEFAULT_ASSUMPTIONS, DEFAULT_EVERYDAY_CONVERSIONS } from '../utils/calculations';
 
 interface AssumptionsModalProps {
   isOpen: boolean;
@@ -17,7 +17,10 @@ export const AssumptionsModal: React.FC<AssumptionsModalProps> = ({
   assumptions,
   onSaveAssumptions,
 }) => {
-  const [local, setLocal] = useState<PlanningAssumptions>(assumptions);
+  const [local, setLocal] = useState<PlanningAssumptions>({
+    ...assumptions,
+    conversions: assumptions.conversions || DEFAULT_EVERYDAY_CONVERSIONS,
+  });
 
   if (!isOpen) return null;
 
@@ -50,11 +53,23 @@ export const AssumptionsModal: React.FC<AssumptionsModalProps> = ({
     }));
   };
 
+  const handleConversionChange = (field: keyof EverydayConversionFactors, val: number) => {
+    setLocal((prev) => ({
+      ...prev,
+      conversions: {
+        ...(prev.conversions || DEFAULT_EVERYDAY_CONVERSIONS),
+        [field]: Math.max(1, val),
+      },
+    }));
+  };
+
   const totalPerPersonDaily =
     local.demands.toilet +
     local.demands.cleaning +
     local.demands.gardening +
     local.demands.vehicle;
+
+  const conversions = local.conversions || DEFAULT_EVERYDAY_CONVERSIONS;
 
   return (
     <AnimatePresence>
@@ -317,7 +332,136 @@ export const AssumptionsModal: React.FC<AssumptionsModalProps> = ({
               </div>
             </div>
 
-            {/* 4. Rainfall Data Source */}
+            {/* 4. Everyday Water Conversions (Relatable Indian units) */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  4. Everyday Water Conversions
+                </span>
+                <span className="text-xs text-teal-700 dark:text-teal-400 font-medium">
+                  Used in &quot;What does this mean?&quot; comparisons
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {/* Bucket Size */}
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                    🪣 Bucket Size
+                  </label>
+                  <p className="text-[10px] text-slate-400 mb-1.5">Standard Indian bucket</p>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={5}
+                      max={50}
+                      value={conversions.bucketSizeL}
+                      onChange={(e) => handleConversionChange('bucketSizeL', Number(e.target.value))}
+                      className="w-full font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-900 rounded-lg px-2 py-1 border border-slate-300 dark:border-slate-600 text-sm"
+                    />
+                    <span className="text-[11px] text-slate-400">L</span>
+                  </div>
+                </div>
+
+                {/* Water Can */}
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                    🚰 Water Can
+                  </label>
+                  <p className="text-[10px] text-slate-400 mb-1.5">Bubbletop drinking can</p>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={5}
+                      max={50}
+                      value={conversions.waterCanSizeL}
+                      onChange={(e) => handleConversionChange('waterCanSizeL', Number(e.target.value))}
+                      className="w-full font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-900 rounded-lg px-2 py-1 border border-slate-300 dark:border-slate-600 text-sm"
+                    />
+                    <span className="text-[11px] text-slate-400">L</span>
+                  </div>
+                </div>
+
+                {/* Bath Size */}
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                    🚿 Family Bath
+                  </label>
+                  <p className="text-[10px] text-slate-400 mb-1.5">Bucket bath estimate</p>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={10}
+                      max={200}
+                      value={conversions.bathSizeL}
+                      onChange={(e) => handleConversionChange('bathSizeL', Number(e.target.value))}
+                      className="w-full font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-900 rounded-lg px-2 py-1 border border-slate-300 dark:border-slate-600 text-sm"
+                    />
+                    <span className="text-[11px] text-slate-400">L</span>
+                  </div>
+                </div>
+
+                {/* Toilet Flush */}
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                    🚽 Toilet Flush
+                  </label>
+                  <p className="text-[10px] text-slate-400 mb-1.5">Per cistern flush</p>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={2}
+                      max={20}
+                      value={conversions.toiletFlushSizeL}
+                      onChange={(e) => handleConversionChange('toiletFlushSizeL', Number(e.target.value))}
+                      className="w-full font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-900 rounded-lg px-2 py-1 border border-slate-300 dark:border-slate-600 text-sm"
+                    />
+                    <span className="text-[11px] text-slate-400">L</span>
+                  </div>
+                </div>
+
+                {/* Tanker Load */}
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                    🚛 Water Tanker
+                  </label>
+                  <p className="text-[10px] text-slate-400 mb-1.5">Standard supply truck</p>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={1000}
+                      max={20000}
+                      step={500}
+                      value={conversions.tankerSizeL}
+                      onChange={(e) => handleConversionChange('tankerSizeL', Number(e.target.value))}
+                      className="w-full font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-900 rounded-lg px-2 py-1 border border-slate-300 dark:border-slate-600 text-sm"
+                    />
+                    <span className="text-[11px] text-slate-400">L</span>
+                  </div>
+                </div>
+
+                {/* Garden Watering */}
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                  <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                    🌱 Garden Watering
+                  </label>
+                  <p className="text-[10px] text-slate-400 mb-1.5">Per m² per watering</p>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={1}
+                      max={30}
+                      value={conversions.gardenWateringPerM2L}
+                      onChange={(e) => handleConversionChange('gardenWateringPerM2L', Number(e.target.value))}
+                      className="w-full font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-900 rounded-lg px-2 py-1 border border-slate-300 dark:border-slate-600 text-sm"
+                    />
+                    <span className="text-[11px] text-slate-400">L/m²</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 5. Rainfall Data Source */}
             <div className="p-4 rounded-2xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 space-y-1.5">
               <div className="flex items-center gap-2 text-teal-900 dark:text-teal-200 font-bold text-xs sm:text-sm">
                 <span className="text-base" role="img" aria-label="rain">🌧️</span>

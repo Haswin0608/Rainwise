@@ -95,6 +95,16 @@ export interface WaterDemandBreakdown {
   vehicle: number;      // default 5 L
 }
 
+// Editable Everyday Terms Conversions (litres per unit)
+export interface EverydayConversionFactors {
+  bucketSizeL: number;          // default 15 L (1 bucket ≈ 15 L)
+  waterCanSizeL: number;        // default 20 L (1 can ≈ 20 L)
+  bathSizeL: number;            // default 50 L (1 family bucket-bath)
+  toiletFlushSizeL: number;     // default 6 L
+  tankerSizeL: number;          // default 6000 L (1 tanker ≈ 6,000 L)
+  gardenWateringPerM2L: number; // default 5 L per m² per watering
+}
+
 // Assumptions that user can see and modify
 export interface PlanningAssumptions {
   runoffCoefficients: Record<RoofTypeKey, number>;
@@ -102,6 +112,28 @@ export interface PlanningAssumptions {
   waterTariffPerKL: number;    // default ₹15 / kilolitre
   installationCostRs: number;  // default ₹15,000
   dryDaysBuffer: number;       // default 15 days
+  conversions: EverydayConversionFactors;
+}
+
+export type SavedWastedPeriod = 'week' | 'year';
+
+export interface SavedWastedBreakdown {
+  period: SavedWastedPeriod;
+  periodLabel: string;
+  rainfallMm: number;
+  totalRainOnRoofL: number;
+  waterCollectedL: number;
+  savedL: number;
+  lostOnRoofL: number;
+  overflowedL: number;
+  totalWastedL: number;
+  savedPercentage: number;
+  lostPercentage: number;
+  overflowPercentage: number;
+  effectiveTankCapacityL: number;
+  isCustomTank: boolean;
+  hasLocation: boolean;
+  hasRoofArea: boolean;
 }
 
 export type RainfallScenario = 'dry' | 'normal' | 'wet';

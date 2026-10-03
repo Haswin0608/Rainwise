@@ -8,6 +8,9 @@ import {
   RoofTypeKey,
   ROOF_TYPES,
   PlanningAssumptions,
+  EverydayConversionFactors,
+  SavedWastedPeriod,
+  SavedWastedBreakdown,
   HouseholdPlan,
   SimulationResult,
   SimulationMonth,
@@ -27,6 +30,19 @@ export const MONTH_NAMES = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
+
+/**
+ * Standard Everyday Terms Conversions (Clearly editable by user in Assumptions UI)
+ * Default values for Indian households and farmers:
+ */
+export const DEFAULT_EVERYDAY_CONVERSIONS: EverydayConversionFactors = {
+  bucketSizeL: 15,          // 1 standard household bucket ≈ 15 L
+  waterCanSizeL: 20,        // 1 drinking water can (blue bubbletop) ≈ 20 L
+  bathSizeL: 50,            // 1 family bucket bath ≈ 50 L
+  toiletFlushSizeL: 6,      // 1 standard toilet cistern flush ≈ 6 L
+  tankerSizeL: 6000,        // 1 typical private water tanker truck ≈ 6,000 L
+  gardenWateringPerM2L: 5,  // 1 m² garden / crop bed watering ≈ 5 L
+};
 
 /**
  * Standard Defaults & Assumptions (Clearly editable by user in UI)
@@ -49,6 +65,7 @@ export const DEFAULT_ASSUMPTIONS: PlanningAssumptions = {
   waterTariffPerKL: 15,      // ₹ per 1,000 litres
   installationCostRs: 15000, // ₹ 15,000 typical rainwater filter & piping
   dryDaysBuffer: 15,         // Recommended dry buffer days
+  conversions: DEFAULT_EVERYDAY_CONVERSIONS,
 };
 
 export const COMMON_TANK_SIZES = [500, 1000, 2000, 5000, 10000];
@@ -769,4 +786,255 @@ export function getRelatableWaterComparison(
     const tankers = Math.max(1, Math.round(amount / 6000));
     return { primaryText: `Enough to fill ${tankers} large municipal water tankers (~6,000 L each)!`, icon: '🚛' };
   }
+}
+
+/**
+ * ══════════════════════════════════════════════════════════════════════
+ * SAVED VS WASTED CALCULATION ENGINE
+ * ══════════════════════════════════════════════════════════════════════
+ * Formula for students and developers:
+ * 1. Rain Falling on Roof (L) = roofArea (m²) × rainfall (mm)
+ * 2. Water Collected (L) = Rain Falling on Roof × runoffCoefficient
+ * 3. Lost on Roof (L) = Rain Falling on Roof − Water Collected (loss from roof material, splashing, first flush)
+ * 4. Effective Tank Capacity (L) = entered tank capacity (or recommended size if none entered)
+ * 5. Saved (L) = min(Water Collected, Effective Tank Capacity) — water safely stored in the tank
+ * 6. Overflowed (L) = max(0, Water Collected − Effective Tank Capacity) — water lost because tank is full
+ * 7. Total Wasted (L) = Lost on Roof + Overflowed
+ * 
+ * Invariance check:
+ * Saved + Wasted = Saved + (Lost on Roof + Overflowed)
+ *                = Water Collected + (Rain on Roof − Water Collected)
+ *                = Rain Falling on Roof (Always 100% of rain!)
+ */
+export function calcSavedWasted(
+  period: SavedWastedPeriod,
+  roofAreaM2: number,
+  rainfallMm: number,
+  runoffCoefficient: number,
+  tankCapacityL: number,
+  recommendedTankSizeL: number = 2000,
+  hasLocation: boolean = true
+): SavedWastedBreakdown {
+  const hasRoofArea = roofAreaM2 > 0;
+  const isCustomTank = tankCapacityL > 0;
+  const effectiveTankCapacityL = isCustomTank ? tankCapacityL : (recommendedTankSizeL || 2000);
+
+  // If no location or roof area, return safe 0 state
+  if (!hasLocation || !hasRoofArea || rainfallMm <= 0) {
+    return {
+      period,
+      periodLabel: period === 'week' ? 'This week (7-Day Forecast)' : 'Typical year (3-Year Average)',
+      rainfallMm: Math.max(0, rainfallMm || 0),
+      totalRainOnRoofL: 0,
+      waterCollectedL: 0,
+      savedL: 0,
+      lostOnRoofL: 0,
+      overflowedL: 0,
+      totalWastedL: 0,
+      savedPercentage: 0,
+      lostPercentage: 0,
+      overflowPercentage: 0,
+      effectiveTankCapacityL,
+      isCustomTank,
+      hasLocation,
+      hasRoofArea,
+    };
+  }
+
+  // 1. Rain falling on roof (L) = roof area (m²) × rainfall (mm)
+  const totalRainOnRoofL = Math.round(roofAreaM2 * rainfallMm);
+
+  // 2. Water reaching gutters and pipes
+  const waterCollectedL = Math.round(totalRainOnRoofL * runoffCoefficient);
+
+  // 3. Wasted part a) Lost on roof
+  const lostOnRoofL = Math.max(0, totalRainOnRoofL - waterCollectedL);
+
+  // 4. Saved = min(water collected, tank capacity)
+  const savedL = Math.min(waterCollectedL, effectiveTankCapacityL);
+
+  // 5. Wasted part b) Overflowed = water collected minus what tank can hold
+  const overflowedL = Math.max(0, waterCollectedL - effectiveTankCapacityL);
+
+  // 6. Total wasted = Lost on roof + Overflowed
+  const totalWastedL = lostOnRoofL + overflowedL;
+
+  // Exact percentages adding up to 100%
+  let savedPercentage = 0;
+  let overflowPercentage = 0;
+  let lostPercentage = 0;
+
+  if (totalRainOnRoofL > 0) {
+    savedPercentage = Math.round((savedL / totalRainOnRoofL) * 100);
+    overflowPercentage = Math.round((overflowedL / totalRainOnRoofL) * 100);
+    lostPercentage = Math.max(0, 100 - savedPercentage - overflowPercentage);
+  }
+
+  return {
+    period,
+    periodLabel: period === 'week' ? 'This week (7-Day Forecast)' : 'Typical year (3-Year Average)',
+    rainfallMm,
+    totalRainOnRoofL,
+    waterCollectedL,
+    savedL,
+    lostOnRoofL,
+    overflowedL,
+    totalWastedL,
+    savedPercentage,
+    lostPercentage,
+    overflowPercentage,
+    effectiveTankCapacityL,
+    isCustomTank,
+    hasLocation,
+    hasRoofArea,
+  };
+}
+
+/**
+ * ══════════════════════════════════════════════════════════════════════
+ * "IN EVERYDAY TERMS" CONVERSION HELPERS
+ * ══════════════════════════════════════════════════════════════════════
+ */
+
+/**
+ * Converts litres to buckets (default 1 bucket ≈ 15 L).
+ */
+export function toBuckets(litres: number, bucketSizeL: number = 15): number {
+  if (!litres || litres <= 0 || !bucketSizeL || bucketSizeL <= 0) return 0;
+  return Math.round(litres / bucketSizeL);
+}
+
+/**
+ * Converts litres to drinking water cans (default 1 can ≈ 20 L).
+ */
+export function toWaterCans(litres: number, canSizeL: number = 20): number {
+  if (!litres || litres <= 0 || !canSizeL || canSizeL <= 0) return 0;
+  return Math.round(litres / canSizeL);
+}
+
+/**
+ * Converts litres to family bath days / baths (default 50 L per bath).
+ */
+export function toFamilyBaths(litres: number, bathSizeL: number = 50): number {
+  if (!litres || litres <= 0 || !bathSizeL || bathSizeL <= 0) return 0;
+  return Math.round(litres / bathSizeL);
+}
+
+/**
+ * Converts litres to toilet flushes (default 6 L per flush).
+ */
+export function toToiletFlushes(litres: number, flushSizeL: number = 6): number {
+  if (!litres || litres <= 0 || !flushSizeL || flushSizeL <= 0) return 0;
+  return Math.round(litres / flushSizeL);
+}
+
+/**
+ * Converts litres to tanker loads (default 1 tanker ≈ 6,000 L).
+ */
+export function toTankerLoads(litres: number, tankerSizeL: number = 6000): number {
+  if (!litres || litres <= 0 || !tankerSizeL || tankerSizeL <= 0) return 0;
+  const val = litres / tankerSizeL;
+  return val >= 10 ? Math.round(val) : Number(val.toFixed(1));
+}
+
+/**
+ * Converts litres to garden square metres watered once (default 5 L/m²).
+ */
+export function toGardenAreaWatered(litres: number, wateringPerM2L: number = 5): number {
+  if (!litres || litres <= 0 || !wateringPerM2L || wateringPerM2L <= 0) return 0;
+  return Math.round(litres / wateringPerM2L);
+}
+
+/**
+ * Converts litres to days of household non-drinking use.
+ */
+export function toHouseholdDays(litres: number, householdSize: number = 4, dailyPerPersonL: number = 60): number {
+  const dailyTotal = (householdSize || 4) * (dailyPerPersonL || 60);
+  if (!dailyTotal || dailyTotal <= 0 || !litres || litres <= 0) return 0;
+  return Math.round(litres / dailyTotal);
+}
+
+/**
+ * Returns the most relatable unit automatically according to the user rules:
+ * - under 100 L: use buckets
+ * - 100 to 5,000 L: use buckets plus days of use
+ * - above 5,000 L: use buckets plus days of use plus tanker loads
+ */
+export function getRelatableEverydayText(
+  litres: number,
+  conversions: EverydayConversionFactors = DEFAULT_EVERYDAY_CONVERSIONS,
+  householdSize: number = 4,
+  dailyPerPersonL: number = 60
+): string {
+  if (!litres || litres <= 0) return '0 buckets';
+
+  const bucketSize = conversions.bucketSizeL || 15;
+  const tankerSize = conversions.tankerSizeL || 6000;
+  const buckets = toBuckets(litres, bucketSize);
+  const days = toHouseholdDays(litres, householdSize, dailyPerPersonL);
+  const tankers = toTankerLoads(litres, tankerSize);
+
+  if (litres < 100) {
+    return `about ${buckets.toLocaleString()} buckets`;
+  }
+  if (litres <= 5000) {
+    return `about ${buckets.toLocaleString()} buckets • about ${days} days of family use`;
+  }
+  return `about ${buckets.toLocaleString()} buckets • about ${days} days of family use • about ${tankers} tanker loads`;
+}
+
+/**
+ * Generates the top headline summary updating live:
+ * "🎉 You could save about 330 buckets of rainwater this year (5,000 L). ⚠️ About 90 buckets may be wasted."
+ * If waste is small: "👏 Great setup, almost nothing is wasted."
+ * If no location or roof size yet: "Enter your roof size and choose your location to see this."
+ */
+export function getSavedWastedHeadlineSummary(
+  breakdown: SavedWastedBreakdown,
+  conversions: EverydayConversionFactors = DEFAULT_EVERYDAY_CONVERSIONS
+): { icon: string; headline: string; subtext: string; isGood: boolean } {
+  if (!breakdown.hasLocation || !breakdown.hasRoofArea) {
+    return {
+      icon: '📍',
+      headline: 'Enter your roof size and choose your location to see this.',
+      subtext: 'We will show how many buckets of rain you can save and how much may be lost.',
+      isGood: false,
+    };
+  }
+
+  if (breakdown.rainfallMm <= 0) {
+    return {
+      icon: '☀️',
+      headline: breakdown.period === 'week' 
+        ? 'No rain expected this week, nothing to collect yet.' 
+        : 'Zero rainfall recorded for this period.',
+      subtext: 'Check again when rain is forecast!',
+      isGood: true,
+    };
+  }
+
+  const bucketSize = conversions.bucketSizeL || 15;
+  const savedBuckets = toBuckets(breakdown.savedL, bucketSize);
+  const wastedBuckets = toBuckets(breakdown.totalWastedL, bucketSize);
+  const overflowBuckets = toBuckets(breakdown.overflowedL, bucketSize);
+  const periodWord = breakdown.period === 'week' ? 'this week' : 'this year';
+
+  // If waste is small (e.g. overflow is 0 or less than 1 bucket)
+  if (breakdown.overflowedL < bucketSize && breakdown.savedPercentage >= 70) {
+    return {
+      icon: '👏',
+      headline: `Great setup, almost nothing is wasted. You could save about ${savedBuckets.toLocaleString()} buckets of rainwater ${periodWord} (${breakdown.savedL.toLocaleString()} L).`,
+      subtext: `Your tank capacity (${breakdown.effectiveTankCapacityL.toLocaleString()} L) is well matched to your roof.`,
+      isGood: true,
+    };
+  }
+
+  return {
+    icon: '🎉',
+    headline: `You could save about ${savedBuckets.toLocaleString()} buckets of rainwater ${periodWord} (${breakdown.savedL.toLocaleString()} L). ⚠️ About ${wastedBuckets.toLocaleString()} buckets may be wasted.`,
+    subtext: overflowBuckets > 0 
+      ? `About ${overflowBuckets.toLocaleString()} buckets overflow past your tank. A bigger tank could save most of it.`
+      : `Most loss is natural absorption on your roof.`,
+    isGood: false,
+  };
 }

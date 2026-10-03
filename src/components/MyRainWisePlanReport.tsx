@@ -16,6 +16,7 @@ import {
 import { CalculationResult, CalculatorInputs } from '../types';
 import { useAppSettings } from '../context/AppSettingsContext';
 import { sqMetersToSqFeet } from '../utils/units';
+import { SavedVsWastedSection } from './SavedVsWastedSection';
 
 interface MyRainWisePlanReportProps {
   result: CalculationResult;
@@ -282,6 +283,15 @@ Created with RainWise — Save Rain, Stop Wasting Water!`;
             </div>
           </div>
 
+        </div>
+
+        {/* Saved vs Wasted Detailed Graphical Analysis */}
+        <div className="pt-2">
+          <SavedVsWastedSection
+            result={result}
+            inputs={inputs}
+            onGoToRoofInput={onEditPlan}
+          />
         </div>
 
         {/* 6. Plain-Language Tips to Collect More */}

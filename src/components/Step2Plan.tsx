@@ -20,6 +20,7 @@ import { CalculatorInputs, CalculationResult } from '../types';
 import { COMMON_TANK_SIZES } from '../utils/calculations';
 import { useAppSettings } from '../context/AppSettingsContext';
 import { litersToGallons, gallonsToLiters } from '../utils/units';
+import { SavedVsWastedSection } from './SavedVsWastedSection';
 
 interface Step2PlanProps {
   inputs: CalculatorInputs;
@@ -355,6 +356,18 @@ export const Step2Plan: React.FC<Step2PlanProps> = ({
           </div>
         </div>
       </div>
+
+      {/* SAVED VS WASTED VISUAL ANALYSIS & EVERYDAY CONVERSIONS */}
+      <SavedVsWastedSection
+        result={result}
+        inputs={inputs}
+        onOpenAssumptions={onOpenAssumptions}
+        onGoToRoofInput={onPrev}
+        onGoToLocation={() => {
+          const el = document.getElementById('location-section-container');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
+      />
 
       {/* SECTION C: IMPACT & SAVINGS ESTIMATE */}
       <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
