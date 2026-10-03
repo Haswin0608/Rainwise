@@ -95,3 +95,30 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* ═════════════════════════════════════════════════════════════════
+   PRINT STYLES FOR PDF EXPORT ("My RainWise Plan" report)
+   ═════════════════════════════════════════════════════════════════ */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 12pt;
+  }
+  header, footer, nav, #nav-brand-btn, #tutorial-backdrop, #assumptions-backdrop, .print\:hidden {
+    display: none !important;
+  }
+  #rainwise-printable-report {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  /* Ensure backgrounds print cleanly */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

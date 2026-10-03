@@ -40,7 +40,7 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({
   const displayActuallyHarvested = isImperial ? Math.round(litersToGallons(result.actuallyHarvested)) : result.actuallyHarvested;
   const displayWastedWater = isImperial ? Math.round(litersToGallons(result.wastedWater)) : result.wastedWater;
   const displayRoofArea = isImperial ? Math.round(sqMetersToSqFeet(result.roofArea)) : result.roofArea;
-  const displayRainfall = isImperial ? Number(mmToInches(result.rainfall).toFixed(2)) : result.rainfall;
+  const displayRainfall = isImperial ? Number(mmToInches(result.annualRainfallMm).toFixed(2)) : result.annualRainfallMm;
   const displayPotentialWater = isImperial ? Math.round(litersToGallons(result.potentialWater)) : result.potentialWater;
   const displayTankCapacity = isImperial ? Math.round(litersToGallons(result.tankCapacity)) : result.tankCapacity;
 
@@ -51,7 +51,7 @@ export const ResultsPage: React.FC<ResultsPageProps> = ({
 
     const text = `RainWise Rainwater Harvest Results:
 • Total Roof Size: ${formatArea(result.roofArea)} (${roofsText})
-• Rain Fell: ${formatRainfall(result.rainfall)} ${result.weatherInfo?.isAutoFetched ? `(Auto-fetched for ${result.weatherInfo.locationName})` : result.weatherInfo ? `(Edited from weather data for ${result.weatherInfo.locationName})` : '(Manually entered)'}
+• Typical Yearly Rain: ${formatRainfall(result.annualRainfallMm)} (Based on 3-year Open-Meteo archive for ${result.locationName || 'your location'})
 • Total Rain on Your Roof: ${formatVolumeFull(result.potentialWater)}
 • Water You Can Save: ${formatVolumeFull(result.actuallyHarvested)} (${result.savedComparison.primaryText})
 • Water You're Losing: ${formatVolumeFull(result.wastedWater)} (${result.wastedComparison.primaryText})

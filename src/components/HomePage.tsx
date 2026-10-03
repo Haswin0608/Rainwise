@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, type Variants } from 'motion/react';
-import { ArrowRight, Sparkles, Lightbulb } from 'lucide-react';
+import { ArrowRight, Sparkles, Lightbulb, HelpCircle, Droplet, Layers, Sliders } from 'lucide-react';
 import { PresetScenario, AuthUser, SavedBuilding } from '../types';
 import { PRESET_SCENARIOS } from '../utils/calculations';
 import { SavedBuildingsSection } from './SavedBuildingsSection';
@@ -17,6 +17,7 @@ interface HomePageProps {
   onDeleteBuilding: (id: string) => Promise<void>;
   onNewBlankBuilding: () => void;
   onOpenTips?: () => void;
+  onOpenTutorial?: () => void;
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
@@ -30,6 +31,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   onDeleteBuilding,
   onNewBlankBuilding,
   onOpenTips = () => {},
+  onOpenTutorial = () => {},
 }) => {
   const { formatVolume } = useAppSettings();
 
@@ -67,7 +69,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-teal-50 dark:bg-teal-950/70 border border-teal-200/80 dark:border-teal-800 text-teal-800 dark:text-teal-300 text-xs sm:text-sm font-semibold mb-6 shadow-2xs"
         >
           <span>🌧️</span>
-          <span>Free Rainwater Harvesting Tool</span>
+          <span>Household Water-Planning Tool • India</span>
         </motion.div>
 
         {/* Big Bold Plain-Language Headline */}
@@ -85,9 +87,12 @@ export const HomePage: React.FC<HomePageProps> = ({
         {/* Subtitle with direct plain value */}
         <motion.p
           variants={itemVariants}
-          className="text-xl sm:text-2xl text-slate-700 dark:text-slate-300 font-normal leading-relaxed max-w-xl mx-auto mb-8"
+          className="text-lg sm:text-2xl text-slate-700 dark:text-slate-300 font-normal leading-relaxed max-w-xl mx-auto mb-8"
         >
-          Find out how much rain you can save — and how much you&apos;re losing.
+          Plan your household rainwater harvesting in 3 easy steps:
+          <span className="font-bold text-teal-800 dark:text-teal-300 block mt-1">
+            Calculate → Plan → Simulate
+          </span>
         </motion.p>
 
         {/* ═══════════════════════════════════════
@@ -106,68 +111,86 @@ export const HomePage: React.FC<HomePageProps> = ({
           </motion.div>
         )}
 
-        {/* ONE BIG OBVIOUS BUTTON: "Check My Water" */}
+        {/* MAIN ACTION BUTTONS: "Start Water Planning", "❓ Tutorial", "Practical Tips" */}
         <motion.div variants={itemVariants} className="mb-10 w-full sm:w-auto flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
             id="home-calculate-cta"
             onClick={onStartCalculate}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-10 py-5 text-xl font-bold text-white bg-teal-800 hover:bg-teal-900 active:bg-teal-950 dark:bg-teal-700 dark:hover:bg-teal-800 rounded-2xl shadow-lg shadow-teal-900/20 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer min-h-[64px]"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-9 py-4 sm:py-5 text-lg sm:text-xl font-bold text-white bg-teal-800 hover:bg-teal-900 active:bg-teal-950 dark:bg-teal-700 dark:hover:bg-teal-800 rounded-2xl shadow-lg shadow-teal-900/20 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer min-h-[60px]"
           >
-            <span>Check My Water</span>
+            <span>Start Water Planning</span>
             <ArrowRight className="w-6 h-6" />
+          </button>
+
+          <button
+            id="home-tutorial-cta"
+            onClick={onOpenTutorial}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 sm:py-4 text-sm sm:text-base font-bold text-teal-900 dark:text-teal-200 bg-teal-50 dark:bg-teal-950/80 hover:bg-teal-100 dark:hover:bg-teal-900 border border-teal-200 dark:border-teal-800 rounded-2xl shadow-2xs transition-all duration-200 cursor-pointer min-h-[52px]"
+          >
+            <HelpCircle className="w-4 h-4 text-teal-700 dark:text-teal-400" />
+            <span>❓ How It Works</span>
           </button>
 
           <button
             id="home-tips-cta"
             onClick={onOpenTips}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-4 text-base font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xs transition-all duration-200 cursor-pointer min-h-[60px]"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 sm:py-4 text-sm sm:text-base font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xs transition-all duration-200 cursor-pointer min-h-[52px]"
           >
-            <Lightbulb className="w-5 h-5 text-amber-500" />
+            <Lightbulb className="w-4 h-4 text-amber-500" />
             <span>Practical Tips</span>
           </button>
         </motion.div>
 
-        {/* Pictorial Flow Cards (Roof -> Rain -> Tank) */}
+        {/* 3-STEP WORKFLOW CARDS: CALCULATE → PLAN → SIMULATE */}
         <motion.div
           variants={itemVariants}
           className="w-full grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-10 text-left"
         >
-          {/* Card 1: The Roof */}
+          {/* Step 1: Calculate */}
           <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col items-start">
-            <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/60 border border-amber-100 dark:border-amber-800 flex items-center justify-center text-amber-700 dark:text-amber-400 mb-3 text-2xl">
-              🏠
+            <div className="w-12 h-12 rounded-xl bg-teal-50 dark:bg-teal-950/60 border border-teal-100 dark:border-teal-800 flex items-center justify-center text-teal-700 dark:text-teal-400 mb-3 text-2xl">
+              💧
+            </div>
+            <div className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 mb-1">
+              Step 1
             </div>
             <h3 className="font-['Outfit',sans-serif] font-bold text-slate-900 dark:text-white text-lg mb-1">
-              1. Your Roof
+              1. CALCULATE
             </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Measure how long and wide your roof is to see how much rain lands on it.
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              Measure your roof &amp; select your city to calculate total litres of clean rainwater you can collect.
             </p>
           </div>
 
-          {/* Card 2: The Rain */}
+          {/* Step 2: Plan */}
           <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col items-start">
             <div className="w-12 h-12 rounded-xl bg-sky-50 dark:bg-sky-950/60 border border-sky-100 dark:border-sky-800 flex items-center justify-center text-sky-700 dark:text-sky-400 mb-3 text-2xl">
-              🌧️
+              🏡
+            </div>
+            <div className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 mb-1">
+              Step 2
             </div>
             <h3 className="font-['Outfit',sans-serif] font-bold text-slate-900 dark:text-white text-lg mb-1">
-              2. Rain Falling
+              2. PLAN
             </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Enter rainfall manually or auto-fetch today&apos;s rain for your location.
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              Plan non-drinking chores (flushing, mopping, plants), verify your tank size, and estimate yearly ₹ bill savings.
             </p>
           </div>
 
-          {/* Card 3: The Tank */}
+          {/* Step 3: Simulate */}
           <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col items-start">
             <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-100 dark:border-emerald-800 flex items-center justify-center text-emerald-700 dark:text-emerald-400 mb-3 text-2xl">
-              🛢️
+              📊
+            </div>
+            <div className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 mb-1">
+              Step 3
             </div>
             <h3 className="font-['Outfit',sans-serif] font-bold text-slate-900 dark:text-white text-lg mb-1">
-              3. Water Saved
+              3. SIMULATE
             </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              See what your tank can hold, and see if any water is overflowing and wasted.
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              Move live sliders to simulate &quot;What if...?&quot; scenarios, watch the tank fill, and print your RainWise Plan.
             </p>
           </div>
         </motion.div>
@@ -176,11 +199,11 @@ export const HomePage: React.FC<HomePageProps> = ({
         <motion.div variants={itemVariants} className="w-full max-w-xl">
           <div className="flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
             <Sparkles className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-            <span>Or pick a quick example to see how it works</span>
+            <span>Or try a sample Indian household scenario:</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {PRESET_SCENARIOS.map((preset) => {
-              const capacityNum = parseFloat(preset.inputs.tankCapacity) || 0;
+              const capacityNum = parseFloat(preset.inputs.tankCapacity || '0') || 0;
               return (
                 <button
                   key={preset.id}
@@ -190,10 +213,10 @@ export const HomePage: React.FC<HomePageProps> = ({
                 >
                   <span className="text-2xl">{preset.icon}</span>
                   <div>
-                    <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 block">
-                      {preset.name.split(' ')[0]}
+                    <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate">
+                      {preset.name.split(' ')[0]} {preset.name.split(' ')[1] || ''}
                     </span>
-                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">
                       {formatVolume(capacityNum)} tank
                     </span>
                   </div>
@@ -208,7 +231,7 @@ export const HomePage: React.FC<HomePageProps> = ({
           variants={itemVariants}
           className="mt-8 text-xs text-slate-500 dark:text-slate-400"
         >
-          Actual water collected may vary depending on your roof and pipes.
+          All calculations run 100% locally in your browser. No engineering jargon, no login needed.
         </motion.p>
       </motion.div>
     </div>

@@ -9,7 +9,8 @@ import {
   ChevronDown, 
   Sun, 
   Moon, 
-  Lightbulb 
+  Lightbulb,
+  HelpCircle
 } from 'lucide-react';
 import { PageView, AuthUser } from '../types';
 import { useAppSettings } from '../context/AppSettingsContext';
@@ -22,6 +23,7 @@ interface NavbarProps {
   onOpenAuth: () => void;
   onSignOut: () => void;
   onOpenTips: () => void;
+  onOpenTutorial?: () => void;
   savedBuildingsCount?: number;
 }
 
@@ -33,6 +35,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAuth,
   onSignOut,
   onOpenTips,
+  onOpenTutorial,
   savedBuildingsCount = 0,
 }) => {
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -56,7 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 Rain<span className="text-teal-600 dark:text-teal-400">Wise</span>
               </span>
               <span className="text-[10px] font-semibold tracking-wide uppercase px-1.5 py-0.5 rounded bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-300 border border-teal-200/60 dark:border-teal-800 hidden xs:inline">
-                Calculator
+                Water Planner
               </span>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 hidden md:block">
@@ -90,21 +93,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <Calculator className="w-3.5 h-3.5" />
-            <span>Calculator</span>
+            <span>Water Planner</span>
           </button>
 
-          {hasResults && (
+          {/* Tutorial / How It Works Button */}
+          {onOpenTutorial && (
             <button
-              id="nav-results-tab"
-              onClick={() => onNavigate('results')}
-              className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                currentPage === 'results'
-                  ? 'bg-white dark:bg-slate-700 text-teal-800 dark:text-teal-300 shadow-2xs font-semibold'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'
-              }`}
+              type="button"
+              id="nav-tutorial-btn"
+              onClick={onOpenTutorial}
+              className="flex items-center gap-1 px-2 sm:px-2.5 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-teal-700 dark:hover:text-teal-300 hover:bg-white/50 dark:hover:bg-slate-700/50 transition-all cursor-pointer"
+              title="How It Works Walkthrough"
             >
-              <BarChart3 className="w-3.5 h-3.5" />
-              <span>Results</span>
+              <HelpCircle className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+              <span className="hidden sm:inline">Tutorial</span>
             </button>
           )}
 
@@ -135,9 +137,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ? 'bg-white dark:bg-slate-700 text-teal-900 dark:text-teal-200 shadow-2xs font-bold'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
-              title="Metric units (m, mm, litres)"
+              title="Metric units (m², mm, litres)"
             >
-              Metric
+              m²
             </button>
             <button
               type="button"
@@ -148,9 +150,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ? 'bg-white dark:bg-slate-700 text-teal-900 dark:text-teal-200 shadow-2xs font-bold'
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
-              title="Imperial units (ft, in, gallons)"
+              title="Imperial units (sq ft, in, gallons)"
             >
-              Imperial
+              sq ft
             </button>
           </div>
 
@@ -199,54 +201,41 @@ export const Navbar: React.FC<NavbarProps> = ({
                       <p className="font-bold text-slate-900 dark:text-white truncate">
                         {currentUser.displayName || 'Signed In'}
                       </p>
-                      <p className="text-slate-500 dark:text-slate-400 text-xs truncate">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                         {currentUser.email}
                       </p>
-                      {savedBuildingsCount > 0 && (
-                        <p className="text-[11px] text-teal-700 dark:text-teal-400 font-semibold mt-1">
-                          🏠 {savedBuildingsCount} saved building{savedBuildingsCount > 1 ? 's' : ''}
-                        </p>
-                      )}
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowUserMenu(false);
-                        onNavigate('home');
-                      }}
-                      className="w-full text-left px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
-                    >
-                      <Home className="w-4 h-4 text-slate-400" />
-                      <span>My Saved Buildings</span>
-                    </button>
+                    <div className="px-2 py-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          onNavigate('home');
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 flex items-center justify-between cursor-pointer"
+                      >
+                        <span>Saved Buildings</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded-full bg-teal-100 dark:bg-teal-900 text-teal-800 dark:text-teal-200 font-bold">
+                          {savedBuildingsCount}
+                        </span>
+                      </button>
+                    </div>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowUserMenu(false);
-                        onOpenTips();
-                      }}
-                      className="w-full text-left px-4 py-2 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 cursor-pointer"
-                    >
-                      <Lightbulb className="w-4 h-4 text-amber-500" />
-                      <span>Rainwater Tips</span>
-                    </button>
-
-                    <div className="border-t border-slate-100 dark:border-slate-700 my-1"></div>
-
-                    <button
-                      type="button"
-                      id="nav-signout-btn"
-                      onClick={() => {
-                        setShowUserMenu(false);
-                        onSignOut();
-                      }}
-                      className="w-full text-left px-4 py-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-2 cursor-pointer font-semibold"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>Sign Out</span>
-                    </button>
+                    <div className="border-t border-slate-100 dark:border-slate-700 px-2 pt-1">
+                      <button
+                        type="button"
+                        id="nav-logout-btn"
+                        onClick={() => {
+                          setShowUserMenu(false);
+                          onSignOut();
+                        }}
+                        className="w-full text-left px-3 py-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 flex items-center gap-2 cursor-pointer font-medium"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
                   </div>
                 </>
               )}
@@ -256,12 +245,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               type="button"
               id="nav-signin-btn"
               onClick={onOpenAuth}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-teal-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 hover:border-teal-300 dark:hover:border-teal-600 text-teal-900 dark:text-teal-200 text-xs sm:text-sm font-bold shadow-2xs transition-all cursor-pointer min-h-[38px] shrink-0"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-teal-600 dark:border-teal-500 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950 text-xs sm:text-sm font-bold shadow-2xs transition-colors cursor-pointer min-h-[38px]"
             >
-              <LogIn className="w-3.5 h-3.5 text-teal-700 dark:text-teal-400" />
-              <span className="hidden sm:inline">Sign In</span>
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Sign In</span>
             </button>
           )}
+
         </div>
       </div>
     </header>

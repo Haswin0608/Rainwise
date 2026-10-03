@@ -1,6 +1,6 @@
 {
   "name": "RainWise",
-  "description": "A simple rainwater harvesting calculator for farmers and everyday people to find out how much rain they can save and how much they are losing.",
+  "description": "A 3-step household water-planning tool for farmers and households in India: Calculate, Plan, and Simulate rainwater harvesting.",
   "requestFramePermissions": ["geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

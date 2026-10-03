@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, type Variants } from 'motion/react';
 import { CalculatorInputs, CalculationResult, PageView, PresetScenario, AuthUser, SavedBuilding } from './types';
-import { calculateHarvesting } from './utils/calculations';
+import { calculateHarvesting, DEFAULT_ASSUMPTIONS, DEFAULT_INPUTS } from './utils/calculations';
 import { RaindropBackground } from './components/RaindropBackground';
 import { Navbar } from './components/Navbar';
 import { HomePage } from './components/HomePage';
 import { CalculatorPage } from './components/CalculatorPage';
 import { ResultsPage } from './components/ResultsPage';
 import { FirstVisitModal } from './components/FirstVisitModal';
+import { TutorialModal } from './components/TutorialModal';
 import { AuthModal } from './components/AuthModal';
 import { SaveBuildingModal } from './components/SaveBuildingModal';
 import { EditBuildingModal } from './components/EditBuildingModal';
@@ -19,15 +20,9 @@ function RainWiseApp() {
   const [currentPage, setCurrentPage] = useState<PageView>('home');
   const { unit } = useAppSettings();
 
-  const [inputs, setInputs] = useState<CalculatorInputs>({
-    roofs: [
-      { id: '1', name: 'Roof 1', length: '15', width: '10' },
-    ],
-    rainfall: '50',
-    efficiency: '80',
-    tankCapacity: '5000',
-    dailyRequirement: '200',
-  });
+  // Initial State configured for location-based automatic rainfall
+  const [inputs, setInputs] = useState<CalculatorInputs>(DEFAULT_INPUTS);
+
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
@@ -39,6 +34,7 @@ function RainWiseApp() {
 
   // Modals
   const [showFirstVisitModal, setShowFirstVisitModal] = useState(false);
+  const [showTutorialModal, setShowTutorialModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authModalTitle, setAuthModalTitle] = useState<string | undefined>(undefined);
   const [authModalSubtitle, setAuthModalSubtitle] = useState<string | undefined>(undefined);
@@ -54,7 +50,7 @@ function RainWiseApp() {
     setIsTipsOpen(true);
   };
 
-  // Toast notification for user confirmation (e.g., "Saved!", "Loaded Grandpa's Farm")
+  // Toast notification for user confirmation
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -64,13 +60,21 @@ function RainWiseApp() {
     }, 4000);
   };
 
-  // Re-calculate results whenever unit changes if a result is already on screen
+  // Re-calculate results whenever unit changes if a result is already active
   useEffect(() => {
     if (result) {
-      const recomputed = calculateHarvesting(inputs, unit);
+      const recomputed = calculateHarvesting(inputs, unit, inputs.assumptions || DEFAULT_ASSUMPTIONS);
       setResult(recomputed);
     }
   }, [unit]);
+
+  // Check tutorial first-time state
+  useEffect(() => {
+    const hasSeenTutorial = localStorage.getItem('rainwise_tutorial_seen');
+    if (!hasSeenTutorial) {
+      setShowTutorialModal(true);
+    }
+  }, []);
 
   // Check first-visit state
   useEffect(() => {
@@ -121,7 +125,7 @@ function RainWiseApp() {
   const handleFirstVisitGuest = () => {
     localStorage.setItem('rainwise_visited', 'true');
     setShowFirstVisitModal(false);
-    showToast('Continuing as Guest. Calculations work fully without an account!');
+    showToast('Continuing as Guest. All water planning works fully in your browser!');
   };
 
   // Sign out
@@ -137,29 +141,27 @@ function RainWiseApp() {
   // Selecting a saved building from Home Page
   const handleSelectBuilding = (building: SavedBuilding) => {
     setActiveBuilding(building);
-    setInputs({
-      roofs: building.roofs && building.roofs.length > 0 ? building.roofs : [{ id: '1', name: 'Roof 1', length: '10', width: '10' }],
-      rainfall: '',
+    setInputs(prev => ({
+      ...prev,
+      roofAreaMode: building.roofAreaMode || (building.roofs && building.roofs.length > 1 ? 'sections' : 'direct'),
+      directRoofArea: building.directRoofArea || '100',
+      roofs: building.roofs && building.roofs.length > 0 ? building.roofs : [{ id: '1', name: 'Roof 1', length: '12.5', width: '8' }],
+      roofType: building.roofType || 'concrete',
       efficiency: building.efficiency || '80',
-      tankCapacity: building.tankCapacity || '1000',
-      dailyRequirement: building.dailyRequirement || '',
-    });
+      tankCapacity: building.tankCapacity || '2000',
+      dailyRequirement: building.dailyRequirement || '240',
+      householdSize: building.householdSize || '4',
+    }));
     setResult(null);
     setCurrentPage('calculator');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    showToast(`Loaded "${building.nickname}"! Just enter today's rainfall to calculate.`);
+    showToast(`Loaded "${building.nickname}" into water planner!`);
   };
 
   // "+ Calculate a New Building"
   const handleNewBlankBuilding = () => {
     setActiveBuilding(null);
-    setInputs({
-      roofs: [{ id: '1', name: 'Roof 1', length: '', width: '' }],
-      rainfall: '',
-      efficiency: '80',
-      tankCapacity: '',
-      dailyRequirement: '',
-    });
+    setInputs(DEFAULT_INPUTS);
     setResult(null);
     setCurrentPage('calculator');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -182,14 +184,14 @@ function RainWiseApp() {
     animate: { 
       opacity: 1, 
       transition: { 
-        duration: 0.25, 
+        duration: 0.22, 
         ease: 'easeInOut',
       }
     },
     exit: { 
       opacity: 0, 
       transition: { 
-        duration: 0.2, 
+        duration: 0.18, 
         ease: 'easeInOut',
       }
     },
@@ -202,38 +204,32 @@ function RainWiseApp() {
 
   const handleSelectPreset = (preset: PresetScenario) => {
     setActiveBuilding(null);
-    setInputs(preset.inputs);
-    const res = calculateHarvesting(preset.inputs, unit);
+    const newInputs: CalculatorInputs = {
+      ...DEFAULT_INPUTS,
+      ...preset.inputs,
+    };
+    setInputs(newInputs);
+    const res = calculateHarvesting(newInputs, unit, newInputs.assumptions || DEFAULT_ASSUMPTIONS);
     setResult(res);
-    setCurrentPage('results');
+    setShowTutorialModal(false);
+    setCurrentPage('calculator');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast(`Loaded "${preset.name}" into water planner!`);
   };
 
   const handlePerformCalculation = () => {
     setIsCalculating(true);
     setTimeout(() => {
-      const computedResult = calculateHarvesting(inputs, unit);
+      const computedResult = calculateHarvesting(inputs, unit, inputs.assumptions || DEFAULT_ASSUMPTIONS);
       setResult(computedResult);
       setIsCalculating(false);
-      setCurrentPage('results');
+      setCurrentPage('calculator');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 450);
+    }, 300);
   };
 
   const handleReset = () => {
-    setActiveBuilding(null);
-    setInputs({
-      roofs: [
-        { id: '1', name: 'Roof 1', length: '', width: '' },
-      ],
-      rainfall: '',
-      efficiency: '80',
-      tankCapacity: '',
-      dailyRequirement: '',
-    });
-    setResult(null);
-    setCurrentPage('calculator');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    handleNewBlankBuilding();
   };
 
   return (
@@ -248,9 +244,9 @@ function RainWiseApp() {
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-slate-900/90 dark:bg-slate-800/95 backdrop-blur-md text-white font-medium text-xs sm:text-sm shadow-xl border border-slate-700/50 dark:border-slate-650 flex items-center gap-2"
+            className="fixed top-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-slate-900/90 dark:bg-slate-800/95 backdrop-blur-md text-white font-medium text-xs sm:text-sm shadow-xl border border-slate-700/50 dark:border-slate-650 flex items-center gap-2 print:hidden"
           >
-            <span>🌧️</span>
+            <span role="img" aria-label="rain">🌧️</span>
             <span>{toastMessage}</span>
           </motion.div>
         )}
@@ -261,7 +257,7 @@ function RainWiseApp() {
         currentPage={currentPage}
         onNavigate={(page) => {
           if (page === 'results' && !result) {
-            const res = calculateHarvesting(inputs, unit);
+            const res = calculateHarvesting(inputs, unit, inputs.assumptions || DEFAULT_ASSUMPTIONS);
             setResult(res);
           }
           setCurrentPage(page);
@@ -277,6 +273,7 @@ function RainWiseApp() {
         onSignOut={handleSignOut}
         savedBuildingsCount={savedBuildings.length}
         onOpenTips={() => handleOpenTips()}
+        onOpenTutorial={() => setShowTutorialModal(true)}
       />
 
       {/* Main Page View with Animated Transitions */}
@@ -301,6 +298,7 @@ function RainWiseApp() {
                 onDeleteBuilding={handleDeleteBuilding}
                 onNewBlankBuilding={handleNewBlankBuilding}
                 onOpenTips={() => handleOpenTips()}
+                onOpenTutorial={() => setShowTutorialModal(true)}
               />
             </motion.div>
           )}
@@ -315,9 +313,16 @@ function RainWiseApp() {
             >
               <CalculatorPage
                 inputs={inputs}
-                onChange={setInputs}
+                onChange={(newInputs) => {
+                  setInputs(newInputs);
+                  const newResult = calculateHarvesting(newInputs, unit, newInputs.assumptions || DEFAULT_ASSUMPTIONS);
+                  setResult(newResult);
+                }}
                 onCalculate={handlePerformCalculation}
-                onBack={() => setCurrentPage('home')}
+                onBack={() => {
+                  setCurrentPage('home');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 isCalculating={isCalculating}
                 currentUser={currentUser}
                 activeBuilding={activeBuilding}
@@ -327,7 +332,7 @@ function RainWiseApp() {
             </motion.div>
           )}
 
-          {currentPage === 'results' && result && (
+          {currentPage === 'results' && (
             <motion.div
               key="results"
               variants={pageVariants}
@@ -336,73 +341,85 @@ function RainWiseApp() {
               exit="exit"
             >
               <ResultsPage
-                result={result}
-                onAdjustInputs={() => setCurrentPage('calculator')}
+                result={result || calculateHarvesting(inputs, unit, inputs.assumptions || DEFAULT_ASSUMPTIONS)}
+                onAdjustInputs={() => {
+                  setCurrentPage('calculator');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 onReset={handleReset}
-                onOpenTips={(tipId) => handleOpenTips(tipId)}
+                onOpenTips={handleOpenTips}
               />
             </motion.div>
           )}
         </AnimatePresence>
       </main>
 
-      {/* Modals */}
-      {/* 1. First Visit Modal */}
+      {/* First Visit Modal for New Visitors */}
       <FirstVisitModal
         isOpen={showFirstVisitModal}
         onSignIn={handleFirstVisitSignIn}
         onContinueAsGuest={handleFirstVisitGuest}
       />
 
-      {/* 2. Authentication Modal (Sign In / Sign Up) */}
+      {/* Tutorial Walkthrough Modal */}
+      <TutorialModal
+        isOpen={showTutorialModal}
+        onClose={() => setShowTutorialModal(false)}
+        onStartPlanner={() => {
+          setShowTutorialModal(false);
+          setCurrentPage('calculator');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+      />
+
+      {/* Auth Modal for Sign in / Sign up */}
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
+        onSuccess={() => {
+          setShowAuthModal(false);
+          showToast('Signed in successfully!');
+        }}
         customTitle={authModalTitle}
         customSubtitle={authModalSubtitle}
-        onSuccess={(user) => {
-          showToast(`Welcome ${user.displayName || user.email}!`);
-          if (currentUser) refreshBuildings(user.uid);
-        }}
-        onContinueAsGuest={() => {
-          showToast('Continuing as guest.');
-        }}
       />
 
-      {/* 3. Save Building Modal */}
-      <SaveBuildingModal
-        isOpen={showSaveModal}
-        onClose={() => setShowSaveModal(false)}
-        currentUser={currentUser}
-        inputs={inputs}
-        existingBuilding={activeBuilding}
-        onSavedSuccess={(saved) => {
-          setActiveBuilding(saved);
-          if (currentUser) refreshBuildings(currentUser.uid);
-          showToast(`"${saved.nickname}" saved successfully!`);
-        }}
-        onRequestSignIn={() => {
-          setAuthModalTitle('Sign Up to Save Buildings');
-          setAuthModalSubtitle('Create a free account or sign in so you never have to re-enter your roof sizes.');
-          setShowAuthModal(true);
-        }}
-      />
+      {/* Save Building Modal */}
+      {currentUser && (
+        <SaveBuildingModal
+          isOpen={showSaveModal}
+          onClose={() => setShowSaveModal(false)}
+          currentUser={currentUser}
+          inputs={inputs}
+          existingBuilding={activeBuilding}
+          onSavedSuccess={(saved) => {
+            setShowSaveModal(false);
+            refreshBuildings(currentUser.uid);
+            setActiveBuilding(saved);
+            showToast(`"${saved.nickname}" saved to your buildings list!`);
+          }}
+          onRequestSignIn={() => {
+            setShowSaveModal(false);
+            setShowAuthModal(true);
+          }}
+        />
+      )}
 
-      {/* 4. Edit Building Modal */}
-      <EditBuildingModal
-        isOpen={Boolean(editingBuilding)}
-        onClose={() => setEditingBuilding(null)}
-        building={editingBuilding}
-        onUpdated={(updated) => {
-          if (activeBuilding?.id === updated.id) {
-            setActiveBuilding(updated);
-          }
-          if (currentUser) refreshBuildings(currentUser.uid);
-          showToast(`"${updated.nickname}" updated!`);
-        }}
-      />
+      {/* Edit Building Modal */}
+      {currentUser && editingBuilding && (
+        <EditBuildingModal
+          isOpen={editingBuilding !== null}
+          onClose={() => setEditingBuilding(null)}
+          building={editingBuilding}
+          onUpdated={(updated) => {
+            setEditingBuilding(null);
+            refreshBuildings(currentUser.uid);
+            showToast(`Building renamed to "${updated.nickname}"!`);
+          }}
+        />
+      )}
 
-      {/* 5. Rainwater Practical Tips Modal */}
+      {/* Educational Tips Modal */}
       <TipsModal
         isOpen={isTipsOpen}
         onClose={() => setIsTipsOpen(false)}
@@ -410,19 +427,15 @@ function RainWiseApp() {
       />
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs py-5 mt-auto">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs text-slate-500 dark:text-slate-400 text-center sm:text-left">
+      <footer className="relative z-10 py-8 px-4 text-center text-xs text-slate-500 dark:text-slate-500 border-t border-slate-200/60 dark:border-slate-800/80 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xs print:hidden">
+        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-800 dark:text-white font-['Outfit',sans-serif]">RainWise</span>
-            <span>•</span>
-            <span>Helping farmers and households save rainwater</span>
+            <span className="text-base" role="img" aria-label="water">💧</span>
+            <span className="font-bold text-slate-700 dark:text-slate-300">RainWise</span>
+            <span>— Household Rainwater Planning Tool for India</span>
           </div>
-          <div className="flex items-center gap-3">
-            <span>{unit === 'imperial' ? '1 in rain on 1,000 sq ft ≈ 623 gallons' : '1mm rain on 1m² = 1 litre'}</span>
-            <span>•</span>
-            <span className="text-teal-800 dark:text-teal-400 font-medium">
-              {currentUser ? `Signed in as ${currentUser.displayName || currentUser.email}` : 'Guest mode (no login required)'}
-            </span>
+          <div className="text-[11px] text-slate-400">
+            Open-Meteo Weather &amp; 3-Year Archive Data • Offline-ready client calculations
           </div>
         </div>
       </footer>
