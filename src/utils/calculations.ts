@@ -9,12 +9,17 @@ import {
   ROOF_TYPES,
   PlanningAssumptions,
   EverydayConversionFactors,
+  CalculationPeriod,
   SavedWastedPeriod,
   SavedWastedBreakdown,
+  TankFillBreakdown,
+  RoofCalculationBreakdown,
   HouseholdPlan,
   SimulationResult,
   SimulationMonth,
-  RainfallScenario
+  RainfallScenario,
+  RoofItem,
+  StorageTankItem
 } from '../types';
 import { 
   UnitSystem, 
@@ -30,6 +35,117 @@ export const MONTH_NAMES = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
 ];
+
+/**
+ * Normalizes any format of roofs (v1 single, v1 sections, or v2 list) into version 2 RoofItem[]
+ */
+export function normalizeRoofs(
+  rawRoofs?: any[], 
+  fallbackDirectArea?: string, 
+  fallbackRoofType?: RoofTypeKey
+): RoofItem[] {
+  if (Array.isArray(rawRoofs) && rawRoofs.length > 0) {
+    return rawRoofs.map((r, i) => {
+      // Version 2 format with direct area
+      if (r.area !== undefined && r.area !== null && r.area !== '') {
+        return {
+          id: r.id || `roof_${Date.now()}_${i}`,
+          name: r.name || `Roof ${i + 1}`,
+          area: String(r.area),
+          areaUnit: r.areaUnit || 'metric',
+          typeKey: r.typeKey || fallbackRoofType || 'concrete',
+          customName: r.customName || '',
+          customEfficiency: typeof r.customEfficiency === 'number' ? r.customEfficiency : 70,
+        };
+      }
+      // Version 1 format with length & width
+      const l = parseFloat(r.length) || 0;
+      const w = parseFloat(r.width) || 0;
+      const areaVal = (l > 0 && w > 0) ? String(Math.round(l * w * 10) / 10) : '50';
+      return {
+        id: r.id || `roof_${Date.now()}_${i}`,
+        name: r.name || `Roof ${i + 1}`,
+        area: areaVal,
+        areaUnit: 'metric',
+        typeKey: r.typeKey || fallbackRoofType || 'concrete',
+        customName: r.customName || '',
+        customEfficiency: 70,
+      };
+    });
+  }
+
+  // Fallback if empty or not provided
+  return [
+    {
+      id: 'roof_1',
+      name: 'Roof 1',
+      area: fallbackDirectArea || '100',
+      areaUnit: 'metric',
+      typeKey: fallbackRoofType || 'concrete',
+      customName: '',
+      customEfficiency: 70,
+    }
+  ];
+}
+
+/**
+ * Normalizes tanks into version 2 StorageTankItem[]
+ */
+export function normalizeTanks(
+  rawTanks?: any[], 
+  fallbackCapacity?: string, 
+  noTankYet?: boolean
+): { tanks: StorageTankItem[]; noTankYet: boolean } {
+  if (noTankYet) {
+    return { tanks: [], noTankYet: true };
+  }
+  if (Array.isArray(rawTanks) && rawTanks.length > 0) {
+    const list = rawTanks.map((t, i) => ({
+      id: t.id || `tank_${Date.now()}_${i}`,
+      name: t.name || `Tank ${i + 1}`,
+      capacity: String(t.capacity ?? '1000'),
+    }));
+    return { tanks: list, noTankYet: false };
+  }
+  if (fallbackCapacity && parseFloat(fallbackCapacity) > 0) {
+    return {
+      tanks: [{ id: 'tank_1', name: 'Tank 1', capacity: fallbackCapacity }],
+      noTankYet: false,
+    };
+  }
+  return {
+    tanks: [{ id: 'tank_1', name: 'Tank 1', capacity: '2000' }],
+    noTankYet: false,
+  };
+}
+
+/**
+ * Computes total storage capacity across all tanks in litres
+ */
+export function getTotalTankCapacity(
+  tanks?: StorageTankItem[], 
+  noTankYet?: boolean, 
+  recommendedTankSizeL: number = 2000,
+  unit: UnitSystem = 'metric'
+): { totalLitres: number; isCustom: boolean; count: number } {
+  if (noTankYet || !tanks || tanks.length === 0) {
+    return { totalLitres: recommendedTankSizeL, isCustom: false, count: 0 };
+  }
+  const isImperial = unit === 'imperial';
+  let sumL = 0;
+  let validCount = 0;
+  for (const t of tanks) {
+    const cap = parseFloat(t.capacity) || 0;
+    if (cap > 0) {
+      sumL += isImperial ? gallonsToLiters(cap) : cap;
+      validCount++;
+    }
+  }
+  if (sumL === 0) {
+    return { totalLitres: recommendedTankSizeL, isCustom: false, count: 0 };
+  }
+  return { totalLitres: Math.round(sumL), isCustom: true, count: validCount };
+}
 
 /**
  * Standard Everyday Terms Conversions (Clearly editable by user in Assumptions UI)
@@ -79,7 +195,13 @@ export const PRESET_SCENARIOS: PresetScenario[] = [
     inputs: {
       roofAreaMode: 'direct',
       directRoofArea: '100',
-      roofs: [{ id: '1', name: 'Main House', length: '12.5', width: '8' }],
+      roofs: [
+        { id: 'preset-r-1', name: 'Main Concrete Roof', area: '100', areaUnit: 'metric', typeKey: 'concrete' }
+      ],
+      tanks: [
+        { id: 'preset-t-1', name: 'Underground Sump', capacity: '2000' }
+      ],
+      noTankYet: false,
       roofType: 'concrete',
       householdSize: '4',
       tankCapacity: '2000',
@@ -99,9 +221,13 @@ export const PRESET_SCENARIOS: PresetScenario[] = [
       roofAreaMode: 'sections',
       directRoofArea: '160',
       roofs: [
-        { id: '1', name: 'Main Farmhouse (Tiles)', length: '12', width: '8' },
-        { id: '2', name: 'Storage Shed (Metal)', length: '8', width: '8' },
+        { id: 'preset-r-1', name: 'Main Farmhouse (Tiles)', area: '96', areaUnit: 'metric', typeKey: 'clay_tile' },
+        { id: 'preset-r-2', name: 'Storage Shed (Metal)', area: '64', areaUnit: 'metric', typeKey: 'metal_sheet' },
       ],
+      tanks: [
+        { id: 'preset-t-1', name: 'Main Farm Tank', capacity: '5000' }
+      ],
+      noTankYet: false,
       roofType: 'clay_tile',
       householdSize: '5',
       tankCapacity: '5000',
@@ -120,7 +246,13 @@ export const PRESET_SCENARIOS: PresetScenario[] = [
     inputs: {
       roofAreaMode: 'direct',
       directRoofArea: '80',
-      roofs: [{ id: '1', name: 'House Roof', length: '10', width: '8' }],
+      roofs: [
+        { id: 'preset-r-1', name: 'House Metal Roof', area: '80', areaUnit: 'metric', typeKey: 'metal_sheet' }
+      ],
+      tanks: [
+        { id: 'preset-t-1', name: 'Sintex Poly Tank', capacity: '1000' }
+      ],
+      noTankYet: false,
       roofType: 'metal_sheet',
       householdSize: '3',
       tankCapacity: '1000',
@@ -134,18 +266,37 @@ export const PRESET_SCENARIOS: PresetScenario[] = [
 ];
 
 export const DEFAULT_INPUTS: CalculatorInputs = {
-  roofAreaMode: 'direct',
-  directRoofArea: '100',
-  roofs: [{ id: '1', name: 'Main Roof', length: '12.5', width: '8' }],
-  roofType: 'concrete',
-  efficiency: '80',
+  roofs: [
+    {
+      id: 'roof_1',
+      name: 'Roof 1',
+      area: '100',
+      areaUnit: 'metric',
+      typeKey: 'concrete',
+      customName: '',
+      customEfficiency: 70,
+    }
+  ],
+  tanks: [
+    {
+      id: 'tank_1',
+      name: 'Tank 1',
+      capacity: '2000',
+    }
+  ],
+  noTankYet: false,
   householdSize: '4',
-  tankCapacity: '2000',
   dailyRequirement: '240',
   waterTariff: '15',
   installationCost: '15000',
   rainfallScenario: 'normal',
   assumptions: DEFAULT_ASSUMPTIONS,
+  // Backwards compatibility defaults:
+  roofAreaMode: 'direct',
+  directRoofArea: '100',
+  roofType: 'concrete',
+  efficiency: '80',
+  tankCapacity: '2000',
 };
 
 /**
@@ -154,11 +305,18 @@ export const DEFAULT_INPUTS: CalculatorInputs = {
 export function getRunoffCoefficient(
   roofType: RoofTypeKey, 
   customCoefficient?: string, 
-  assumptions: PlanningAssumptions = DEFAULT_ASSUMPTIONS
+  assumptions: PlanningAssumptions = DEFAULT_ASSUMPTIONS,
+  customEfficiency?: number
 ): number {
-  if (roofType === 'custom' && customCoefficient) {
-    const val = parseFloat(customCoefficient);
-    if (!isNaN(val) && val > 0 && val <= 1) return val;
+  if (roofType === 'custom') {
+    if (typeof customEfficiency === 'number' && !isNaN(customEfficiency) && customEfficiency >= 0) {
+      return Math.min(1, Math.max(0, customEfficiency / 100));
+    }
+    if (customCoefficient) {
+      const val = parseFloat(customCoefficient);
+      if (!isNaN(val) && val > 0 && val <= 1) return val;
+    }
+    return 0.70;
   }
   return assumptions.runoffCoefficients[roofType] ?? 0.80;
 }
@@ -173,46 +331,22 @@ export function validateInputs(
   const errors: FormErrors = {};
   let isValid = true;
 
-  if (inputs.roofAreaMode === 'direct') {
-    const directArea = parseFloat(inputs.directRoofArea);
-    if (isNaN(directArea) || directArea <= 0) {
-      errors.directArea = 'Please enter a valid roof area greater than 0';
-      isValid = false;
-    } else if (unit === 'imperial' && directArea > 150000) {
-      errors.directArea = 'Roof area seems unusually large for a household';
-    } else if (unit === 'metric' && directArea > 15000) {
-      errors.directArea = 'Roof area seems unusually large for a household';
-    }
+  const normalized = normalizeRoofs(inputs.roofs, inputs.directRoofArea, inputs.roofType);
+  if (normalized.length === 0) {
+    errors.directArea = 'Please add at least one roof';
+    isValid = false;
   } else {
-    const roofErrors: Record<string, RoofError> = {};
-    let hasRoofError = false;
-
-    if (!inputs.roofs || inputs.roofs.length === 0) {
-      errors.directArea = 'Please add at least one roof section';
-      isValid = false;
-    } else {
-      inputs.roofs.forEach((roof) => {
-        const rErr: RoofError = {};
-        const l = parseFloat(roof.length);
-        const w = parseFloat(roof.width);
-
-        if (isNaN(l) || l <= 0) {
-          rErr.length = 'Length must be > 0';
-          hasRoofError = true;
-        }
-        if (isNaN(w) || w <= 0) {
-          rErr.width = 'Width must be > 0';
-          hasRoofError = true;
-        }
-
-        if (Object.keys(rErr).length > 0) {
-          roofErrors[roof.id] = rErr;
-        }
-      });
-
-      if (hasRoofError) {
-        errors.roofs = roofErrors;
+    for (const r of normalized) {
+      const a = parseFloat(r.area);
+      if (isNaN(a) || a <= 0) {
+        errors.directArea = `Please enter a valid area for ${r.name}`;
         isValid = false;
+        break;
+      }
+      if (r.typeKey === 'custom' && (!r.customName || !r.customName.trim())) {
+        errors.directArea = `Please type your roof material for ${r.name}`;
+        isValid = false;
+        break;
       }
     }
   }
@@ -258,7 +392,9 @@ export function calculateHouseholdPlan(
   annualHarvestableL: number,
   inputs: CalculatorInputs,
   unit: UnitSystem = 'metric',
-  assumptions: PlanningAssumptions = DEFAULT_ASSUMPTIONS
+  assumptions: PlanningAssumptions = DEFAULT_ASSUMPTIONS,
+  peakMonthHarvestL?: number,
+  typicalEventRunoffL?: number
 ): HouseholdPlan {
   const isImperial = unit === 'imperial';
   const householdSize = Math.max(1, parseInt(inputs.householdSize || '4', 10));
@@ -310,11 +446,19 @@ export function calculateHouseholdPlan(
     },
   ];
 
-  // Tank Adequacy Evaluation
+  // Tank Adequacy Evaluation (Requirement 6)
   const recommendedSize = getRecommendedTankSize(dailyDemandTotalL, annualHarvestableL, assumptions.dryDaysBuffer);
 
-  const rawTank = inputs.tankCapacity ? parseFloat(inputs.tankCapacity) : 0;
-  const enteredTankL = isImperial ? gallonsToLiters(rawTank) : rawTank;
+  const tankCapacityInfo = getTotalTankCapacity(inputs.tanks, inputs.noTankYet, recommendedSize, unit);
+  const enteredTankL = tankCapacityInfo.isCustom ? tankCapacityInfo.totalLitres : 0;
+
+  // Calculate fallbacks for peakMonthHarvestL and typicalEventRunoffL if not supplied
+  const peakHarvest = peakMonthHarvestL && peakMonthHarvestL > 0 
+    ? peakMonthHarvestL 
+    : Math.max(500, Math.round(annualHarvestableL * 0.28));
+  const typicalEventRunoff = typicalEventRunoffL && typicalEventRunoffL > 0 
+    ? typicalEventRunoffL 
+    : Math.max(300, Math.round(annualHarvestableL * 0.12));
 
   let tankStatus: 'good' | 'overflow' | 'large' = 'good';
   let statusLabel = 'Good size';
@@ -323,39 +467,48 @@ export function calculateHouseholdPlan(
   let overflowLitres = 0;
   let overflowNotice = 'Zero waste expected with typical usage!';
 
-  if (!enteredTankL || enteredTankL <= 0) {
+  // Case 0: No tank yet / not custom
+  if (!tankCapacityInfo.isCustom || enteredTankL <= 0 || inputs.noTankYet) {
     tankStatus = 'good';
     statusLabel = 'Recommended Size';
     badgeColor = 'sky';
-    message = `We recommend a ${formatVolumeFull(recommendedSize, unit)} tank for your ${householdSize}-person household to bridge typical dry breaks.`;
-    overflowLitres = Math.max(0, annualHarvestableL - (recommendedSize * 6));
-    overflowNotice = `A ${formatVolumeFull(recommendedSize, unit)} tank captures multiple rain cycles nicely.`;
+    message = `Recommended tank size: ${formatVolumeFull(recommendedSize, unit)} based on your roof and local rain.`;
+    overflowLitres = Math.max(0, annualHarvestableL);
+    overflowNotice = `Without a tank, 100% of your harvestable water (${formatVolumeFull(annualHarvestableL, unit)}) will be wasted! Adding a ${formatVolumeFull(recommendedSize, unit)} tank captures clean water for your household.`;
   } else {
-    const peakStormVolume = annualHarvestableL * 0.20;
+    const tankDesc = tankCapacityInfo.count > 1 
+      ? `${formatVolumeFull(enteredTankL, unit)} total storage across ${tankCapacityInfo.count} tanks` 
+      : `${formatVolumeFull(enteredTankL, unit)} tank`;
 
-    if (enteredTankL < peakStormVolume * 0.7) {
+    // Case 1: "May overflow ⚠️" when total tank capacity is less than typical rainfall event runoff (or < 50% of peak month harvest)
+    if (enteredTankL < typicalEventRunoff || enteredTankL < peakHarvest * 0.50) {
       tankStatus = 'overflow';
       statusLabel = 'May overflow ⚠️';
       badgeColor = 'amber';
-      overflowLitres = Math.max(0, Math.round(annualHarvestableL - (enteredTankL * 4)));
-      message = `Your ${formatVolumeFull(enteredTankL, unit)} tank is on the smaller side for this roof. It will fill fast and water may spill over during heavy rains.`;
-      overflowNotice = `Approximately ${formatVolumeFull(overflowLitres, unit)} of overflow could be lost without a larger or second tank.`;
-    } else if (enteredTankL > annualHarvestableL * 0.8 && enteredTankL > recommendedSize * 2) {
+      const eventOverflow = Math.max(0, typicalEventRunoff - enteredTankL);
+      const peakOverflow = Math.max(0, peakHarvest - enteredTankL);
+      overflowLitres = peakOverflow > 0 ? peakOverflow : eventOverflow;
+      message = `Your ${tankDesc} is less than typical rainfall event runoff. It may overflow by about ${formatVolumeFull(overflowLitres, unit)} during heavy rains.`;
+      overflowNotice = `About ${formatVolumeFull(overflowLitres, unit)} of overflow could be lost in wet periods. Consider adding another tank.`;
+    }
+    // Case 2: "Larger than needed 🔻" when tank capacity exceeds what the roof can fill even in the wettest month
+    else if (enteredTankL > peakHarvest && enteredTankL > recommendedSize * 1.5) {
       tankStatus = 'large';
       statusLabel = 'Larger than needed 🔻';
       badgeColor = 'purple';
       overflowLitres = 0;
-      message = `Your ${formatVolumeFull(enteredTankL, unit)} tank is very generous. It will rarely reach 100% capacity from this roof alone.`;
-      overflowNotice = `No water will be lost, but a smaller tank could have saved installation cost.`;
-    } else {
+      const suggestedSize = Math.round(peakHarvest * 0.85);
+      message = `Your ${tankDesc} exceeds what your roof can fill even in the wettest month (~${formatVolumeFull(peakHarvest, unit)}). A smaller size (such as ${formatVolumeFull(suggestedSize, unit)}) could save you money.`;
+      overflowNotice = `No water will be lost, but smaller storage could reduce upfront installation costs.`;
+    }
+    // Case 3: "Good size ✅" when tank holds between 50% and 100% of the peak month's harvest
+    else {
       tankStatus = 'good';
       statusLabel = 'Good size ✅';
       badgeColor = 'emerald';
-      overflowLitres = Math.max(0, Math.round(annualHarvestableL * 0.08));
-      message = `Your ${formatVolumeFull(enteredTankL, unit)} tank is well-balanced for your roof collection and household needs.`;
-      overflowNotice = overflowLitres > 0 
-        ? `Only ~${formatVolumeFull(overflowLitres, unit)} overflow during peak torrential storms.`
-        : `Virtually no water will be wasted during regular rainfall!`;
+      overflowLitres = 0;
+      message = `Your ${tankDesc} holds between 50% and 100% of the peak month's harvest (~${formatVolumeFull(peakHarvest, unit)}). It is well-sized for your roof and rainfall!`;
+      overflowNotice = `Optimal balance of storage capacity and budget. Almost nothing wasted during normal rains!`;
     }
   }
 
@@ -519,6 +672,7 @@ export function runMonthlySimulation(
  * Main Calculation Engine:
  * Location-based Automatic Rainfall:
  * - Short term: 7-day forecast weekly collection
+ * - Seasonal: current calendar month from 3-year historical patterns
  * - Yearly: 3-year historical average (Open-Meteo Archive)
  */
 export function calculateHarvesting(
@@ -528,71 +682,59 @@ export function calculateHarvesting(
 ): CalculationResult {
   const isImperial = unit === 'imperial';
 
-  // 1. Calculate Roof Area (m²)
+  // 1. Normalize roofs and compute individual areas and runoff coefficients
+  const normalizedRoofs = normalizeRoofs(inputs.roofs, inputs.directRoofArea, inputs.roofType);
+  
   let totalRoofArea = 0;
-  let roofsBreakdown: RoofAreaBreakdown[] = [];
+  let weightedCoeffSum = 0;
 
-  if (inputs.roofAreaMode === 'direct') {
-    const rawDirect = Math.max(0, parseFloat(inputs.directRoofArea) || 0);
-    totalRoofArea = isImperial ? sqFeetToSqMeters(rawDirect) : rawDirect;
-    totalRoofArea = Number(totalRoofArea.toFixed(2));
+  const roofsBreakdown: RoofAreaBreakdown[] = normalizedRoofs.map((roof, index) => {
+    const rawA = Math.max(0, parseFloat(roof.area) || 0);
+    const aMeters = roof.areaUnit === 'imperial' ? sqFeetToSqMeters(rawA) : rawA;
+    const coeff = getRunoffCoefficient(roof.typeKey, undefined, assumptions, roof.customEfficiency);
+    
+    totalRoofArea += aMeters;
+    weightedCoeffSum += aMeters * coeff;
 
-    roofsBreakdown = [
-      {
-        id: 'direct-roof',
-        name: 'Total Roof Area',
-        length: 0,
-        width: 0,
-        area: totalRoofArea,
-      },
-    ];
-  } else {
-    roofsBreakdown = (inputs.roofs || []).map((roof, index) => {
-      const rawL = Math.max(0, parseFloat(roof.length) || 0);
-      const rawW = Math.max(0, parseFloat(roof.width) || 0);
-      const lMeters = isImperial ? feetToMeters(rawL) : rawL;
-      const wMeters = isImperial ? feetToMeters(rawW) : rawW;
-      const aMeters = Number((lMeters * wMeters).toFixed(2));
-      return {
-        id: roof.id,
-        name: roof.name || `Roof ${index + 1}`,
-        length: Number(lMeters.toFixed(2)),
-        width: Number(wMeters.toFixed(2)),
-        area: aMeters,
-      };
-    });
+    return {
+      id: roof.id || `roof_${index + 1}`,
+      name: roof.name || `Roof ${index + 1}`,
+      length: 0,
+      width: 0,
+      area: Number(aMeters.toFixed(2)),
+    };
+  });
 
-    totalRoofArea = Number(
-      roofsBreakdown.reduce((sum, r) => sum + r.area, 0).toFixed(2)
-    );
-  }
+  totalRoofArea = Number(totalRoofArea.toFixed(2));
+  const overallRunoffCoeff = totalRoofArea > 0 ? weightedCoeffSum / totalRoofArea : 0.80;
+  const primaryRoofType = normalizedRoofs[0]?.typeKey || 'concrete';
+  const efficiency = Math.round(overallRunoffCoeff * 100);
 
-  // 2. Runoff Coefficient
-  const roofType = inputs.roofType || 'concrete';
-  const runoffCoefficient = getRunoffCoefficient(roofType, inputs.customRunoffCoefficient, assumptions);
-  const efficiency = Math.round(runoffCoefficient * 100);
+  // 2. Storage Tanks
+  const { tanks: normalizedTanks, noTankYet } = normalizeTanks(inputs.tanks, inputs.tankCapacity, inputs.noTankYet);
+  const tankCapacityInfo = getTotalTankCapacity(normalizedTanks, noTankYet, 2000, unit);
+  const tankCapacityL = tankCapacityInfo.totalLitres;
 
-  // 3. Tank Capacity (in litres)
-  const rawTank = inputs.tankCapacity ? Math.max(0, parseFloat(inputs.tankCapacity) || 0) : 0;
-  const tankCapacityL = isImperial ? gallonsToLiters(rawTank) : rawTank;
-
-  // 4. Check whether location has been selected
+  // 3. Location & Rainfall checks
   const historical = inputs.historicalRainfall || inputs.weatherInfo?.historical;
   const hasHistoricalRainfall = typeof inputs.typicalAnnualRainfallMm === 'number' || (historical && typeof historical.typicalAnnualRainfallMm === 'number');
   const hasWeeklyRainfall = typeof inputs.weeklyRainfallMm === 'number' || (inputs.weatherInfo && typeof inputs.weatherInfo.weeklyRainfallMm === 'number');
   const hasLocation = Boolean(inputs.locationName && (hasHistoricalRainfall || hasWeeklyRainfall));
 
   if (!hasLocation) {
-    // Before location is chosen: Return clean state with hasLocation: false
     const householdPlan = calculateHouseholdPlan(0, inputs, unit, assumptions);
 
     return {
       hasLocation: false,
       locationName: inputs.locationName,
       roofs: roofsBreakdown,
+      roofsList: normalizedRoofs,
       roofArea: totalRoofArea,
-      roofType,
-      runoffCoefficient,
+      roofType: primaryRoofType,
+      runoffCoefficient: Number(overallRunoffCoeff.toFixed(2)),
+      tanks: normalizedTanks,
+      totalTankCapacityL: tankCapacityL,
+      isNoTankYet: noTankYet,
       weeklyRainfallMm: 0,
       weeklyHarvestableWater: 0,
       annualRainfallMm: 0,
@@ -622,38 +764,87 @@ export function calculateHarvesting(
     };
   }
 
-  // When location IS chosen:
+  // Location is chosen:
   // Weekly collection from 7-day forecast
   const weeklyRainfallMm = inputs.weeklyRainfallMm ?? inputs.weatherInfo?.weeklyRainfallMm ?? inputs.weatherInfo?.fullWeather?.weeklyPrecipitationSumMm ?? 0;
-  const weeklyHarvestableWater = Math.round((totalRoofArea * weeklyRainfallMm * runoffCoefficient) / 10) * 10;
+  
+  // Weekly harvestable: sum over each roof of (roofAreaM2 * weeklyRainfallMm * roofCoeff)
+  let weeklyHarvestableWater = 0;
+  normalizedRoofs.forEach((r) => {
+    const rawA = Math.max(0, parseFloat(r.area) || 0);
+    const aM2 = r.areaUnit === 'imperial' ? sqFeetToSqMeters(rawA) : rawA;
+    const c = getRunoffCoefficient(r.typeKey, undefined, assumptions, r.customEfficiency);
+    weeklyHarvestableWater += aM2 * weeklyRainfallMm * c;
+  });
+  weeklyHarvestableWater = Math.round(weeklyHarvestableWater / 10) * 10;
+
+  // Monthly collection for current calendar month
+  const now = new Date();
+  const currentMonthIdx = now.getMonth();
+  const baseMonthly = inputs.typicalMonthlyRainfallMm ?? historical?.typicalMonthlyRainfallMm ?? new Array(12).fill(0);
+  const scenario: RainfallScenario = inputs.rainfallScenario || 'normal';
+  const scenarioMultiplier = scenario === 'dry' ? 0.7 : scenario === 'wet' ? 1.3 : 1.0;
+  
+  const monthlyRainfallMm = Number(((baseMonthly[currentMonthIdx] || 0) * scenarioMultiplier).toFixed(1));
+  let monthlyHarvestableWater = 0;
+  normalizedRoofs.forEach((r) => {
+    const rawA = Math.max(0, parseFloat(r.area) || 0);
+    const aM2 = r.areaUnit === 'imperial' ? sqFeetToSqMeters(rawA) : rawA;
+    const c = getRunoffCoefficient(r.typeKey, undefined, assumptions, r.customEfficiency);
+    monthlyHarvestableWater += aM2 * monthlyRainfallMm * c;
+  });
+  monthlyHarvestableWater = Math.round(monthlyHarvestableWater);
 
   // Typical annual rainfall from 3-year historical archive
   const annualRainfallMm = inputs.typicalAnnualRainfallMm ?? historical?.typicalAnnualRainfallMm ?? 0;
-
-  // Simulation scenario scaling: 'dry' (-30%), 'normal' (0%), 'wet' (+30%)
-  const scenario: RainfallScenario = inputs.rainfallScenario || 'normal';
-  const scenarioMultiplier = scenario === 'dry' ? 0.7 : scenario === 'wet' ? 1.3 : 1.0;
   const scaledAnnualRainfallMm = Math.round(annualRainfallMm * scenarioMultiplier * 10) / 10;
 
   // Yearly potential & harvestable calculations
+  let annualHarvestableWater = 0;
+  normalizedRoofs.forEach((r) => {
+    const rawA = Math.max(0, parseFloat(r.area) || 0);
+    const aM2 = r.areaUnit === 'imperial' ? sqFeetToSqMeters(rawA) : rawA;
+    const c = getRunoffCoefficient(r.typeKey, undefined, assumptions, r.customEfficiency);
+    annualHarvestableWater += aM2 * scaledAnnualRainfallMm * c;
+  });
+  const harvestableWater = Math.round(annualHarvestableWater);
   const potentialWater = Math.round(totalRoofArea * scaledAnnualRainfallMm);
-  const harvestableWater = Math.round(potentialWater * runoffCoefficient);
   const waterLost = Math.max(0, potentialWater - harvestableWater);
 
   const actuallyHarvested = tankCapacityL > 0 ? Math.min(harvestableWater, tankCapacityL) : harvestableWater;
   const wastedWater = Math.max(0, harvestableWater - actuallyHarvested);
 
+  // Peak month rain & harvestable for tank assessment
+  const maxMonthRain = Math.max(...baseMonthly, 0);
+  let peakMonthHarvestL = 0;
+  let typicalEventRunoffL = 0;
+  normalizedRoofs.forEach((r) => {
+    const rawA = Math.max(0, parseFloat(r.area) || 0);
+    const aM2 = r.areaUnit === 'imperial' ? sqFeetToSqMeters(rawA) : rawA;
+    const c = getRunoffCoefficient(r.typeKey, undefined, assumptions, r.customEfficiency);
+    peakMonthHarvestL += aM2 * (maxMonthRain * scenarioMultiplier) * c;
+    typicalEventRunoffL += aM2 * 35 * c; // Typical 35mm downpour event
+  });
+  peakMonthHarvestL = Math.round(peakMonthHarvestL) || Math.round(harvestableWater * 0.28);
+  typicalEventRunoffL = Math.round(typicalEventRunoffL) || Math.round(harvestableWater * 0.12);
+
   // Household Plan (Step 2)
-  const householdPlan = calculateHouseholdPlan(harvestableWater, inputs, unit, assumptions);
+  const householdPlan = calculateHouseholdPlan(
+    harvestableWater, 
+    inputs, 
+    unit, 
+    assumptions, 
+    peakMonthHarvestL, 
+    typicalEventRunoffL
+  );
 
   // Monthly Simulation (Step 3)
-  const baseMonthly = inputs.typicalMonthlyRainfallMm ?? historical?.typicalMonthlyRainfallMm ?? new Array(12).fill(annualRainfallMm / 12);
   const scaledMonthly = baseMonthly.map(m => Math.round(m * scenarioMultiplier * 10) / 10);
   const effectiveTankForSim = tankCapacityL > 0 ? tankCapacityL : householdPlan.tankAdequacy.recommendedSize;
 
   const simulation = runMonthlySimulation(
     totalRoofArea,
-    runoffCoefficient,
+    overallRunoffCoeff,
     scaledMonthly,
     effectiveTankForSim,
     householdPlan.dailyDemandTotalL,
@@ -672,8 +863,8 @@ export function calculateHarvesting(
   const savedFormatted = formatVolumeFull(harvestableWater, unit);
   const lostFormatted = formatVolumeFull(waterLost, unit);
 
-  const summarySentence = `At ${inputs.locationName || 'your location'}, you could collect about ${savedFormatted} of clean rainwater in a typical year.`;
-  const suggestionLine = `About ${lostFormatted} (${100 - efficiency}%) splashes off or evaporates from the roof surface.`;
+  const summarySentence = `At ${inputs.locationName || 'your location'}, you could collect about ${savedFormatted} of clean rainwater across ${normalizedRoofs.length} ${normalizedRoofs.length === 1 ? 'roof' : 'roofs'} in a typical year.`;
+  const suggestionLine = `About ${lostFormatted} (${100 - efficiency}%) splashes off or evaporates from your roof surfaces.`;
 
   const savedComparison = getRelatableWaterComparison(
     harvestableWater,
@@ -695,11 +886,17 @@ export function calculateHarvesting(
     hasLocation: true,
     locationName: inputs.locationName,
     roofs: roofsBreakdown,
+    roofsList: normalizedRoofs,
     roofArea: totalRoofArea,
-    roofType,
-    runoffCoefficient,
+    roofType: primaryRoofType,
+    runoffCoefficient: Number(overallRunoffCoeff.toFixed(2)),
+    tanks: normalizedTanks,
+    totalTankCapacityL: tankCapacityL,
+    isNoTankYet: noTankYet,
     weeklyRainfallMm: Number(weeklyRainfallMm.toFixed(1)),
     weeklyHarvestableWater,
+    monthlyRainfallMm,
+    monthlyHarvestableWater,
     annualRainfallMm: Number(annualRainfallMm.toFixed(1)),
     scaledAnnualRainfallMm,
     rainfallScenario: scenario,
@@ -792,13 +989,13 @@ export function getRelatableWaterComparison(
  * ══════════════════════════════════════════════════════════════════════
  * SAVED VS WASTED CALCULATION ENGINE
  * ══════════════════════════════════════════════════════════════════════
- * Formula for students and developers:
- * 1. Rain Falling on Roof (L) = roofArea (m²) × rainfall (mm)
- * 2. Water Collected (L) = Rain Falling on Roof × runoffCoefficient
+ * Formula for students, builders, and developers:
+ * 1. Rain Falling on Roof (L) = sum over roofs of (roofArea (m²) × rainfall (mm))
+ * 2. Water Collected (L) = sum over roofs of (roofArea × rainfall × that roof's runoff coefficient)
  * 3. Lost on Roof (L) = Rain Falling on Roof − Water Collected (loss from roof material, splashing, first flush)
- * 4. Effective Tank Capacity (L) = entered tank capacity (or recommended size if none entered)
- * 5. Saved (L) = min(Water Collected, Effective Tank Capacity) — water safely stored in the tank
- * 6. Overflowed (L) = max(0, Water Collected − Effective Tank Capacity) — water lost because tank is full
+ * 4. Effective Tank Capacity (L) = total storage capacity of all tanks combined (or recommended size if none entered)
+ * 5. Saved (L) = min(Water Collected, Effective Tank Capacity) — water safely stored in tanks
+ * 6. Overflowed (L) = max(0, Water Collected − Effective Tank Capacity) — water lost because all tanks are full
  * 7. Total Wasted (L) = Lost on Roof + Overflowed
  * 
  * Invariance check:
@@ -807,24 +1004,106 @@ export function getRelatableWaterComparison(
  *                = Rain Falling on Roof (Always 100% of rain!)
  */
 export function calcSavedWasted(
-  period: SavedWastedPeriod,
-  roofAreaM2: number,
+  period: CalculationPeriod,
+  roofsOrArea: RoofItem[] | number,
   rainfallMm: number,
-  runoffCoefficient: number,
-  tankCapacityL: number,
+  tanksOrCoeff?: StorageTankItem[] | number,
+  noTankYetOrTankCap?: boolean | number,
   recommendedTankSizeL: number = 2000,
-  hasLocation: boolean = true
+  hasLocation: boolean = true,
+  assumptions: PlanningAssumptions = DEFAULT_ASSUMPTIONS,
+  unit: UnitSystem = 'metric'
 ): SavedWastedBreakdown {
-  const hasRoofArea = roofAreaM2 > 0;
-  const isCustomTank = tankCapacityL > 0;
-  const effectiveTankCapacityL = isCustomTank ? tankCapacityL : (recommendedTankSizeL || 2000);
+  const now = new Date();
+  const currentMonthName = MONTH_NAMES[now.getMonth()];
+  const daysInCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
 
-  // If no location or roof area, return safe 0 state
-  if (!hasLocation || !hasRoofArea || rainfallMm <= 0) {
+  const daysInPeriod = period === 'week' ? 7 : period === 'month' ? daysInCurrentMonth : 365;
+  const periodLabel = period === 'week'
+    ? 'This week (7-Day Forecast)'
+    : period === 'month'
+    ? `This month (Typical for ${currentMonthName})`
+    : 'Typical year (3-Year Average)';
+
+  // Handle both signatures (array of RoofItem vs legacy single number)
+  let roofsList: RoofItem[] = [];
+  if (Array.isArray(roofsOrArea)) {
+    roofsList = normalizeRoofs(roofsOrArea);
+  } else {
+    const singleArea = typeof roofsOrArea === 'number' ? roofsOrArea : 100;
+    roofsList = [{
+      id: 'roof_1',
+      name: 'Main Roof',
+      area: String(singleArea),
+      areaUnit: 'metric',
+      typeKey: 'concrete',
+      customName: '',
+      customEfficiency: 70,
+    }];
+  }
+
+  // Handle tanks
+  let tanksList: StorageTankItem[] = [];
+  let noTank = false;
+  if (Array.isArray(tanksOrCoeff)) {
+    tanksList = tanksOrCoeff;
+    noTank = Boolean(noTankYetOrTankCap);
+  } else if (typeof noTankYetOrTankCap === 'number') {
+    tanksList = [{ id: 'tank_1', name: 'Tank 1', capacity: String(noTankYetOrTankCap) }];
+    noTank = noTankYetOrTankCap <= 0;
+  } else {
+    tanksList = [{ id: 'tank_1', name: 'Tank 1', capacity: '2000' }];
+    noTank = false;
+  }
+
+  const tankCapacityInfo = getTotalTankCapacity(tanksList, noTank, recommendedTankSizeL, unit);
+  const effectiveTankCapacityL = tankCapacityInfo.totalLitres;
+  const isCustomTank = tankCapacityInfo.isCustom;
+
+  // Calculate per-roof values and sums
+  let totalRainOnRoofL = 0;
+  let waterCollectedL = 0;
+  let hasRoofArea = false;
+
+  const safeRainfall = Math.max(0, rainfallMm || 0);
+
+  const roofsBreakdown: RoofCalculationBreakdown[] = roofsList.map((r, idx) => {
+    const rawA = Math.max(0, parseFloat(r.area) || 0);
+    if (rawA > 0) hasRoofArea = true;
+    const aM2 = r.areaUnit === 'imperial' ? sqFeetToSqMeters(rawA) : rawA;
+    const c = getRunoffCoefficient(r.typeKey, undefined, assumptions, r.customEfficiency);
+    const fall = Math.round(aM2 * safeRainfall);
+    const coll = Math.round(fall * c);
+    const lost = Math.max(0, fall - coll);
+
+    totalRainOnRoofL += fall;
+    waterCollectedL += coll;
+
+    const typeOpt = ROOF_TYPES.find((t) => t.key === r.typeKey);
+    const label = r.typeKey === 'custom' && r.customName ? r.customName : typeOpt?.label || 'Roof';
+
+    return {
+      id: r.id || `roof_${idx + 1}`,
+      name: r.name || `Roof ${idx + 1}`,
+      areaM2: Number(aM2.toFixed(1)),
+      areaDisplay: rawA,
+      areaUnit: r.areaUnit,
+      roofType: r.typeKey,
+      roofTypeLabel: label,
+      runoffCoefficient: c,
+      rainFallingL: fall,
+      rainCollectedL: coll,
+      rainLostL: lost,
+    };
+  });
+
+  // If no location or roof area or 0 rainfall
+  if (!hasLocation || !hasRoofArea || safeRainfall <= 0) {
     return {
       period,
-      periodLabel: period === 'week' ? 'This week (7-Day Forecast)' : 'Typical year (3-Year Average)',
-      rainfallMm: Math.max(0, rainfallMm || 0),
+      periodLabel,
+      rainfallMm: safeRainfall,
+      daysInPeriod,
       totalRainOnRoofL: 0,
       waterCollectedL: 0,
       savedL: 0,
@@ -836,28 +1115,56 @@ export function calcSavedWasted(
       overflowPercentage: 0,
       effectiveTankCapacityL,
       isCustomTank,
+      tanksFill: tanksList.map((t, idx) => ({
+        id: t.id || `tank_${idx + 1}`,
+        name: t.name || `Tank ${idx + 1}`,
+        capacityL: parseFloat(t.capacity) || 0,
+        fillL: 0,
+        fillPct: 0,
+      })),
+      roofsBreakdown,
       hasLocation,
       hasRoofArea,
     };
   }
 
-  // 1. Rain falling on roof (L) = roof area (m²) × rainfall (mm)
-  const totalRainOnRoofL = Math.round(roofAreaM2 * rainfallMm);
-
-  // 2. Water reaching gutters and pipes
-  const waterCollectedL = Math.round(totalRainOnRoofL * runoffCoefficient);
-
-  // 3. Wasted part a) Lost on roof
+  // Wasted part a) Lost on roof
   const lostOnRoofL = Math.max(0, totalRainOnRoofL - waterCollectedL);
 
-  // 4. Saved = min(water collected, tank capacity)
+  // Saved = min(water collected, effective tank capacity)
   const savedL = Math.min(waterCollectedL, effectiveTankCapacityL);
 
-  // 5. Wasted part b) Overflowed = water collected minus what tank can hold
+  // Wasted part b) Overflowed = water collected minus what all tanks combined can hold
   const overflowedL = Math.max(0, waterCollectedL - effectiveTankCapacityL);
 
-  // 6. Total wasted = Lost on roof + Overflowed
+  // Total wasted = Lost on roof + Overflowed
   const totalWastedL = lostOnRoofL + overflowedL;
+
+  // In-order filling: Tank 1 fills first, then overflow goes to Tank 2, etc.
+  let remToFill = savedL;
+  const isImperial = unit === 'imperial';
+  const tanksFill: TankFillBreakdown[] = (tanksList && tanksList.length > 0 && !noTank) ? tanksList.map((t, idx) => {
+    const rawCap = parseFloat(t.capacity) || 0;
+    const capL = isImperial ? gallonsToLiters(rawCap) : rawCap;
+    const fillL = Math.min(remToFill, capL);
+    remToFill = Math.max(0, remToFill - fillL);
+    const fillPct = capL > 0 ? Math.round((fillL / capL) * 100) : 0;
+    return {
+      id: t.id || `tank_${idx + 1}`,
+      name: t.name || `Tank ${idx + 1}`,
+      capacityL: Math.round(capL),
+      fillL: Math.round(fillL),
+      fillPct: Math.min(100, Math.max(0, fillPct)),
+    };
+  }) : [
+    {
+      id: 'rec_tank',
+      name: 'Recommended Tank',
+      capacityL: effectiveTankCapacityL,
+      fillL: savedL,
+      fillPct: effectiveTankCapacityL > 0 ? Math.min(100, Math.round((savedL / effectiveTankCapacityL) * 100)) : 0,
+    }
+  ];
 
   // Exact percentages adding up to 100%
   let savedPercentage = 0;
@@ -872,8 +1179,9 @@ export function calcSavedWasted(
 
   return {
     period,
-    periodLabel: period === 'week' ? 'This week (7-Day Forecast)' : 'Typical year (3-Year Average)',
-    rainfallMm,
+    periodLabel,
+    rainfallMm: safeRainfall,
+    daysInPeriod,
     totalRainOnRoofL,
     waterCollectedL,
     savedL,
@@ -885,6 +1193,8 @@ export function calcSavedWasted(
     overflowPercentage,
     effectiveTankCapacityL,
     isCustomTank,
+    tanksFill,
+    roofsBreakdown,
     hasLocation,
     hasRoofArea,
   };
@@ -1017,7 +1327,7 @@ export function getSavedWastedHeadlineSummary(
   const savedBuckets = toBuckets(breakdown.savedL, bucketSize);
   const wastedBuckets = toBuckets(breakdown.totalWastedL, bucketSize);
   const overflowBuckets = toBuckets(breakdown.overflowedL, bucketSize);
-  const periodWord = breakdown.period === 'week' ? 'this week' : 'this year';
+  const periodWord = breakdown.period === 'week' ? 'this week' : breakdown.period === 'month' ? 'this month' : 'this year';
 
   // If waste is small (e.g. overflow is 0 or less than 1 bucket)
   if (breakdown.overflowedL < bucketSize && breakdown.savedPercentage >= 70) {

@@ -11,7 +11,7 @@ import {
   formatLength as fmtLength,
   formatTemp as fmtTemp,
 } from '../utils/units';
-import { AuthUser } from '../types';
+import { AuthUser, CalculationPeriod } from '../types';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 
@@ -23,6 +23,8 @@ interface AppSettingsContextType {
   setTheme: (theme: AppTheme) => void;
   unit: UnitSystem;
   setUnit: (unit: UnitSystem) => void;
+  period: CalculationPeriod;
+  setPeriod: (period: CalculationPeriod) => void;
   labels: UnitLabels;
   formatVolume: (liters: number) => string;
   formatVolumeFull: (liters: number) => string;
@@ -117,6 +119,9 @@ export const AppSettingsProvider: React.FC<{
     setTheme(theme === 'light' ? 'dark' : 'light');
   }, [theme, setTheme]);
 
+  // 3. Calculation Period State (Default: 'week', resets on fresh load)
+  const [period, setPeriod] = useState<CalculationPeriod>('week');
+
   const labels = unit === 'imperial' ? IMPERIAL_LABELS : METRIC_LABELS;
 
   const value: AppSettingsContextType = {
@@ -125,6 +130,8 @@ export const AppSettingsProvider: React.FC<{
     setTheme,
     unit,
     setUnit,
+    period,
+    setPeriod,
     labels,
     formatVolume: (liters: number) => fmtVolume(liters, unit),
     formatVolumeFull: (liters: number) => fmtVolumeFull(liters, unit),

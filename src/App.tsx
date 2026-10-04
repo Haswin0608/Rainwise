@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, type Variants } from 'motion/react';
 import { CalculatorInputs, CalculationResult, PageView, PresetScenario, AuthUser, SavedBuilding } from './types';
-import { calculateHarvesting, DEFAULT_ASSUMPTIONS, DEFAULT_INPUTS } from './utils/calculations';
+import { calculateHarvesting, DEFAULT_ASSUMPTIONS, DEFAULT_INPUTS, normalizeRoofs, normalizeTanks } from './utils/calculations';
 import { RaindropBackground } from './components/RaindropBackground';
 import { Navbar } from './components/Navbar';
 import { HomePage } from './components/HomePage';
@@ -13,18 +13,67 @@ import { AuthModal } from './components/AuthModal';
 import { SaveBuildingModal } from './components/SaveBuildingModal';
 import { EditBuildingModal } from './components/EditBuildingModal';
 import { TipsModal } from './components/TipsModal';
+import { AssumptionsModal } from './components/AssumptionsModal';
+import { SmartBuildingPlanner } from './components/SmartBuildingPlanner';
+import { BuildingPlanReport } from './components/BuildingPlanReport';
+import { 
+  BuildingPlannerAnswers, 
+  GeneratedBuildingPlan, 
+  BuildingTypeKey, 
+  FullWeatherData, 
+  HistoricalRainfallData,
+  PlanningAssumptions
+} from './types';
+import { buildBuildingPlan, loadBuildingPlannerAnswers } from './utils/buildingPlanner';
 import { AppSettingsProvider, useAppSettings } from './context/AppSettingsContext';
 import { subscribeToAuth, logoutUser, getUserBuildings, deleteUserBuilding } from './lib/firebase';
 
 function RainWiseApp() {
-  const [currentPage, setCurrentPage] = useState<PageView>('home');
+  const [currentPage, setCurrentPage] = useState<PageView>('planner');
   const { unit } = useAppSettings();
 
-  // Initial State configured for location-based automatic rainfall
-  const [inputs, setInputs] = useState<CalculatorInputs>(DEFAULT_INPUTS);
+  // Initial State configured for location-based automatic rainfall and persisted to localStorage
+  const [inputs, setInputs] = useState<CalculatorInputs>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('rainwise_calculator_inputs');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const normalizedR = normalizeRoofs(parsed.roofs, parsed.directRoofArea, parsed.roofType);
+          const { tanks: normalizedT, noTankYet } = normalizeTanks(parsed.tanks, parsed.tankCapacity, parsed.noTankYet);
+          return {
+            ...DEFAULT_INPUTS,
+            ...parsed,
+            roofs: normalizedR,
+            tanks: normalizedT,
+            noTankYet,
+          };
+        }
+      } catch (e) {
+        console.error('Error restoring saved inputs:', e);
+      }
+    }
+    return DEFAULT_INPUTS;
+  });
+
+  // Persist inputs to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('rainwise_calculator_inputs', JSON.stringify(inputs));
+    } catch (e) {
+      // ignore
+    }
+  }, [inputs]);
 
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+
+  // Smart Building Planner State
+  const [plannerMode, setPlannerMode] = useState<'wizard' | 'report'>('wizard');
+  const [plannerAnswers, setPlannerAnswers] = useState<BuildingPlannerAnswers | null>(loadBuildingPlannerAnswers());
+  const [generatedPlan, setGeneratedPlan] = useState<GeneratedBuildingPlan | null>(null);
+  const [plannerWeatherData, setPlannerWeatherData] = useState<FullWeatherData | null>(null);
+  const [plannerHistoricalData, setPlannerHistoricalData] = useState<HistoricalRainfallData | null>(null);
 
   // Auth & Saved Buildings State
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
@@ -36,6 +85,7 @@ function RainWiseApp() {
   const [showFirstVisitModal, setShowFirstVisitModal] = useState(false);
   const [showTutorialModal, setShowTutorialModal] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showAssumptionsModal, setShowAssumptionsModal] = useState(false);
   const [authModalTitle, setAuthModalTitle] = useState<string | undefined>(undefined);
   const [authModalSubtitle, setAuthModalSubtitle] = useState<string | undefined>(undefined);
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -141,16 +191,18 @@ function RainWiseApp() {
   // Selecting a saved building from Home Page
   const handleSelectBuilding = (building: SavedBuilding) => {
     setActiveBuilding(building);
+    const normalizedRoofs = normalizeRoofs(building.roofs, building.directRoofArea, building.roofType);
+    const { tanks: normalizedTanks, noTankYet } = normalizeTanks(building.tanks, building.tankCapacity, building.noTankYet);
+
     setInputs(prev => ({
       ...prev,
-      roofAreaMode: building.roofAreaMode || (building.roofs && building.roofs.length > 1 ? 'sections' : 'direct'),
-      directRoofArea: building.directRoofArea || '100',
-      roofs: building.roofs && building.roofs.length > 0 ? building.roofs : [{ id: '1', name: 'Roof 1', length: '12.5', width: '8' }],
-      roofType: building.roofType || 'concrete',
-      efficiency: building.efficiency || '80',
-      tankCapacity: building.tankCapacity || '2000',
-      dailyRequirement: building.dailyRequirement || '240',
+      roofs: normalizedRoofs,
+      tanks: normalizedTanks,
+      noTankYet,
       householdSize: building.householdSize || '4',
+      tankCapacity: normalizedTanks[0]?.capacity || building.tankCapacity || '2000',
+      dailyRequirement: building.dailyRequirement || '240',
+      locationName: building.locationLabel || prev.locationName,
     }));
     setResult(null);
     setCurrentPage('calculator');
@@ -197,9 +249,36 @@ function RainWiseApp() {
     },
   };
 
+  const handleStartSmartPlanner = () => {
+    setPlannerMode('wizard');
+    setCurrentPage('planner');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleStartCalculate = () => {
     setCurrentPage('calculator');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSaveAssumptions = (newAssumptions: PlanningAssumptions) => {
+    setInputs((prev) => ({
+      ...prev,
+      assumptions: newAssumptions,
+    }));
+    if (result) {
+      const recomputed = calculateHarvesting(inputs, unit, newAssumptions);
+      setResult(recomputed);
+    }
+    if (plannerAnswers && generatedPlan) {
+      const updatedPlan = buildBuildingPlan(
+        plannerAnswers,
+        plannerWeatherData,
+        plannerHistoricalData,
+        newAssumptions
+      );
+      setGeneratedPlan(updatedPlan);
+    }
+    showToast('Water planning assumptions updated!');
   };
 
   const handleSelectPreset = (preset: PresetScenario) => {
@@ -230,6 +309,83 @@ function RainWiseApp() {
 
   const handleReset = () => {
     handleNewBlankBuilding();
+  };
+
+  // Smart Building Planner Handler
+  const handlePlanGenerated = (
+    answers: BuildingPlannerAnswers,
+    wData: FullWeatherData | null,
+    hData: HistoricalRainfallData | null
+  ) => {
+    setPlannerAnswers(answers);
+    setPlannerWeatherData(wData);
+    setPlannerHistoricalData(hData);
+
+    const plan = buildBuildingPlan(answers, wData, hData, inputs.assumptions || DEFAULT_ASSUMPTIONS);
+    setGeneratedPlan(plan);
+    setPlannerMode('report');
+
+    const resolvedTankCapacity = answers.tankCapacityL ? String(answers.tankCapacityL) : String(plan.recommendedStorageLitres);
+    const hasSpecifiedTank = Boolean(answers.isTankUserSpecified && answers.tankCapacityL);
+
+    // Also feed answers into the detailed calculator inputs
+    setInputs((prev) => ({
+      ...prev,
+      roofs: [
+        {
+          id: 'roof-planner-1',
+          name: `${answers.buildingType === 'house' ? 'Main House' : 'Main'} Roof`,
+          area: String(answers.roofAreaM2),
+          areaUnit: 'metric',
+          typeKey: answers.roofType,
+        }
+      ],
+      tanks: [
+        {
+          id: 'tank-planner-1',
+          name: 'Storage Tank 1',
+          capacity: resolvedTankCapacity,
+        }
+      ],
+      noTankYet: !hasSpecifiedTank,
+      roofAreaMode: 'direct',
+      directRoofArea: String(answers.roofAreaM2),
+      roofType: answers.roofType,
+      householdSize: String(answers.primaryOccupancy),
+      tankCapacity: resolvedTankCapacity,
+      dailyRequirement: String(plan.dailyDemandLitres),
+      locationName: answers.locationName,
+      latitude: answers.latitude,
+      longitude: answers.longitude,
+      weeklyRainfallMm: plan.weeklyRainfallMm,
+      typicalAnnualRainfallMm: plan.annualRainfallMm,
+      historicalRainfall: hData,
+    }));
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast(`Created RainWise Plan for your ${plan.buildingProfile.name}!`);
+  };
+
+  const handleEditPlannerAnswers = () => {
+    setPlannerMode('wizard');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSwitchBuildingType = (newType: BuildingTypeKey) => {
+    if (!plannerAnswers) return;
+    const updatedAnswers: BuildingPlannerAnswers = {
+      ...plannerAnswers,
+      buildingType: newType,
+    };
+    setPlannerAnswers(updatedAnswers);
+    const newPlan = buildBuildingPlan(
+      updatedAnswers, 
+      plannerWeatherData, 
+      plannerHistoricalData, 
+      inputs.assumptions || DEFAULT_ASSUMPTIONS
+    );
+    setGeneratedPlan(newPlan);
+    showToast(`Updated comparison plan for ${newPlan.buildingProfile.name}!`);
   };
 
   return (
@@ -288,6 +444,7 @@ function RainWiseApp() {
               exit="exit"
             >
               <HomePage
+                onStartSmartPlanner={handleStartSmartPlanner}
                 onStartCalculate={handleStartCalculate}
                 onSelectPreset={handleSelectPreset}
                 currentUser={currentUser}
@@ -300,6 +457,40 @@ function RainWiseApp() {
                 onOpenTips={() => handleOpenTips()}
                 onOpenTutorial={() => setShowTutorialModal(true)}
               />
+            </motion.div>
+          )}
+
+          {currentPage === 'planner' && (
+            <motion.div
+              key="planner"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+            >
+              {plannerMode === 'wizard' || !generatedPlan ? (
+                <SmartBuildingPlanner
+                  onPlanGenerated={handlePlanGenerated}
+                  initialAnswers={plannerAnswers || undefined}
+                  assumptions={inputs.assumptions || DEFAULT_ASSUMPTIONS}
+                  onOpenAssumptions={() => setShowAssumptionsModal(true)}
+                  onBackToHome={() => {
+                    setCurrentPage('home');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                />
+              ) : (
+                <BuildingPlanReport
+                  plan={generatedPlan}
+                  answers={plannerAnswers!}
+                  weatherData={plannerWeatherData}
+                  historicalData={plannerHistoricalData}
+                  assumptions={inputs.assumptions || DEFAULT_ASSUMPTIONS}
+                  onEditAnswers={handleEditPlannerAnswers}
+                  onOpenAssumptions={() => setShowAssumptionsModal(true)}
+                  onSwitchBuildingType={handleSwitchBuildingType}
+                />
+              )}
             </motion.div>
           )}
 
@@ -424,6 +615,14 @@ function RainWiseApp() {
         isOpen={isTipsOpen}
         onClose={() => setIsTipsOpen(false)}
         highlightTipId={selectedTipId}
+      />
+
+      {/* Assumptions Customization Modal */}
+      <AssumptionsModal
+        isOpen={showAssumptionsModal}
+        onClose={() => setShowAssumptionsModal(false)}
+        assumptions={inputs.assumptions || DEFAULT_ASSUMPTIONS}
+        onSaveAssumptions={handleSaveAssumptions}
       />
 
       {/* Footer */}

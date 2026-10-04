@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowRight, 
   ArrowLeft, 
@@ -14,13 +14,18 @@ import {
   Clock, 
   TrendingUp,
   Sparkles,
-  Info
+  Info,
+  Plus,
+  Trash2,
+  Container,
+  Layers
 } from 'lucide-react';
-import { CalculatorInputs, CalculationResult } from '../types';
-import { COMMON_TANK_SIZES } from '../utils/calculations';
+import { CalculatorInputs, CalculationResult, StorageTankItem } from '../types';
+import { COMMON_TANK_SIZES, normalizeTanks, getTotalTankCapacity } from '../utils/calculations';
 import { useAppSettings } from '../context/AppSettingsContext';
 import { litersToGallons, gallonsToLiters } from '../utils/units';
 import { SavedVsWastedSection } from './SavedVsWastedSection';
+import { StepperNumberInput } from './StepperNumberInput';
 
 interface Step2PlanProps {
   inputs: CalculatorInputs;
@@ -45,24 +50,59 @@ export const Step2Plan: React.FC<Step2PlanProps> = ({
   const plan = result.householdPlan;
   const householdSize = parseInt(inputs.householdSize || '4', 10);
 
-  const handleHouseholdChange = (count: number) => {
-    const val = Math.max(1, Math.min(25, count));
+  // Normalize tanks for robust handling
+  const { tanks, noTankYet } = normalizeTanks(inputs.tanks, inputs.tankCapacity, inputs.noTankYet);
+  const tankCapacityInfo = getTotalTankCapacity(tanks, noTankYet, plan?.tankAdequacy.recommendedSize || 2000, unit);
+
+  const handleHouseholdChange = (valStr: string) => {
     onChange({
       ...inputs,
-      householdSize: String(val),
+      householdSize: valStr,
     });
   };
 
-  const handleTankChange = (litresOrGallons: string) => {
+  const handleToggleNoTank = (checked: boolean) => {
     onChange({
       ...inputs,
-      tankCapacity: litresOrGallons,
+      noTankYet: checked,
     });
   };
 
-  const handleQuickTankSelect = (litres: number) => {
+  const handleAddTank = () => {
+    if (tanks.length >= 10) return;
+    const nextIdx = tanks.length + 1;
+    const newTank: StorageTankItem = {
+      id: `tank_${Date.now()}_${nextIdx}`,
+      name: `Tank ${nextIdx}`,
+      capacity: isImperial ? '250' : '1000',
+    };
+    onChange({
+      ...inputs,
+      noTankYet: false,
+      tanks: [...tanks, newTank],
+    });
+  };
+
+  const handleUpdateTank = (id: string, updates: Partial<StorageTankItem>) => {
+    const updated = tanks.map((t) => (t.id === id ? { ...t, ...updates } : t));
+    onChange({
+      ...inputs,
+      tanks: updated,
+    });
+  };
+
+  const handleRemoveTank = (id: string) => {
+    if (tanks.length <= 1) return;
+    const updated = tanks.filter((t) => t.id !== id);
+    onChange({
+      ...inputs,
+      tanks: updated,
+    });
+  };
+
+  const handleQuickTankSelect = (tankId: string, litres: number) => {
     const val = isImperial ? Math.round(litersToGallons(litres)).toString() : litres.toString();
-    handleTankChange(val);
+    handleUpdateTank(tankId, { capacity: val });
   };
 
   return (
@@ -117,11 +157,11 @@ export const Step2Plan: React.FC<Step2PlanProps> = ({
         </div>
       )}
 
-      {/* INPUTS ROW: Household Size & Optional Tank Size */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* INPUTS ROW: Household Size & Multiple Storage Tanks */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         
         {/* Household Size Stepper */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-5 p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -134,109 +174,170 @@ export const Step2Plan: React.FC<Step2PlanProps> = ({
             <h3 className="font-['Outfit',sans-serif] font-bold text-lg text-slate-900 dark:text-white">
               How many people live here?
             </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Used to calculate chore coverage and recommended storage buffer.
+            </p>
           </div>
 
-          <div className="mt-4 flex items-center justify-between gap-3 p-2 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
-            <button
-              type="button"
-              id="step2-household-minus"
-              onClick={() => handleHouseholdChange(householdSize - 1)}
-              className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700 text-slate-800 dark:text-white font-bold text-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-600 shadow-2xs transition cursor-pointer"
-            >
-              -
-            </button>
-
-            <div className="text-center">
-              <span className="text-2xl font-black font-['Outfit',sans-serif] text-slate-900 dark:text-white block">
-                {householdSize}
-              </span>
-              <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                {householdSize === 1 ? 'person' : 'people'} ({plan?.dailyDemandTotalL} L/day total)
-              </span>
-            </div>
-
-            <button
-              type="button"
-              id="step2-household-plus"
-              onClick={() => handleHouseholdChange(householdSize + 1)}
-              className="w-10 h-10 rounded-xl bg-white dark:bg-slate-700 text-slate-800 dark:text-white font-bold text-lg flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-600 shadow-2xs transition cursor-pointer"
-            >
-              +
-            </button>
+          <div className="py-2">
+            <StepperNumberInput
+              id="step2-household-input"
+              label="Residents"
+              unit="people"
+              value={inputs.householdSize || '4'}
+              onChange={handleHouseholdChange}
+              step={1}
+              min={1}
+              max={100}
+              placeholder="4"
+              inputMode="numeric"
+              helperText={`Total non-drinking requirement: ~${plan?.dailyDemandTotalL || 240} L/day`}
+              icon="👥"
+            />
           </div>
         </div>
 
-        {/* Tank Size Input (Optional) with Quick Common Indian Tank Sizes */}
-        <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Tank Storage (Optional)
-              </span>
-              {inputs.tankCapacity ? (
-                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400">
-                  Entered
-                </span>
-              ) : (
-                <span className="text-xs font-semibold text-sky-700 dark:text-sky-400">
-                  Suggested: {formatVolume(plan?.tankAdequacy.recommendedSize || 2000)}
-                </span>
-              )}
+        {/* Multiple Storage Tanks List (Requirement 3) */}
+        <div className="lg:col-span-7 p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">🛢️</span>
+              <div>
+                <h3 className="font-['Outfit',sans-serif] font-bold text-lg text-slate-900 dark:text-white">
+                  Storage Tanks ({noTankYet ? '0' : tanks.length})
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Add up to 10 linked tanks. Tanks fill in order (Tank 1 first).
+                </p>
+              </div>
             </div>
-            <h3 className="font-['Outfit',sans-serif] font-bold text-lg text-slate-900 dark:text-white">
-              Do you already have a tank?
-            </h3>
-          </div>
 
-          <div className="mt-3 space-y-2">
-            <div className="relative">
+            {/* "No tank yet" Toggle */}
+            <label className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer select-none">
               <input
-                type="number"
-                id="step2-tank-input"
-                min="0"
-                step="100"
-                value={inputs.tankCapacity}
-                onChange={(e) => handleTankChange(e.target.value)}
-                placeholder={`Leave blank to recommend (${formatVolume(plan?.tankAdequacy.recommendedSize || 2000)})`}
-                className="w-full text-base sm:text-lg font-bold font-['Outfit',sans-serif] px-3.5 py-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+                type="checkbox"
+                id="step2-no-tank-yet-toggle"
+                checked={noTankYet}
+                onChange={(e) => handleToggleNoTank(e.target.checked)}
+                className="w-4 h-4 text-teal-700 rounded border-slate-300 dark:border-slate-600 focus:ring-teal-500 cursor-pointer"
               />
-              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
-                {isImperial ? 'gallons' : 'litres'}
-              </span>
-            </div>
-
-            {/* Quick Pick Pills for Common Tank Sizes */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Picks:</span>
-              {COMMON_TANK_SIZES.map((size) => {
-                const label = isImperial ? `${Math.round(litersToGallons(size))}g` : `${size}L`;
-                const isSelected = inputs.tankCapacity === (isImperial ? Math.round(litersToGallons(size)).toString() : size.toString());
-                return (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => handleQuickTankSelect(size)}
-                    className={`px-2 py-0.5 rounded-lg text-xs font-bold transition cursor-pointer ${
-                      isSelected
-                        ? 'bg-teal-700 text-white shadow-2xs'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-              {inputs.tankCapacity && (
-                <button
-                  type="button"
-                  onClick={() => handleTankChange('')}
-                  className="text-[10px] text-slate-400 hover:text-slate-600 underline ml-auto cursor-pointer"
-                >
-                  Clear (use suggested)
-                </button>
-              )}
-            </div>
+              <span>No tank yet</span>
+            </label>
           </div>
+
+          {noTankYet ? (
+            <div className="p-5 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 text-center space-y-2.5">
+              <span className="text-2xl block">💡</span>
+              <span className="text-sm font-bold text-sky-900 dark:text-sky-200 block">
+                No storage tank yet?
+              </span>
+              <p className="text-xs text-slate-600 dark:text-slate-400 max-w-md mx-auto">
+                RainWise recommends a <strong className="text-teal-800 dark:text-teal-300 font-bold">{formatVolumeFull(plan?.tankAdequacy.recommendedSize || 2000)}</strong> tank based on your roof area and local rainfall.
+              </p>
+              <button
+                type="button"
+                onClick={() => handleToggleNoTank(false)}
+                className="px-4 py-2 rounded-xl bg-teal-850 hover:bg-teal-900 text-white font-bold text-xs shadow-xs transition cursor-pointer min-h-[40px]"
+              >
+                Configure my own storage tanks
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Tanks Cards */}
+              <div className="space-y-3">
+                {tanks.map((tank, idx) => (
+                  <div
+                    key={tank.id}
+                    id={`tank-card-${tank.id}`}
+                    className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700/80 space-y-3"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="text-xl shrink-0">🛢️</span>
+                        <input
+                          type="text"
+                          maxLength={35}
+                          value={tank.name}
+                          onChange={(e) => handleUpdateTank(tank.id, { name: e.target.value })}
+                          placeholder={`Tank ${idx + 1}`}
+                          className="font-['Outfit',sans-serif] font-bold text-base text-slate-900 dark:text-white bg-transparent border-b border-dashed border-slate-300 dark:border-slate-600 focus:border-teal-600 focus:outline-none px-1 py-0.5 max-w-xs"
+                          aria-label="Tank name"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTank(tank.id)}
+                        disabled={tanks.length <= 1}
+                        title={tanks.length <= 1 ? 'Cannot remove the last remaining tank' : 'Remove this tank'}
+                        aria-label={`Remove ${tank.name}`}
+                        className={`p-2 rounded-xl transition cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center ${
+                          tanks.length <= 1
+                            ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                            : 'text-rose-600 hover:text-rose-800 hover:bg-rose-50 dark:hover:bg-rose-950/60'
+                        }`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <StepperNumberInput
+                      id={`tank-cap-${tank.id}`}
+                      label="Capacity"
+                      unit={isImperial ? 'gal' : 'litres'}
+                      value={tank.capacity}
+                      onChange={(val) => handleUpdateTank(tank.id, { capacity: val })}
+                      step={(curr) => (curr >= 5000 ? 500 : 100)}
+                      min={50}
+                      max={500000}
+                      placeholder={isImperial ? '250' : '1000'}
+                      inputMode="numeric"
+                      compact
+                      quickChips={COMMON_TANK_SIZES.map((size) => ({
+                        label: isImperial ? `${Math.round(litersToGallons(size))}g` : `${size}L`,
+                        value: isImperial ? Math.round(litersToGallons(size)).toString() : size.toString(),
+                      }))}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* ➕ Add Another Tank Button */}
+              <div>
+                {tanks.length < 10 ? (
+                  <button
+                    type="button"
+                    id="step2-add-tank-btn"
+                    onClick={handleAddTank}
+                    className="w-full py-3 rounded-2xl border-2 border-dashed border-teal-500/60 hover:border-teal-600 text-teal-850 dark:text-teal-300 hover:bg-teal-50/50 dark:hover:bg-slate-800/80 text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[48px]"
+                  >
+                    <Plus className="w-4 h-4 text-teal-700 dark:text-teal-400" />
+                    <span>➕ Add another tank (e.g. Garden Tank, Overflow Cistern)</span>
+                  </button>
+                ) : (
+                  <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-semibold text-center">
+                    Maximum 10 storage tanks reached.
+                  </div>
+                )}
+              </div>
+
+              {/* Total Storage Summary */}
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1">
+                <div className="p-3 rounded-xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-800/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-teal-700 dark:text-teal-400 shrink-0" />
+                    <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                      Total storage: <strong className="text-teal-900 dark:text-teal-200 font-mono font-black">{formatVolumeFull(tankCapacityInfo.totalLitres)}</strong> across {tanks.length} {tanks.length === 1 ? 'tank' : 'tanks'}
+                    </span>
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 pl-1 leading-relaxed">
+                  ℹ️ Tanks fill in order: Tank 1 fills first, then overflows into Tank 2, etc. If the last tank fills, the rest overflows.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
       </div>

@@ -4,6 +4,7 @@ import { X, Save, MapPin, Check, AlertCircle, Loader2, Sparkles, LogIn } from 'l
 import { AuthUser, CalculatorInputs, SavedBuilding } from '../types';
 import { saveUserBuilding } from '../lib/firebase';
 import { reverseGeocodeCoords } from '../utils/weather';
+import { normalizeRoofs } from '../utils/calculations';
 
 interface SaveBuildingModalProps {
   isOpen: boolean;
@@ -106,11 +107,8 @@ export const SaveBuildingModal: React.FC<SaveBuildingModalProps> = ({
   }
 
   // Calculate total roof area to preview in the summary
-  const totalRoofArea = (inputs.roofs || []).reduce((acc, r) => {
-    const l = parseFloat(r.length) || 0;
-    const w = parseFloat(r.width) || 0;
-    return acc + l * w;
-  }, 0);
+  const normalizedRoofs = normalizeRoofs(inputs.roofs, inputs.directRoofArea, inputs.roofType);
+  const totalRoofArea = normalizedRoofs.reduce((acc, r) => acc + (parseFloat(r.area) || 0), 0);
 
   const handleDetectLocation = () => {
     setLocationError(null);
@@ -156,7 +154,10 @@ export const SaveBuildingModal: React.FC<SaveBuildingModalProps> = ({
           nickname: nickname.trim(),
           locationLabel: locationLabel.trim() || undefined,
           roofs: inputs.roofs,
-          tankCapacity: inputs.tankCapacity || '1000',
+          tanks: inputs.tanks,
+          noTankYet: inputs.noTankYet,
+          householdSize: inputs.householdSize || '4',
+          tankCapacity: inputs.tanks?.[0]?.capacity || inputs.tankCapacity || '1000',
           efficiency: inputs.efficiency || '80',
           dailyRequirement: inputs.dailyRequirement || undefined,
         },

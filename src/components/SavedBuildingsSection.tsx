@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { SavedBuilding } from '../types';
 import { useAppSettings } from '../context/AppSettingsContext';
+import { normalizeRoofs, normalizeTanks } from '../utils/calculations';
 
 interface SavedBuildingsSectionProps {
   buildings: SavedBuilding[];
@@ -101,11 +102,10 @@ export const SavedBuildingsSection: React.FC<SavedBuildingsSectionProps> = ({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {buildings.map((building) => {
-            const totalArea = (building.roofs || []).reduce((acc, r) => {
-              const l = parseFloat(r.length) || 0;
-              const w = parseFloat(r.width) || 0;
-              return acc + l * w;
-            }, 0);
+            const normalizedRoofs = normalizeRoofs(building.roofs, building.directRoofArea, building.roofType);
+            const totalArea = normalizedRoofs.reduce((acc, r) => acc + (parseFloat(r.area) || 0), 0);
+            const { tanks: normalizedTanks, noTankYet } = normalizeTanks(building.tanks, building.tankCapacity, building.noTankYet);
+            const totalTankL = noTankYet ? 0 : normalizedTanks.reduce((acc, t) => acc + (parseFloat(t.capacity) || 0), 0);
 
             const isConfirmingDelete = deleteConfirmId === building.id;
 
@@ -202,14 +202,20 @@ export const SavedBuildingsSection: React.FC<SavedBuildingsSectionProps> = ({
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-750 flex items-center gap-2">
                       <Layers className="w-3.5 h-3.5 text-teal-700 dark:text-teal-400 shrink-0" />
                       <span>
-                        <strong>{formatArea(totalArea)}</strong> ({building.roofs.length} {building.roofs.length === 1 ? 'roof' : 'roofs'})
+                        <strong>{formatArea(totalArea)}</strong> ({normalizedRoofs.length} {normalizedRoofs.length === 1 ? 'roof' : 'roofs'})
                       </span>
                     </div>
 
                     <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-750 flex items-center gap-2">
                       <Container className="w-3.5 h-3.5 text-sky-700 dark:text-sky-400 shrink-0" />
                       <span>
-                        <strong>{formatVolume(Number(building.tankCapacity) || 0)}</strong> tank
+                        {noTankYet ? (
+                          <strong>No tank</strong>
+                        ) : (
+                          <>
+                            <strong>{formatVolume(totalTankL)}</strong> ({normalizedTanks.length} {normalizedTanks.length === 1 ? 'tank' : 'tanks'})
+                          </>
+                        )}
                       </span>
                     </div>
                   </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
 import { 
   Droplet, 
@@ -11,12 +11,12 @@ import {
   Calendar,
   CloudRain,
   ShieldCheck,
-  RotateCcw
+  RotateCcw,
+  Plus
 } from 'lucide-react';
 import { 
   CalculationResult, 
   CalculatorInputs, 
-  SavedWastedPeriod,
   EverydayConversionFactors 
 } from '../types';
 import { 
@@ -34,6 +34,7 @@ import {
   MONTH_NAMES
 } from '../utils/calculations';
 import { useAppSettings } from '../context/AppSettingsContext';
+import { PeriodSelector } from './PeriodSelector';
 
 interface SavedVsWastedSectionProps {
   result: CalculationResult;
@@ -50,8 +51,7 @@ export const SavedVsWastedSection: React.FC<SavedVsWastedSectionProps> = ({
   onGoToLocation,
   onGoToRoofInput,
 }) => {
-  const { formatVolumeFull, unit } = useAppSettings();
-  const [period, setPeriod] = useState<SavedWastedPeriod>('year');
+  const { formatVolumeFull, formatVolume, formatArea, unit, period } = useAppSettings();
 
   const conversions: EverydayConversionFactors = 
     inputs.assumptions?.conversions || DEFAULT_EVERYDAY_CONVERSIONS;
@@ -65,22 +65,25 @@ export const SavedVsWastedSection: React.FC<SavedVsWastedSectionProps> = ({
     : 60;
 
   const recommendedTankL = result.householdPlan?.tankAdequacy.recommendedSize || 2000;
-  const userTankL = result.tankCapacity;
 
   // Active rainfall depending on period
   const rainfallMm = period === 'week' 
     ? (result.weeklyRainfallMm || 0) 
-    : (result.annualRainfallMm || 0);
+    : period === 'month'
+    ? (result.monthlyRainfallMm ?? (result.scaledAnnualRainfallMm ? Math.round(result.scaledAnnualRainfallMm / 12) : 0))
+    : (result.scaledAnnualRainfallMm || result.annualRainfallMm || 0);
 
-  // Compute live breakdown using the small commented calculation engine
+  // Compute live breakdown using the calculation engine with multi-roofs and multi-tanks
   const breakdown = calcSavedWasted(
     period,
-    result.roofArea,
+    result.roofsList && result.roofsList.length > 0 ? result.roofsList : inputs.roofs,
     rainfallMm,
-    result.runoffCoefficient,
-    userTankL,
+    result.tanks && result.tanks.length > 0 ? result.tanks : inputs.tanks,
+    inputs.noTankYet ?? result.isNoTankYet,
     recommendedTankL,
-    result.hasLocation
+    result.hasLocation,
+    inputs.assumptions,
+    unit
   );
 
   // Headline summary at top
@@ -113,11 +116,16 @@ export const SavedVsWastedSection: React.FC<SavedVsWastedSectionProps> = ({
   // CHART B: TANK CAPACITY & OVERFLOW ANIMATION VALUES
   // ═══════════════════════════════════════════════════════════════════
   const effectiveTank = breakdown.effectiveTankCapacityL || 2000;
-  // Fill percent relative to tank capacity
-  const tankFillPct = effectiveTank > 0 
-    ? Math.min(100, Math.round((breakdown.savedL / effectiveTank) * 100)) 
-    : 0;
+  const isNoTank = Boolean(inputs.noTankYet || result.isNoTankYet);
   const hasOverflow = breakdown.overflowedL > 0;
+
+  // Active period title for section headers
+  const currentMonthName = MONTH_NAMES[new Date().getMonth()];
+  const activePeriodTitle = period === 'week'
+    ? 'Water you could save this week'
+    : period === 'month'
+    ? `Water you could save this month (${currentMonthName})`
+    : 'Water you could save in a typical year';
 
   // ═══════════════════════════════════════════════════════════════════
   // CHART C: MONTHLY STACKED BAR CHART DATA
@@ -232,14 +240,14 @@ export const SavedVsWastedSection: React.FC<SavedVsWastedSectionProps> = ({
       </div>
 
       {/* ═════════════════════════════════════════════════════════════
-          SECTION HEADER + PERIOD TOGGLE ("This week | Typical year")
+          SECTION HEADER + THREE-WAY PERIOD TOGGLE
           ═════════════════════════════════════════════════════════════ */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-2xl">⚖️</span>
             <h3 className="font-['Outfit',sans-serif] font-black text-xl sm:text-2xl text-slate-900 dark:text-white tracking-tight">
-              Saved vs Wasted Water
+              {activePeriodTitle}
             </h3>
           </div>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
@@ -247,42 +255,8 @@ export const SavedVsWastedSection: React.FC<SavedVsWastedSectionProps> = ({
           </p>
         </div>
 
-        {/* Period Toggle Button: min 44px target, high contrast */}
-        <div 
-          role="radiogroup" 
-          aria-label="Select forecast time period"
-          className="inline-flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 self-start sm:self-center"
-        >
-          <button
-            type="button"
-            role="radio"
-            aria-checked={period === 'week'}
-            onClick={() => setPeriod('week')}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[44px] flex items-center gap-1.5 ${
-              period === 'week'
-                ? 'bg-teal-800 text-white shadow-md'
-                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            <CloudRain className="w-4 h-4" />
-            <span>This week</span>
-          </button>
-
-          <button
-            type="button"
-            role="radio"
-            aria-checked={period === 'year'}
-            onClick={() => setPeriod('year')}
-            className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer min-h-[44px] flex items-center gap-1.5 ${
-              period === 'year'
-                ? 'bg-teal-800 text-white shadow-md'
-                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            <Calendar className="w-4 h-4" />
-            <span>Typical year</span>
-          </button>
-        </div>
+        {/* Three-way Global Period Selector: [ This week ] [ This month ] [ Typical year ] */}
+        <PeriodSelector showDescriptions />
       </div>
 
       {/* ═════════════════════════════════════════════════════════════
@@ -471,7 +445,7 @@ export const SavedVsWastedSection: React.FC<SavedVsWastedSectionProps> = ({
           </div>
         </div>
 
-        {/* ───────── CHART B: ANIMATED WATER TANK GRAPHIC ───────── */}
+        {/* ───────── CHART B: ANIMATED WATER TANK GRAPHIC (MULTIPLE TANKS) ───────── */}
         <div className="lg:col-span-6 p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between space-y-4">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
             <div>
@@ -479,101 +453,166 @@ export const SavedVsWastedSection: React.FC<SavedVsWastedSectionProps> = ({
                 Visual Chart B
               </div>
               <h4 className="font-['Outfit',sans-serif] font-bold text-lg text-slate-900 dark:text-white">
-                Live Tank Fill &amp; Overflow
+                Live Tank Fill &amp; Overflow ({breakdown.tanksFill.length} {breakdown.tanksFill.length === 1 ? 'Tank' : 'Tanks'})
               </h4>
             </div>
             <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
-              hasOverflow
+              isNoTank
+                ? 'bg-rose-100 text-rose-900 border border-rose-300 dark:bg-rose-950 dark:text-rose-200 dark:border-rose-800'
+                : hasOverflow
                 ? 'bg-orange-100 text-orange-900 border border-orange-300 dark:bg-orange-950 dark:text-orange-200 dark:border-orange-800'
                 : 'bg-emerald-100 text-emerald-900 border border-emerald-300 dark:bg-emerald-950 dark:text-emerald-200 dark:border-emerald-800'
             }`}>
-              {hasOverflow ? '⚠️ Tank Overflowing' : '✅ Safely Within Tank'}
+              {isNoTank ? '⚠️ No Tank (100% Wasted)' : hasOverflow ? '⚠️ Tanks Overflowing' : '✅ Safely Within Tanks'}
             </span>
           </div>
 
           {/* Animated Tank Diagram */}
           <div className="relative flex flex-col items-center justify-center p-4 rounded-2xl bg-gradient-to-b from-slate-50 to-slate-100/70 dark:from-slate-850 dark:to-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden min-h-[240px]">
             
-            {/* Overflow spilling label & graphic if overflow occurs */}
-            {hasOverflow && (
-              <div className="absolute top-2 right-2 sm:right-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-500 text-white text-xs font-bold shadow-md animate-bounce">
-                <span>💦 This water is going to waste.</span>
-              </div>
-            )}
-
-            {/* Physical Tank Container */}
-            <div className="relative w-44 sm:w-48 h-56 rounded-3xl border-4 border-slate-700 dark:border-slate-600 bg-white/90 dark:bg-slate-900/90 shadow-inner overflow-hidden flex flex-col justify-end">
-              
-              {/* Spout on top right for overflow discharge */}
-              <div className={`absolute top-4 -right-1 w-4 h-3 rounded-r-md border border-slate-700 ${
-                hasOverflow ? 'bg-orange-500 shadow-sm' : 'bg-slate-300 dark:bg-slate-700'
-              }`} />
-
-              {/* Water Spilling Drop Animation when overflowing */}
-              {hasOverflow && (
-                <div className="absolute top-7 right-0 flex flex-col items-center z-10 motion-safe:animate-pulse">
-                  <div className="w-1.5 h-3 bg-orange-400 rounded-full my-0.5" />
-                  <div className="w-2 h-2.5 bg-orange-500 rounded-full my-0.5" />
+            {/* If user has no tank yet */}
+            {isNoTank ? (
+              <div className="py-6 px-4 text-center space-y-3 w-full">
+                <div className="w-16 h-16 mx-auto rounded-3xl bg-rose-50 dark:bg-rose-950/60 border-2 border-dashed border-rose-300 dark:border-rose-800 flex items-center justify-center text-3xl">
+                  🪣
                 </div>
-              )}
-
-              {/* Level Markings (0%, 25%, 50%, 75%, 100%) */}
-              <div className="absolute inset-y-2 left-2 flex flex-col justify-between text-[9px] font-mono font-bold text-slate-400 pointer-events-none select-none z-10">
-                <span>100%</span>
-                <span>75%</span>
-                <span>50%</span>
-                <span>25%</span>
-                <span>0%</span>
-              </div>
-
-              {/* Tank Water Body with Fill Height */}
-              <div 
-                className={`w-full transition-all duration-700 ease-out relative ${
-                  hasOverflow 
-                    ? 'bg-gradient-to-t from-teal-800 via-teal-600 to-emerald-500' 
-                    : 'bg-gradient-to-t from-teal-700 to-emerald-500'
-                }`}
-                style={{ height: `${Math.max(4, Math.min(100, tankFillPct))}%` }}
-              >
-                {/* Wave Ripple Animation on Water Surface */}
-                <div 
-                  className="absolute top-0 left-0 right-0 h-2.5 bg-white/30 -translate-y-1 motion-safe:animate-pulse"
-                  aria-hidden="true"
-                />
-
-                {/* Fill Percentage Label */}
-                <div className="absolute inset-0 flex items-center justify-center text-white font-['Outfit',sans-serif] font-black text-lg drop-shadow-md">
-                  {tankFillPct}% Full
-                </div>
-              </div>
-
-              {/* Roof pipe feeding into tank */}
-              <div className="absolute top-0 left-8 w-4 h-4 bg-slate-300 dark:bg-slate-700 border-x border-slate-600" />
-            </div>
-
-            {/* Tank Capacity Readout */}
-            <div className="text-center mt-3">
-              <span className="font-['Outfit',sans-serif] font-bold text-sm sm:text-base text-slate-900 dark:text-white block">
-                {breakdown.savedL.toLocaleString()} L saved of {effectiveTank.toLocaleString()} L capacity
-              </span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                {hasOverflow ? (
-                  <strong className="text-orange-700 dark:text-orange-300">
-                    +{breakdown.overflowedL.toLocaleString()} L overflowing past tank capacity
-                  </strong>
-                ) : (
-                  `${Math.max(0, effectiveTank - breakdown.savedL).toLocaleString()} L headroom remaining in tank`
+                <h4 className="font-['Outfit',sans-serif] font-extrabold text-base sm:text-lg text-rose-900 dark:text-rose-200 leading-snug">
+                  Without a tank, 100% of your harvestable water ({formatVolume(breakdown.waterCollectedL)}) is wasted!
+                </h4>
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
+                  All rain falling on your roof is currently lost to evaporation or drains away. Adding a storage tank captures this water for your household chores.
+                </p>
+                {onGoToRoofInput && (
+                  <button
+                    type="button"
+                    onClick={onGoToRoofInput}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-teal-850 hover:bg-teal-900 text-white font-bold text-xs shadow-md transition cursor-pointer min-h-[44px]"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Add a Storage Tank</span>
+                  </button>
                 )}
-              </span>
-            </div>
+              </div>
+            ) : (
+              <>
+                {/* Overflow spilling label & graphic if overflow occurs */}
+                {hasOverflow && (
+                  <div className="absolute top-2 right-2 sm:right-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-500 text-white text-xs font-bold shadow-md animate-bounce">
+                    <span>💦 +{formatVolume(breakdown.overflowedL)} wasted</span>
+                  </div>
+                )}
+
+                {/* Tanks side-by-side in horizontal container */}
+                <div className="w-full flex items-end justify-center gap-3 sm:gap-5 overflow-x-auto py-3 px-2">
+                  {breakdown.tanksFill.map((tank, idx) => {
+                    const isLastTank = idx === breakdown.tanksFill.length - 1;
+                    const tankHasOverflow = isLastTank && hasOverflow;
+
+                    return (
+                      <div key={tank.id} className="flex items-end gap-2 shrink-0">
+                        {/* Single Tank Card */}
+                        <div className="flex flex-col items-center">
+                          {/* Tank Title & Capacity */}
+                          <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[110px] mb-1">
+                            {tank.name}
+                          </span>
+
+                          {/* Physical Tank Container */}
+                          <div className="relative w-28 sm:w-32 h-48 sm:h-52 rounded-2xl border-4 border-slate-700 dark:border-slate-600 bg-white/90 dark:bg-slate-900/90 shadow-inner overflow-hidden flex flex-col justify-end">
+                            
+                            {/* Overflow spout on right if this tank overflows */}
+                            {tankHasOverflow && (
+                              <>
+                                <div className="absolute top-3 -right-1 w-3.5 h-3 rounded-r-md border border-slate-700 bg-orange-500 shadow-sm" />
+                                <div className="absolute top-6 right-0 flex flex-col items-center z-10 motion-safe:animate-pulse">
+                                  <div className="w-1.5 h-2.5 bg-orange-400 rounded-full my-0.5" />
+                                  <div className="w-2 h-2 bg-orange-500 rounded-full my-0.5" />
+                                </div>
+                              </>
+                            )}
+
+                            {/* Level Markings (0%, 50%, 100%) */}
+                            <div className="absolute inset-y-2 left-1.5 flex flex-col justify-between text-[8px] font-mono font-bold text-slate-400 pointer-events-none select-none z-10">
+                              <span>100%</span>
+                              <span>50%</span>
+                              <span>0%</span>
+                            </div>
+
+                            {/* Water Body */}
+                            <div 
+                              className={`w-full transition-all duration-700 ease-out relative ${
+                                tank.fillPct >= 100
+                                  ? 'bg-gradient-to-t from-teal-800 via-teal-600 to-emerald-500' 
+                                  : 'bg-gradient-to-t from-teal-700 to-emerald-500'
+                              }`}
+                              style={{ height: `${Math.max(4, Math.min(100, tank.fillPct))}%` }}
+                            >
+                              {/* Wave Ripple */}
+                              <div 
+                                className="absolute top-0 left-0 right-0 h-2 bg-white/30 -translate-y-0.5 motion-safe:animate-pulse"
+                                aria-hidden="true"
+                              />
+
+                              {/* Fill % label */}
+                              <div className="absolute inset-0 flex items-center justify-center text-white font-['Outfit',sans-serif] font-black text-sm drop-shadow-md">
+                                {tank.fillPct}%
+                              </div>
+                            </div>
+
+                            {/* Inflow Pipe on top */}
+                            <div className="absolute top-0 left-4 w-3 h-3 bg-slate-300 dark:bg-slate-700 border-x border-slate-600" />
+                          </div>
+
+                          {/* Tank Stats below cylinder */}
+                          <div className="text-center mt-2">
+                            <span className="font-mono font-bold text-xs text-slate-800 dark:text-slate-200 block">
+                              {formatVolume(tank.fillL)}
+                            </span>
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block">
+                              of {formatVolume(tank.capacityL)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Connecting Pipe / Arrow between tanks */}
+                        {!isLastTank && (
+                          <div className="mb-24 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
+                            <span className="text-xs font-bold leading-none mb-1">➡️</span>
+                            <span className="text-[9px] uppercase tracking-tighter font-semibold">fills</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Tanks Total Storage Readout */}
+                <div className="text-center mt-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60 w-full">
+                  <span className="font-['Outfit',sans-serif] font-bold text-sm sm:text-base text-slate-900 dark:text-white block">
+                    {formatVolume(breakdown.savedL)} saved across {breakdown.tanksFill.length} {breakdown.tanksFill.length === 1 ? 'tank' : 'tanks'} ({formatVolume(breakdown.effectiveTankCapacityL)} total capacity)
+                  </span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    {hasOverflow ? (
+                      <strong className="text-orange-700 dark:text-orange-300">
+                        +{formatVolume(breakdown.overflowedL)} overflowing past all tanks
+                      </strong>
+                    ) : (
+                      `${formatVolume(Math.max(0, breakdown.effectiveTankCapacityL - breakdown.savedL))} remaining headroom across tanks`
+                    )}
+                  </span>
+                </div>
+              </>
+            )}
 
           </div>
 
           <p className="text-xs text-slate-600 dark:text-slate-400 text-center">
-            {hasOverflow ? (
-              <span>😟 <strong>{overflowBuckets.toLocaleString()} buckets</strong> spilled over. A larger tank would capture this water.</span>
+            {isNoTank ? (
+              <span>⚠️ No tank configured yet. Harvestable rain is being lost.</span>
+            ) : hasOverflow ? (
+              <span>😟 <strong>{overflowBuckets.toLocaleString()} buckets</strong> spilled over. Tanks fill in order (Tank 1 first, then Tank 2). Consider adding another tank.</span>
             ) : (
-              <span>👏 No overflow detected. Your tank is adequately sized for this period&apos;s rain.</span>
+              <span>👏 No overflow detected. Tanks fill in sequence and have enough room for this period&apos;s rain.</span>
             )}
           </p>
         </div>

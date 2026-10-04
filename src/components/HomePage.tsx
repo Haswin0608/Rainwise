@@ -7,6 +7,7 @@ import { SavedBuildingsSection } from './SavedBuildingsSection';
 import { useAppSettings } from '../context/AppSettingsContext';
 
 interface HomePageProps {
+  onStartSmartPlanner: () => void;
   onStartCalculate: () => void;
   onSelectPreset: (preset: PresetScenario) => void;
   currentUser: AuthUser | null;
@@ -21,6 +22,7 @@ interface HomePageProps {
 }
 
 export const HomePage: React.FC<HomePageProps> = ({
+  onStartSmartPlanner,
   onStartCalculate,
   onSelectPreset,
   currentUser,
@@ -111,17 +113,45 @@ export const HomePage: React.FC<HomePageProps> = ({
           </motion.div>
         )}
 
-        {/* MAIN ACTION BUTTONS: "Start Water Planning", "❓ Tutorial", "Practical Tips" */}
-        <motion.div variants={itemVariants} className="mb-10 w-full sm:w-auto flex flex-col sm:flex-row items-center justify-center gap-3">
-          <button
-            id="home-calculate-cta"
-            onClick={onStartCalculate}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-9 py-4 sm:py-5 text-lg sm:text-xl font-bold text-white bg-teal-800 hover:bg-teal-900 active:bg-teal-950 dark:bg-teal-700 dark:hover:bg-teal-800 rounded-2xl shadow-lg shadow-teal-900/20 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer min-h-[60px]"
-          >
-            <span>Start Water Planning</span>
-            <ArrowRight className="w-6 h-6" />
-          </button>
+        {/* SMART BUILDING PLANNER FEATURED CARD (New starting point) */}
+        <motion.div variants={itemVariants} className="w-full mb-8">
+          <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-teal-800 via-teal-900 to-slate-900 text-white shadow-xl relative overflow-hidden border border-teal-700/50 text-left">
+            <div className="absolute right-0 bottom-0 translate-x-8 translate-y-8 opacity-10 text-9xl pointer-events-none select-none">
+              🏛️
+            </div>
+            <div className="relative z-10 max-w-xl space-y-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-700/60 border border-teal-500/50 text-teal-200 text-xs font-bold uppercase tracking-wider">
+                <span>✨ New Starting Point</span>
+              </div>
+              <h2 className="font-['Outfit',sans-serif] font-black text-2xl sm:text-3xl text-white tracking-tight leading-tight">
+                Before you build, let RainWise design your rainwater system.
+              </h2>
+              <p className="text-sm sm:text-base text-teal-100/90 leading-relaxed">
+                Step-by-step sizing for individual homes, apartments, schools, offices, hospitals, and factories.
+              </p>
+              <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <button
+                  id="home-smart-planner-btn"
+                  onClick={onStartSmartPlanner}
+                  className="inline-flex items-center justify-center gap-2.5 px-7 py-4 text-base sm:text-lg font-black text-teal-950 bg-amber-400 hover:bg-amber-300 active:bg-amber-500 rounded-2xl shadow-lg transition-all cursor-pointer min-h-[52px]"
+                >
+                  <span>Launch Smart Building Planner</span>
+                  <ArrowRight className="w-5 h-5 text-teal-950" />
+                </button>
+                <button
+                  id="home-calculate-cta"
+                  onClick={onStartCalculate}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-3.5 text-sm font-bold text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl transition cursor-pointer min-h-[48px]"
+                >
+                  <span>Detailed 3-Step Calculator</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
 
+        {/* SECONDARY ACTION BUTTONS: "❓ Tutorial", "Practical Tips" */}
+        <motion.div variants={itemVariants} className="mb-10 w-full sm:w-auto flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
             id="home-tutorial-cta"
             onClick={onOpenTutorial}

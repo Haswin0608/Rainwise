@@ -71,16 +71,16 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Center Navigation Tabs */}
         <nav className="flex items-center gap-1 p-1 bg-slate-100/90 dark:bg-slate-800/90 rounded-xl border border-slate-200/80 dark:border-slate-700 text-xs sm:text-sm font-medium">
           <button
-            id="nav-home-tab"
-            onClick={() => onNavigate('home')}
+            id="nav-planner-tab"
+            onClick={() => onNavigate('planner')}
             className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-              currentPage === 'home'
-                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs font-semibold'
+              currentPage === 'planner'
+                ? 'bg-white dark:bg-slate-700 text-teal-800 dark:text-teal-300 shadow-2xs font-semibold'
                 : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'
             }`}
           >
-            <Home className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Home</span>
+            <span className="text-xs">🏛️</span>
+            <span>Smart Planner</span>
           </button>
 
           <button
@@ -93,7 +93,21 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <Calculator className="w-3.5 h-3.5" />
-            <span>Water Planner</span>
+            <span className="hidden sm:inline">Detailed Calculator</span>
+            <span className="sm:hidden">Calculator</span>
+          </button>
+
+          <button
+            id="nav-home-tab"
+            onClick={() => onNavigate('home')}
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+              currentPage === 'home'
+                ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs font-semibold'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'
+            }`}
+          >
+            <Home className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Home</span>
           </button>
 
           {/* Tutorial / How It Works Button */}

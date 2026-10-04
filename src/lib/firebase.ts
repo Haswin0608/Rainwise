@@ -22,7 +22,8 @@ import {
   orderBy,
   getDocFromServer,
 } from 'firebase/firestore';
-import { AuthUser, SavedBuilding, RoofSection } from '../types';
+import { AuthUser, SavedBuilding, RoofSection, RoofItem, StorageTankItem } from '../types';
+import { normalizeRoofs, normalizeTanks } from '../utils/calculations';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 // Initialize Firebase App instance
@@ -204,9 +205,12 @@ export async function logoutUser(): Promise<void> {
 export interface SaveBuildingPayload {
   nickname: string;
   locationLabel?: string;
-  roofs: RoofSection[];
-  tankCapacity: string;
-  efficiency: string;
+  roofs: (RoofItem | RoofSection)[];
+  tanks?: StorageTankItem[];
+  noTankYet?: boolean;
+  householdSize?: string;
+  tankCapacity?: string;
+  efficiency?: string;
   dailyRequirement?: string;
 }
 
@@ -220,12 +224,19 @@ export async function fetchUserBuildings(userId: string): Promise<SavedBuilding[
     const list: SavedBuilding[] = [];
     snapshot.forEach((docSnap) => {
       const data = docSnap.data();
+      const normalizedRoofs = normalizeRoofs(data.roofs, data.directRoofArea, data.roofType);
+      const { tanks: normalizedTanks, noTankYet } = normalizeTanks(data.tanks, data.tankCapacity, data.noTankYet);
+
       list.push({
         id: docSnap.id,
         userId: data.userId || userId,
         nickname: data.nickname || 'Unnamed Building',
         locationLabel: data.locationLabel || undefined,
-        roofs: Array.isArray(data.roofs) ? data.roofs : [],
+        version: data.version || 1,
+        roofs: normalizedRoofs,
+        tanks: normalizedTanks,
+        noTankYet,
+        householdSize: String(data.householdSize || '4'),
         tankCapacity: String(data.tankCapacity || '1000'),
         efficiency: String(data.efficiency || '80'),
         dailyRequirement: data.dailyRequirement ? String(data.dailyRequirement) : undefined,
@@ -249,17 +260,19 @@ export async function saveUserBuilding(
   const docRef = doc(db, 'users', userId, 'buildings', buildingId);
   const now = new Date().toISOString();
 
+  const normalizedRoofs = normalizeRoofs(payload.roofs);
+  const { tanks: normalizedTanks, noTankYet } = normalizeTanks(payload.tanks, payload.tankCapacity, payload.noTankYet);
+
   const docData: Record<string, any> = {
     id: buildingId,
     userId,
+    version: 2,
     nickname: payload.nickname.trim(),
-    roofs: payload.roofs.map((r, idx) => ({
-      id: r.id || `roof_${idx + 1}`,
-      name: r.name || `Roof ${idx + 1}`,
-      length: String(r.length || '0'),
-      width: String(r.width || '0'),
-    })),
-    tankCapacity: String(payload.tankCapacity || '1000'),
+    roofs: normalizedRoofs,
+    tanks: normalizedTanks,
+    noTankYet,
+    householdSize: payload.householdSize || '4',
+    tankCapacity: normalizedTanks[0]?.capacity || payload.tankCapacity || '1000',
     efficiency: String(payload.efficiency || '80'),
     updatedAt: now,
   };
@@ -285,7 +298,11 @@ export async function saveUserBuilding(
     userId,
     nickname: payload.nickname.trim(),
     locationLabel: payload.locationLabel?.trim() || undefined,
-    roofs: docData.roofs,
+    version: 2,
+    roofs: normalizedRoofs,
+    tanks: normalizedTanks,
+    noTankYet,
+    householdSize: docData.householdSize,
     tankCapacity: docData.tankCapacity,
     efficiency: docData.efficiency,
     dailyRequirement: docData.dailyRequirement,
