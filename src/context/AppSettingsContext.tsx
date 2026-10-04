@@ -43,29 +43,15 @@ export const AppSettingsProvider: React.FC<{
   children: React.ReactNode;
   currentUser?: AuthUser | null;
 }> = ({ children, currentUser }) => {
-  // 1. Theme State (Respect prefers-color-scheme on first visit)
-  const [theme, setThemeState] = useState<AppTheme>(() => {
-    if (typeof window !== 'undefined') {
-      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as AppTheme | null;
-      if (savedTheme === 'light' || savedTheme === 'dark') {
-        return savedTheme;
-      }
-      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        return 'dark';
-      }
-    }
-    return 'light';
-  });
+  // 1. Theme State (Unified Dark Theme)
+  const [theme, setThemeState] = useState<AppTheme>('dark');
 
-  // Apply theme to DOM
+  // Apply dark theme to DOM
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
+    root.classList.add('dark');
+    root.style.colorScheme = 'dark';
+    localStorage.setItem(THEME_STORAGE_KEY, 'dark');
   }, [theme]);
 
   // 2. Unit State (Default: metric)

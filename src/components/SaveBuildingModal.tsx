@@ -51,23 +51,23 @@ export const SaveBuildingModal: React.FC<SaveBuildingModalProps> = ({
   if (!currentUser) {
     return (
       <AnimatePresence>
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="relative w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden"
+            className="relative w-full max-w-md bg-[#131d2e] rounded-3xl shadow-xl border border-[#24354c] overflow-hidden"
           >
             <div className="p-6 text-center space-y-4">
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-3xl">
+              <div className="w-14 h-14 mx-auto rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-3xl">
                 💾
               </div>
 
               <div>
-                <h3 className="text-xl font-bold font-['Outfit',sans-serif] text-slate-900">
+                <h3 className="text-xl font-bold font-['Outfit',sans-serif] text-white">
                   Sign up to save this building for next time?
                 </h3>
-                <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+                <p className="text-sm text-slate-300 mt-2 leading-relaxed">
                   Create a free account or sign in so you don&apos;t have to measure your roof and tank every time it rains.
                 </p>
               </div>
@@ -80,7 +80,7 @@ export const SaveBuildingModal: React.FC<SaveBuildingModalProps> = ({
                     onClose();
                     onRequestSignIn();
                   }}
-                  className="w-full py-3.5 px-4 rounded-xl bg-teal-800 hover:bg-teal-900 active:bg-teal-950 text-white font-bold text-sm sm:text-base shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[48px]"
+                  className="w-full py-3.5 px-4 rounded-xl bg-teal-400 hover:bg-teal-300 active:bg-teal-500 text-slate-950 font-bold text-sm sm:text-base shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer min-h-[48px]"
                 >
                   <LogIn className="w-5 h-5" />
                   <span>Sign In / Sign Up</span>
@@ -90,7 +90,7 @@ export const SaveBuildingModal: React.FC<SaveBuildingModalProps> = ({
                   type="button"
                   id="prompt-cancel-save-btn"
                   onClick={onClose}
-                  className="w-full py-2.5 px-4 rounded-xl text-slate-600 hover:text-slate-900 font-semibold text-sm transition-colors cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-xl text-slate-400 hover:text-white font-semibold text-sm transition-colors cursor-pointer"
                 >
                   Continue as Guest without saving
                 </button>
@@ -179,29 +179,29 @@ export const SaveBuildingModal: React.FC<SaveBuildingModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative w-full max-w-lg bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden"
+          className="relative w-full max-w-lg bg-[#131d2e] rounded-3xl shadow-xl border border-[#24354c] overflow-hidden"
         >
           {/* Header */}
-          <div className="p-6 pb-4 border-b border-slate-100 flex items-start justify-between">
+          <div className="p-6 pb-4 border-b border-[#1e293b] flex items-start justify-between">
             <div className="flex items-center gap-2.5">
               <span className="text-2xl">💾</span>
               <div>
-                <h3 className="text-xl font-bold font-['Outfit',sans-serif] text-slate-900">
+                <h3 className="text-xl font-bold font-['Outfit',sans-serif] text-white">
                   {existingBuilding ? 'Update Saved Building' : 'Save This Building'}
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-400">
                   Save your building dimensions to easily reload next time.
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              className="p-1.5 rounded-full hover:bg-[#1e293b] text-slate-400 hover:text-white transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -211,13 +211,13 @@ export const SaveBuildingModal: React.FC<SaveBuildingModalProps> = ({
           <div className="p-6 space-y-5">
             {savedSuccessMessage ? (
               <div className="py-8 text-center space-y-3">
-                <div className="w-16 h-16 mx-auto rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-2xl">
+                <div className="w-16 h-16 mx-auto rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl">
                   <Check className="w-8 h-8" />
                 </div>
-                <h4 className="text-lg font-bold text-slate-900 font-['Outfit',sans-serif]">
+                <h4 className="text-lg font-bold text-white font-['Outfit',sans-serif]">
                   {savedSuccessMessage}
                 </h4>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-slate-400">
                   Reload it anytime from &quot;Your Saved Buildings&quot; on the home page.
                 </p>
               </div>
@@ -225,8 +225,8 @@ export const SaveBuildingModal: React.FC<SaveBuildingModalProps> = ({
               <form onSubmit={handleSave} className="space-y-4">
                 {/* Building Nickname */}
                 <div>
-                  <label className="block text-sm font-bold text-slate-900 mb-1">
-                    Building Nickname <span className="text-rose-500">*</span>
+                  <label className="block text-sm font-bold text-slate-200 mb-1">
+                    Building Nickname <span className="text-rose-400">*</span>
                   </label>
                   <input
                     type="text"
@@ -235,7 +235,7 @@ export const SaveBuildingModal: React.FC<SaveBuildingModalProps> = ({
                     placeholder="e.g. My House, Grandpa's Farm, School Block"
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 text-base focus:outline-none focus:ring-2 focus:ring-teal-700"
+                    className="w-full px-4 py-3 rounded-xl border border-[#24354c] bg-[#0e1626] text-slate-100 placeholder:text-slate-500 text-base focus:outline-none focus:ring-2 focus:ring-teal-400"
                   />
                   
                   {/* Quick suggestion chips */}
@@ -246,7 +246,7 @@ export const SaveBuildingModal: React.FC<SaveBuildingModalProps> = ({
                         key={name}
                         type="button"
                         onClick={() => setNickname(name)}
-                        className="text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-teal-50 text-slate-700 hover:text-teal-900 border border-slate-200 transition-colors cursor-pointer"
+                        className="text-xs px-2.5 py-1 rounded-lg bg-[#0e1626] hover:bg-[#1e293b] text-slate-300 hover:text-teal-300 border border-[#24354c] transition-colors cursor-pointer"
                       >
                         {name}
                       </button>
@@ -257,7 +257,7 @@ export const SaveBuildingModal: React.FC<SaveBuildingModalProps> = ({
                 {/* Optional Location label */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="block text-sm font-semibold text-slate-700">
+                    <label className="block text-sm font-semibold text-slate-300">
                       City / Area (optional)
                     </label>
                     <button
@@ -265,7 +265,7 @@ export const SaveBuildingModal: React.FC<SaveBuildingModalProps> = ({
                       id="save-building-detect-location-btn"
                       onClick={handleDetectLocation}
                       disabled={isDetectingLocation}
-                      className="text-xs font-bold text-teal-800 hover:text-teal-950 flex items-center gap-1 cursor-pointer"
+                      className="text-xs font-bold text-teal-400 hover:text-teal-300 flex items-center gap-1 cursor-pointer"
                     >
                       {isDetectingLocation ? (
                         <>
@@ -286,20 +286,20 @@ export const SaveBuildingModal: React.FC<SaveBuildingModalProps> = ({
                     placeholder="e.g. Coimbatore, North Farm"
                     value={locationLabel}
                     onChange={(e) => setLocationLabel(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-700"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#24354c] bg-[#0e1626] text-slate-100 placeholder:text-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
                   />
                   {locationError && (
-                    <p className="text-xs text-amber-700 mt-1">{locationError}</p>
+                    <p className="text-xs text-amber-300 mt-1">{locationError}</p>
                   )}
                 </div>
 
                 {/* What is being saved summary */}
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600 space-y-1.5">
-                  <div className="font-bold text-slate-800 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-teal-700" />
+                <div className="p-3.5 rounded-2xl bg-[#0e1626] border border-[#24354c] text-xs text-slate-300 space-y-1.5">
+                  <div className="font-bold text-teal-300 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-teal-400" />
                     <span>Fixed details being saved:</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 pt-1 text-slate-700">
+                  <div className="grid grid-cols-2 gap-2 pt-1 text-slate-300">
                     <div>• {inputs.roofs.length} roof section(s) ({totalRoofArea} m²)</div>
                     <div>• {inputs.tankCapacity || '1,000'} L Tank size</div>
                     <div>• {inputs.efficiency || '80'}% Efficiency</div>
@@ -313,7 +313,7 @@ export const SaveBuildingModal: React.FC<SaveBuildingModalProps> = ({
                 </div>
 
                 {saveError && (
-                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs sm:text-sm flex items-start gap-2">
+                  <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs sm:text-sm flex items-start gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                     <span>{saveError}</span>
                   </div>
@@ -324,7 +324,7 @@ export const SaveBuildingModal: React.FC<SaveBuildingModalProps> = ({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2.5 rounded-xl text-slate-600 hover:text-slate-800 font-semibold text-sm cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl text-slate-400 hover:text-white font-semibold text-sm cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -332,7 +332,7 @@ export const SaveBuildingModal: React.FC<SaveBuildingModalProps> = ({
                     type="submit"
                     id="save-building-submit-btn"
                     disabled={isSaving}
-                    className="px-6 py-3 rounded-xl bg-teal-800 hover:bg-teal-900 active:bg-teal-950 text-white font-bold text-sm sm:text-base shadow-sm transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60 min-h-[44px]"
+                    className="px-6 py-3 rounded-xl bg-teal-400 hover:bg-teal-300 active:bg-teal-500 text-slate-950 font-bold text-sm sm:text-base shadow-sm transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60 min-h-[44px]"
                   >
                     {isSaving ? (
                       <>

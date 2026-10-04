@@ -19,7 +19,9 @@ import {
   SimulationMonth,
   RainfallScenario,
   RoofItem,
-  StorageTankItem
+  StorageTankItem,
+  FullWaterSummary,
+  PeriodWaterSummary
 } from '../types';
 import { 
   UnitSystem, 
@@ -665,6 +667,250 @@ export function runMonthlySimulation(
     heavyRainMonths,
     rainfallScenario: scenario,
     scenarioMultiplier,
+  };
+}
+
+/**
+ * ONE SINGLE SOURCE OF TRUTH FOR ALL NUMBERS
+ * Calculates water summary metrics for Week, Month, and Year periods simultaneously.
+ */
+export function calcWaterSummary(
+  inputs: CalculatorInputs,
+  unit: UnitSystem = 'metric',
+  assumptions: PlanningAssumptions = DEFAULT_ASSUMPTIONS,
+  overrideTankCapacityL?: number
+): FullWaterSummary {
+  const bucketSizeL = assumptions.conversions?.bucketSizeL || 15;
+
+  // Normalize roofs
+  const normalizedRoofs = normalizeRoofs(inputs.roofs, inputs.directRoofArea, inputs.roofType);
+  let hasRoofArea = false;
+
+  const roofItems = normalizedRoofs.map((r) => {
+    const rawA = Math.max(0, parseFloat(r.area) || 0);
+    if (rawA > 0) hasRoofArea = true;
+    const aM2 = r.areaUnit === 'imperial' ? sqFeetToSqMeters(rawA) : rawA;
+    const coeff = getRunoffCoefficient(r.typeKey, undefined, assumptions, r.customEfficiency);
+    return {
+      aM2,
+      coeff,
+    };
+  });
+
+  // Normalize tanks & total tank capacity in litres
+  const { tanks: normalizedTanks, noTankYet } = normalizeTanks(inputs.tanks, inputs.tankCapacity, inputs.noTankYet);
+  const tankCapacityInfo = getTotalTankCapacity(normalizedTanks, noTankYet, 2000, unit);
+  
+  const totalTankCapacityL = overrideTankCapacityL !== undefined
+    ? Math.max(0, overrideTankCapacityL)
+    : (noTankYet ? 0 : tankCapacityInfo.totalLitres);
+
+  // Family water demand per day
+  const people = parseInt(inputs.householdSize || '4', 10);
+  const unlimitedDemandTip = isNaN(people) || people <= 0;
+  const noTankTip = totalTankCapacityL === 0;
+
+  const demands = assumptions.demands || DEFAULT_ASSUMPTIONS.demands;
+  const lPerPersonPerDay = (demands.toilet ?? 30) + (demands.cleaning ?? 10) + (demands.gardening ?? 15) + (demands.vehicle ?? 5);
+  const dailyTotalFamilyDemandL = unlimitedDemandTip ? Infinity : Math.max(1, people * lPerPersonPerDay);
+
+  // Rainfall sources
+  const historical = inputs.historicalRainfall || inputs.weatherInfo?.historical;
+  const monthlyRainArray = inputs.typicalMonthlyRainfallMm || historical?.typicalMonthlyRainfallMm || new Array(12).fill(0);
+
+  const now = new Date();
+  const currentMonthIdx = now.getMonth();
+  const daysInCurrentMonth = new Date(now.getFullYear(), currentMonthIdx + 1, 0).getDate();
+  const currentMonthRainMm = monthlyRainArray[currentMonthIdx] || 0;
+
+  const typicalAnnualRainMm = inputs.typicalAnnualRainfallMm || historical?.typicalAnnualRainfallMm || monthlyRainArray.reduce((a, b) => a + b, 0);
+
+  const weeklyRainMm = inputs.weeklyRainfallMm ?? inputs.weatherInfo?.weeklyRainfallMm ?? inputs.weatherInfo?.fullWeather?.weeklyPrecipitationSumMm ?? 0;
+
+  const hasLocation = Boolean(inputs.locationName && (typicalAnnualRainMm > 0 || weeklyRainMm > 0 || currentMonthRainMm > 0));
+
+  let invariantError = false;
+
+  // Compute 7-day week summary
+  const safeWeekRainMm = Math.max(0, weeklyRainMm || 0);
+  let weekRainOnRoof = 0;
+  let weekCaught = 0;
+  roofItems.forEach((r) => {
+    const fall = r.aM2 * safeWeekRainMm;
+    weekRainOnRoof += fall;
+    weekCaught += fall * r.coeff;
+  });
+  weekRainOnRoof = Math.round(weekRainOnRoof);
+  weekCaught = Math.round(weekCaught);
+  const weekLostOnRoof = Math.max(0, weekRainOnRoof - weekCaught);
+  let weekKept = 0;
+  let weekSpilled = 0;
+
+  if (noTankTip) {
+    weekKept = 0;
+    weekSpilled = weekCaught;
+  } else {
+    const dailyCaught = weekCaught / 7;
+    let lvl = 0;
+    let sSum = 0;
+    for (let d = 0; d < 7; d++) {
+      const startL = lvl;
+      lvl = Math.min(totalTankCapacityL, lvl + dailyCaught);
+      const spillToday = Math.max(0, (startL + dailyCaught) - totalTankCapacityL);
+      sSum += spillToday;
+      const usedToday = Math.min(lvl, dailyTotalFamilyDemandL);
+      lvl = lvl - usedToday;
+    }
+    weekSpilled = Math.round(sSum);
+    weekKept = Math.max(0, weekCaught - weekSpilled);
+  }
+  const weekWasted = weekLostOnRoof + weekSpilled;
+  const weekKeptPct = weekRainOnRoof > 0 ? Math.min(100, Math.round((weekKept / weekRainOnRoof) * 100)) : 0;
+  const weekWastedPct = weekRainOnRoof > 0 ? Math.max(0, 100 - weekKeptPct) : 0;
+
+  const week: PeriodWaterSummary = {
+    period: 'week',
+    periodLabel: 'This week',
+    daysInPeriod: 7,
+    rainfallMm: safeWeekRainMm,
+    rainOnRoof: weekRainOnRoof,
+    caught: weekCaught,
+    lostOnRoof: weekLostOnRoof,
+    kept: weekKept,
+    spilled: weekSpilled,
+    wasted: weekWasted,
+    keptPercent: weekKeptPct,
+    wastedPercent: weekWastedPct,
+    rainOnRoofBuckets: toBuckets(weekRainOnRoof, bucketSizeL),
+    caughtBuckets: toBuckets(weekCaught, bucketSizeL),
+    lostOnRoofBuckets: toBuckets(weekLostOnRoof, bucketSizeL),
+    keptBuckets: toBuckets(weekKept, bucketSizeL),
+    spilledBuckets: toBuckets(weekSpilled, bucketSizeL),
+    wastedBuckets: toBuckets(weekWasted, bucketSizeL),
+  };
+
+  // Compute 12-Month breakdown sequentially
+  const daysInMonths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  const monthlyBreakdown: PeriodWaterSummary[] = [];
+  let currentLevel = 0;
+
+  for (let m = 0; m < 12; m++) {
+    const mRainMm = Math.max(0, monthlyRainArray[m] || 0);
+    const daysInM = daysInMonths[m];
+
+    let mRainOnRoof = 0;
+    let mCaught = 0;
+    roofItems.forEach((r) => {
+      const fall = r.aM2 * mRainMm;
+      mRainOnRoof += fall;
+      mCaught += fall * r.coeff;
+    });
+
+    mRainOnRoof = Math.round(mRainOnRoof);
+    mCaught = Math.round(mCaught);
+    const mLostOnRoof = Math.max(0, mRainOnRoof - mCaught);
+
+    let mKept = 0;
+    let mSpilled = 0;
+
+    if (noTankTip) {
+      mKept = 0;
+      mSpilled = mCaught;
+    } else {
+      const dailyCaught = mCaught / daysInM;
+      let mSpill = 0;
+
+      for (let d = 0; d < daysInM; d++) {
+        const startL = currentLevel;
+        currentLevel = Math.min(totalTankCapacityL, currentLevel + dailyCaught);
+        const spillToday = Math.max(0, (startL + dailyCaught) - totalTankCapacityL);
+        mSpill += spillToday;
+        const usedToday = Math.min(currentLevel, dailyTotalFamilyDemandL);
+        currentLevel = currentLevel - usedToday;
+      }
+      mSpilled = Math.round(mSpill);
+      mKept = Math.max(0, mCaught - mSpilled);
+    }
+
+    const mWasted = mLostOnRoof + mSpilled;
+    const mKeptPct = mRainOnRoof > 0 ? Math.min(100, Math.round((mKept / mRainOnRoof) * 100)) : 0;
+    const mWastedPct = mRainOnRoof > 0 ? Math.max(0, 100 - mKeptPct) : 0;
+
+    monthlyBreakdown.push({
+      period: 'month',
+      periodLabel: MONTH_NAMES[m],
+      monthName: MONTH_NAMES[m],
+      daysInPeriod: daysInM,
+      rainfallMm: mRainMm,
+      rainOnRoof: mRainOnRoof,
+      caught: mCaught,
+      lostOnRoof: mLostOnRoof,
+      kept: mKept,
+      spilled: mSpilled,
+      wasted: mWasted,
+      keptPercent: mKeptPct,
+      wastedPercent: mWastedPct,
+      rainOnRoofBuckets: toBuckets(mRainOnRoof, bucketSizeL),
+      caughtBuckets: toBuckets(mCaught, bucketSizeL),
+      lostOnRoofBuckets: toBuckets(mLostOnRoof, bucketSizeL),
+      keptBuckets: toBuckets(mKept, bucketSizeL),
+      spilledBuckets: toBuckets(mSpilled, bucketSizeL),
+      wastedBuckets: toBuckets(mWasted, bucketSizeL),
+    });
+  }
+
+  // Current calendar month summary
+  const month = monthlyBreakdown[currentMonthIdx] || monthlyBreakdown[0];
+
+  // Year summary = sum of 12 monthly periods
+  const yearRainOnRoof = monthlyBreakdown.reduce((acc, m) => acc + m.rainOnRoof, 0);
+  const yearCaught = monthlyBreakdown.reduce((acc, m) => acc + m.caught, 0);
+  const yearLostOnRoof = monthlyBreakdown.reduce((acc, m) => acc + m.lostOnRoof, 0);
+  const yearKept = monthlyBreakdown.reduce((acc, m) => acc + m.kept, 0);
+  const yearSpilled = monthlyBreakdown.reduce((acc, m) => acc + m.spilled, 0);
+  const yearWasted = yearLostOnRoof + yearSpilled;
+
+  const yearKeptPct = yearRainOnRoof > 0 ? Math.min(100, Math.round((yearKept / yearRainOnRoof) * 100)) : 0;
+  const yearWastedPct = yearRainOnRoof > 0 ? Math.max(0, 100 - yearKeptPct) : 0;
+
+  // Invariant check
+  if (Math.abs((yearKept + yearSpilled + yearLostOnRoof) - yearRainOnRoof) > 2) {
+    console.error(`Water summary invariant check failed: ${yearKept} + ${yearSpilled} + ${yearLostOnRoof} != ${yearRainOnRoof}`);
+    invariantError = true;
+  }
+
+  const year: PeriodWaterSummary = {
+    period: 'year',
+    periodLabel: 'Typical year',
+    daysInPeriod: 365,
+    rainfallMm: typicalAnnualRainMm,
+    rainOnRoof: yearRainOnRoof,
+    caught: yearCaught,
+    lostOnRoof: yearLostOnRoof,
+    kept: yearKept,
+    spilled: yearSpilled,
+    wasted: yearWasted,
+    keptPercent: yearKeptPct,
+    wastedPercent: yearWastedPct,
+    rainOnRoofBuckets: toBuckets(yearRainOnRoof, bucketSizeL),
+    caughtBuckets: toBuckets(yearCaught, bucketSizeL),
+    lostOnRoofBuckets: toBuckets(yearLostOnRoof, bucketSizeL),
+    keptBuckets: toBuckets(yearKept, bucketSizeL),
+    spilledBuckets: toBuckets(yearSpilled, bucketSizeL),
+    wastedBuckets: toBuckets(yearWasted, bucketSizeL),
+  };
+
+  return {
+    week,
+    month,
+    year,
+    monthlyBreakdown,
+    hasLocation,
+    hasRoofArea,
+    bucketSizeL,
+    unlimitedDemandTip,
+    noTankTip,
+    invariantError,
   };
 }
 

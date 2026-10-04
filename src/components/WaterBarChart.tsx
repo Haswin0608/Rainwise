@@ -28,10 +28,9 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
   const [weekChartType, setWeekChartType] = useState<'bar' | 'line'>('bar');
   const { unit, theme, formatVolume, formatRainfall, formatTemp } = useAppSettings();
 
-  const isDark = theme === 'dark';
-  const gridStroke = isDark ? '#1e293b' : '#f1f5f9';
-  const axisStroke = isDark ? '#475569' : '#cbd5e1';
-  const tickFill = isDark ? '#94a3b8' : '#475569';
+  const gridStroke = '#1e293b';
+  const axisStroke = '#475569';
+  const tickFill = '#94a3b8';
 
   // ═══════════════════════════════════════
   // 1. "Today's Breakdown" Data
@@ -41,7 +40,7 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
       id: 'fell',
       name: 'Rain that fell',
       liters: result.potentialWater,
-      fill: isDark ? '#38bdf8' : '#0284c7', // Sky blue
+      fill: '#38bdf8', // Sky blue
       description: 'Total rain that landed on your roof',
       icon: '🌧️',
     },
@@ -49,7 +48,7 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
       id: 'saved',
       name: 'Water saved',
       liters: result.actuallyHarvested,
-      fill: isDark ? '#34d399' : '#059669', // Emerald green
+      fill: '#34d399', // Emerald green
       description: 'Stored safely inside your tank',
       icon: '✅',
     },
@@ -57,7 +56,7 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
       id: 'wasted',
       name: 'Water wasted',
       liters: result.wastedWater,
-      fill: isDark ? '#fb7185' : '#e11d48', // Soft warm red/amber
+      fill: '#fb7185', // Soft warm red/amber
       description: 'Lost to overflow because tank was full',
       icon: '🚫',
     },
@@ -95,7 +94,7 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
       tempMin: d.tempMin,
       isHeavy,
       formattedRain: formatRainfall(d.precipitationMm),
-      fill: isHeavy ? (isDark ? '#38bdf8' : '#0284c7') : isDark ? '#2dd4bf' : '#0d9488',
+      fill: isHeavy ? '#38bdf8' : '#2dd4bf',
     };
   });
 
@@ -104,7 +103,7 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-slate-900/95 dark:bg-slate-950 text-white p-3.5 rounded-2xl shadow-xl border border-slate-700/80 text-xs sm:text-sm backdrop-blur-md min-w-[200px] z-50">
+        <div className="bg-[#0b1120] text-white p-3.5 rounded-2xl shadow-xl border border-[#24354c] text-xs sm:text-sm backdrop-blur-md min-w-[200px] z-50">
           <div className="flex items-center gap-2 mb-1.5">
             <span className="text-base">{data.icon}</span>
             <span className="font-bold text-slate-100">{data.name}</span>
@@ -124,7 +123,7 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-slate-900/95 dark:bg-slate-950 text-white p-3.5 rounded-2xl shadow-xl border border-slate-700/80 text-xs sm:text-sm backdrop-blur-md min-w-[220px] z-50">
+        <div className="bg-[#0b1120] text-white p-3.5 rounded-2xl shadow-xl border border-[#24354c] text-xs sm:text-sm backdrop-blur-md min-w-[220px] z-50">
           <div className="flex items-center justify-between gap-2 mb-1">
             <span className="font-bold text-slate-100 flex items-center gap-1.5">
               <span>{data.icon}</span>
@@ -135,7 +134,7 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
           <div className="text-xl sm:text-2xl font-extrabold font-['Outfit',sans-serif] text-teal-300">
             {data.formattedRain}
           </div>
-          <div className="text-xs text-slate-300 mt-1 flex items-center justify-between gap-2 border-t border-slate-800 pt-1.5">
+          <div className="text-xs text-slate-300 mt-1 flex items-center justify-between gap-2 border-t border-[#1e293b] pt-1.5">
             <span>Expected temp:</span>
             <span className="font-medium text-slate-200">
               {formatTemp(data.tempMin)} – {formatTemp(data.tempMax)}
@@ -154,20 +153,20 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
   };
 
   return (
-    <div className="w-full bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-5 sm:p-7 shadow-xs transition-colors">
+    <div className="w-full bg-[#131d2e] rounded-3xl border border-[#24354c] p-5 sm:p-7 shadow-xs transition-colors">
       
       {/* Top Header & Interactive View Switcher Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="font-['Outfit',sans-serif] font-bold text-slate-900 dark:text-white text-lg sm:text-xl">
+            <h3 className="font-['Outfit',sans-serif] font-bold text-white text-lg sm:text-xl">
               Rain & Water Visualizer
             </h3>
-            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950 text-teal-800 dark:text-teal-300 border border-teal-200/80 dark:border-teal-800">
+            <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-300 border border-teal-500/30">
               Interactive
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+          <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
             {activeView === 'today'
               ? 'Tap or hover any bar to see exact amounts in your chosen unit'
               : 'Expected rainfall for the next 7 days from local weather data'}
@@ -175,15 +174,15 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
         </div>
 
         {/* Small Tabs/Buttons above chart to toggle views */}
-        <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 self-start sm:self-auto shrink-0">
+        <div className="flex items-center gap-1 p-1 bg-[#0e1626] rounded-2xl border border-[#24354c] self-start sm:self-auto shrink-0">
           <button
             type="button"
             id="chart-tab-today"
             onClick={() => setActiveView('today')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
               activeView === 'today'
-                ? 'bg-white dark:bg-slate-700 text-teal-900 dark:text-teal-100 shadow-2xs'
-                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-[#1e293b] text-teal-300 shadow-2xs'
+                : 'text-slate-400 hover:text-white'
             }`}
           >
             <BarChart3 className="w-3.5 h-3.5" />
@@ -196,14 +195,14 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
             onClick={() => setActiveView('week')}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
               activeView === 'week'
-                ? 'bg-white dark:bg-slate-700 text-teal-900 dark:text-teal-100 shadow-2xs'
-                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                ? 'bg-[#1e293b] text-teal-300 shadow-2xs'
+                : 'text-slate-400 hover:text-white'
             }`}
           >
             <CalendarDays className="w-3.5 h-3.5" />
             <span>This Week</span>
             {hasForecast && (
-              <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse hidden xs:inline" />
+              <span className="w-2 h-2 rounded-full bg-teal-400 animate-pulse hidden xs:inline" />
             )}
           </button>
         </div>
@@ -215,24 +214,24 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
       {activeView === 'today' && (
         <div className="space-y-4">
           {/* Legend */}
-          <div className="flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm border-b border-slate-100 dark:border-slate-800 pb-3">
-            <span className="text-slate-500 dark:text-slate-400 font-medium">
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm border-b border-[#1e293b] pb-3">
+            <span className="text-slate-400 font-medium">
               Hover or tap any bar for details:
             </span>
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-[#0284c7] dark:bg-[#38bdf8]" />
-                <span className="text-slate-700 dark:text-slate-300">Rain that fell</span>
+                <span className="w-3 h-3 rounded-full bg-[#38bdf8]" />
+                <span className="text-slate-300">Rain that fell</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-[#059669] dark:bg-[#34d399]" />
-                <span className="text-emerald-800 dark:text-emerald-300 font-bold">
+                <span className="w-3 h-3 rounded-full bg-[#34d399]" />
+                <span className="text-emerald-300 font-bold">
                   Water saved
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-full bg-[#e11d48] dark:bg-[#fb7185]" />
-                <span className="text-rose-800 dark:text-rose-300 font-bold">Water wasted</span>
+                <span className="w-3 h-3 rounded-full bg-[#fb7185]" />
+                <span className="text-rose-300 font-bold">Water wasted</span>
               </div>
             </div>
           </div>
@@ -267,7 +266,7 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
                   />
                   <Tooltip
                     content={<TodayTooltip />}
-                    cursor={{ fill: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(241, 245, 249, 0.7)' }}
+                    cursor={{ fill: 'rgba(51, 65, 85, 0.4)' }}
                   />
                   <Bar
                     dataKey="displayValue"
@@ -294,22 +293,22 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
           {hasForecast ? (
             <>
               {/* Header inside Week View */}
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3 text-xs sm:text-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1e293b] pb-3 text-xs sm:text-sm">
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-700 dark:text-slate-300 font-semibold">
+                  <span className="text-slate-200 font-semibold">
                     📍 7-Day Rainfall Forecast for {result.weatherInfo?.locationName}
                   </span>
                 </div>
 
                 {/* Sub-toggle: Bar vs Line */}
-                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-semibold">
+                <div className="flex items-center gap-1 bg-[#0e1626] border border-[#24354c] p-1 rounded-xl text-xs font-semibold">
                   <button
                     type="button"
                     onClick={() => setWeekChartType('bar')}
                     className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                       weekChartType === 'bar'
-                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs'
-                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                        ? 'bg-[#1e293b] text-teal-300 shadow-2xs'
+                        : 'text-slate-400 hover:text-white'
                     }`}
                   >
                     Bars
@@ -319,8 +318,8 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
                     onClick={() => setWeekChartType('line')}
                     className={`px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
                       weekChartType === 'line'
-                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs'
-                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
+                        ? 'bg-[#1e293b] text-teal-300 shadow-2xs'
+                        : 'text-slate-400 hover:text-white'
                     }`}
                   >
                     Trend Line
@@ -355,7 +354,7 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
                         <Tooltip
                           content={<WeekTooltip />}
                           cursor={{
-                            fill: isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(241, 245, 249, 0.7)',
+                            fill: 'rgba(51, 65, 85, 0.4)',
                           }}
                         />
                         <Bar
@@ -393,9 +392,9 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
                         <Line
                           type="monotone"
                           dataKey="rainfallDisplay"
-                          stroke={isDark ? '#2dd4bf' : '#0d9488'}
+                          stroke="#2dd4bf"
                           strokeWidth={3}
-                          dot={{ r: 5, fill: isDark ? '#2dd4bf' : '#0d9488' }}
+                          dot={{ r: 5, fill: '#2dd4bf' }}
                           activeDot={{ r: 7 }}
                           animationDuration={900}
                           animationEasing="ease-out"
@@ -407,12 +406,12 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
               </div>
 
               {/* Informative Forecast Footer Strip */}
-              <div className="p-3.5 rounded-2xl bg-teal-50/80 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-800/60 text-teal-950 dark:text-teal-200 text-xs sm:text-sm flex flex-wrap items-center justify-between gap-3">
+              <div className="p-3.5 rounded-2xl bg-[#0e1626] border border-teal-500/20 text-slate-200 text-xs sm:text-sm flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <CloudRain className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
+                  <CloudRain className="w-4 h-4 text-teal-400 shrink-0" />
                   <span>
                     Total rain expected over the next 7 days:{' '}
-                    <strong>
+                    <strong className="text-white">
                       {formatRainfall(
                         forecastDays.reduce((acc, curr) => acc + curr.precipitationMm, 0)
                       )}
@@ -420,7 +419,7 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
                   </span>
                 </div>
                 {weeklyChartData.some((d) => d.isHeavy) && (
-                  <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-100/80 dark:bg-amber-950/60 px-2.5 py-1 rounded-full border border-amber-300/80 dark:border-amber-800">
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-amber-300 bg-amber-950/60 px-2.5 py-1 rounded-full border border-amber-800">
                     <AlertTriangle className="w-3.5 h-3.5" />
                     Heavy rain days highlighted
                   </span>
@@ -429,14 +428,14 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
             </>
           ) : (
             /* Fallback when weather was not fetched */
-            <div className="py-10 px-4 text-center rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800 space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/70 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 flex items-center justify-center mx-auto text-2xl">
+            <div className="py-10 px-4 text-center rounded-2xl bg-[#0e1626] border border-[#24354c] space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center mx-auto text-2xl">
                 📍
               </div>
-              <h4 className="font-['Outfit',sans-serif] font-bold text-slate-900 dark:text-white text-base sm:text-lg">
+              <h4 className="font-['Outfit',sans-serif] font-bold text-white text-base sm:text-lg">
                 Connect Your Location for the 7-Day Outlook
               </h4>
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+              <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
                 Track your local area or search your town on the Calculator page to automatically see
                 this week&apos;s expected daily rainfall and plan your tank space.
               </p>
@@ -445,7 +444,7 @@ export const WaterBarChart: React.FC<WaterBarChartProps> = ({ result, onGoToCalc
                   type="button"
                   id="chart-go-to-calculator-btn"
                   onClick={onGoToCalculator}
-                  className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-800 dark:bg-teal-700 hover:bg-teal-900 dark:hover:bg-teal-600 text-white text-xs sm:text-sm font-bold shadow-2xs cursor-pointer transition-colors"
+                  className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-teal-400 hover:bg-teal-300 text-slate-950 text-xs sm:text-sm font-bold shadow-2xs cursor-pointer transition-colors"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Set Location on Calculator</span>

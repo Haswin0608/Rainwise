@@ -22,7 +22,7 @@ import {
   orderBy,
   getDocFromServer,
 } from 'firebase/firestore';
-import { AuthUser, SavedBuilding, RoofSection, RoofItem, StorageTankItem } from '../types';
+import { AuthUser, SavedBuilding, RoofSection, RoofItem, StorageTankItem, BuildingTypeKey } from '../types';
 import { normalizeRoofs, normalizeTanks } from '../utils/calculations';
 import firebaseConfig from '../../firebase-applet-config.json';
 
@@ -203,12 +203,22 @@ export async function logoutUser(): Promise<void> {
 // ═══════════════════════════════════════
 
 export interface SaveBuildingPayload {
-  nickname: string;
+  name?: string;
+  nickname?: string;
+  buildingTypeKey?: BuildingTypeKey;
+  customTypeName?: string;
   locationLabel?: string;
+  location?: {
+    name: string;
+    latitude?: number;
+    longitude?: number;
+  };
   roofs: (RoofItem | RoofSection)[];
   tanks?: StorageTankItem[];
   noTankYet?: boolean;
+  people?: number;
   householdSize?: string;
+  householdDailyLPerPerson?: number;
   tankCapacity?: string;
   efficiency?: string;
   dailyRequirement?: string;
@@ -226,16 +236,24 @@ export async function fetchUserBuildings(userId: string): Promise<SavedBuilding[
       const data = docSnap.data();
       const normalizedRoofs = normalizeRoofs(data.roofs, data.directRoofArea, data.roofType);
       const { tanks: normalizedTanks, noTankYet } = normalizeTanks(data.tanks, data.tankCapacity, data.noTankYet);
+      const buildingName = (data.name || data.nickname || 'Unnamed Building').trim();
+      const bType: BuildingTypeKey = data.buildingTypeKey || 'custom';
 
       list.push({
         id: docSnap.id,
+        name: buildingName,
+        buildingTypeKey: bType,
+        customTypeName: data.customTypeName || (bType === 'custom' && !data.buildingTypeKey ? 'Not specified' : undefined),
         userId: data.userId || userId,
-        nickname: data.nickname || 'Unnamed Building',
-        locationLabel: data.locationLabel || undefined,
-        version: data.version || 1,
+        nickname: buildingName,
+        locationLabel: data.locationLabel || data.location?.name || undefined,
+        location: data.location || (data.locationLabel ? { name: data.locationLabel } : undefined),
+        version: data.version || 2,
         roofs: normalizedRoofs,
         tanks: normalizedTanks,
         noTankYet,
+        people: typeof data.people === 'number' ? data.people : (parseInt(data.householdSize, 10) || 4),
+        householdDailyLPerPerson: data.householdDailyLPerPerson || 40,
         householdSize: String(data.householdSize || '4'),
         tankCapacity: String(data.tankCapacity || '1000'),
         efficiency: String(data.efficiency || '80'),
@@ -262,24 +280,35 @@ export async function saveUserBuilding(
 
   const normalizedRoofs = normalizeRoofs(payload.roofs);
   const { tanks: normalizedTanks, noTankYet } = normalizeTanks(payload.tanks, payload.tankCapacity, payload.noTankYet);
+  const bName = (payload.name || payload.nickname || 'Unnamed Building').trim();
+  const bType: BuildingTypeKey = payload.buildingTypeKey || 'house';
 
   const docData: Record<string, any> = {
     id: buildingId,
+    name: bName,
+    buildingTypeKey: bType,
+    customTypeName: payload.customTypeName?.trim(),
     userId,
     version: 2,
-    nickname: payload.nickname.trim(),
+    nickname: bName,
     roofs: normalizedRoofs,
     tanks: normalizedTanks,
     noTankYet,
+    people: payload.people || (parseInt(payload.householdSize || '4', 10) || 4),
+    householdDailyLPerPerson: payload.householdDailyLPerPerson || 40,
     householdSize: payload.householdSize || '4',
     tankCapacity: normalizedTanks[0]?.capacity || payload.tankCapacity || '1000',
     efficiency: String(payload.efficiency || '80'),
     updatedAt: now,
   };
 
-  if (payload.locationLabel?.trim()) {
+  if (payload.location) {
+    docData.location = payload.location;
+    docData.locationLabel = payload.location.name;
+  } else if (payload.locationLabel?.trim()) {
     docData.locationLabel = payload.locationLabel.trim();
   }
+
   if (payload.dailyRequirement && payload.dailyRequirement.trim() !== '') {
     docData.dailyRequirement = payload.dailyRequirement.trim();
   }
@@ -295,13 +324,19 @@ export async function saveUserBuilding(
 
   return {
     id: buildingId,
+    name: bName,
+    buildingTypeKey: bType,
+    customTypeName: payload.customTypeName?.trim(),
     userId,
-    nickname: payload.nickname.trim(),
-    locationLabel: payload.locationLabel?.trim() || undefined,
+    nickname: bName,
+    location: docData.location,
+    locationLabel: docData.locationLabel,
     version: 2,
     roofs: normalizedRoofs,
     tanks: normalizedTanks,
     noTankYet,
+    people: docData.people,
+    householdDailyLPerPerson: docData.householdDailyLPerPerson,
     householdSize: docData.householdSize,
     tankCapacity: docData.tankCapacity,
     efficiency: docData.efficiency,

@@ -162,45 +162,45 @@ export function getRainLevelCategory(precipitationMm: number): RainLevelStyle {
   if (precipitationMm <= 0) {
     return {
       label: WEATHER_STRINGS.noRain,
-      colorClass: 'text-slate-500 dark:text-slate-400',
-      badgeBg: 'bg-slate-100 dark:bg-slate-800',
-      badgeBorder: 'border-slate-200 dark:border-slate-700',
-      badgeText: 'text-slate-600 dark:text-slate-300',
+      colorClass: 'text-slate-400',
+      badgeBg: 'bg-[#0e1626]',
+      badgeBorder: 'border-[#24354c]',
+      badgeText: 'text-slate-300',
     };
   }
   if (precipitationMm < 2.5) {
     return {
       label: WEATHER_STRINGS.lightRain,
-      colorClass: 'text-sky-600 dark:text-sky-400',
-      badgeBg: 'bg-sky-50 dark:bg-sky-950/70',
-      badgeBorder: 'border-sky-200 dark:border-sky-800',
-      badgeText: 'text-sky-800 dark:text-sky-300',
+      colorClass: 'text-sky-300',
+      badgeBg: 'bg-sky-950/80',
+      badgeBorder: 'border-sky-700/70',
+      badgeText: 'text-sky-200',
     };
   }
   if (precipitationMm <= 10) {
     return {
       label: WEATHER_STRINGS.moderateRain,
-      colorClass: 'text-blue-600 dark:text-blue-400',
-      badgeBg: 'bg-blue-50 dark:bg-blue-950/70',
-      badgeBorder: 'border-blue-200 dark:border-blue-800',
-      badgeText: 'text-blue-800 dark:text-blue-300',
+      colorClass: 'text-teal-300',
+      badgeBg: 'bg-teal-950/80',
+      badgeBorder: 'border-teal-700/70',
+      badgeText: 'text-teal-200',
     };
   }
   if (precipitationMm <= 50) {
     return {
       label: WEATHER_STRINGS.heavyRain,
-      colorClass: 'text-indigo-600 dark:text-indigo-400',
-      badgeBg: 'bg-indigo-50 dark:bg-indigo-950/70',
-      badgeBorder: 'border-indigo-300 dark:border-indigo-800',
-      badgeText: 'text-indigo-900 dark:text-indigo-200',
+      colorClass: 'text-indigo-300',
+      badgeBg: 'bg-indigo-950/80',
+      badgeBorder: 'border-indigo-700/70',
+      badgeText: 'text-indigo-200',
     };
   }
   return {
     label: WEATHER_STRINGS.veryHeavyRain,
-    colorClass: 'text-purple-600 dark:text-purple-400',
-    badgeBg: 'bg-purple-50 dark:bg-purple-950/80',
-    badgeBorder: 'border-purple-300 dark:border-purple-800',
-    badgeText: 'text-purple-900 dark:text-purple-200',
+    colorClass: 'text-purple-300',
+    badgeBg: 'bg-purple-950/90',
+    badgeBorder: 'border-purple-700/70',
+    badgeText: 'text-purple-200',
   };
 }
 

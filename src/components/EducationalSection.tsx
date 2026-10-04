@@ -11,29 +11,29 @@ export const EducationalSection: React.FC<EducationalSectionProps> = ({ result }
   const [showFormulas, setShowFormulas] = useState(false);
 
   return (
-    <div className="w-full rounded-3xl bg-white border border-slate-200 shadow-2xs overflow-hidden">
+    <div className="w-full rounded-3xl bg-[#131d2e] border border-[#24354c] shadow-2xs overflow-hidden">
       {/* Header Button */}
       <button
         type="button"
         id="how-this-works-toggle"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-50 transition-colors cursor-pointer"
+        className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-[#1a273a] transition-colors cursor-pointer"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-teal-50 text-teal-800 flex items-center justify-center text-xl shrink-0">
+          <div className="w-10 h-10 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center text-xl shrink-0">
             💡
           </div>
           <div>
-            <h3 className="font-['Outfit',sans-serif] font-bold text-slate-900 text-base sm:text-lg">
+            <h3 className="font-['Outfit',sans-serif] font-bold text-white text-base sm:text-lg">
               How This Works
             </h3>
-            <p className="text-xs sm:text-sm text-slate-500">
+            <p className="text-xs sm:text-sm text-slate-400">
               A simple explanation of the numbers (optional)
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1 text-sm font-semibold text-teal-800 bg-teal-50 px-3 py-1.5 rounded-xl">
+        <div className="flex items-center gap-1 text-sm font-semibold text-teal-400 bg-teal-500/10 border border-teal-500/20 px-3 py-1.5 rounded-xl">
           <span>{isOpen ? 'Close' : 'Show'}</span>
           {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </div>
@@ -41,36 +41,36 @@ export const EducationalSection: React.FC<EducationalSectionProps> = ({ result }
 
       {/* Expanded Plain Language Content */}
       {isOpen && (
-        <div className="px-6 pb-6 pt-2 border-t border-slate-100 space-y-4 text-slate-700 text-sm sm:text-base leading-relaxed">
-          <p className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
+        <div className="px-6 pb-6 pt-2 border-t border-[#1e293b] space-y-4 text-slate-200 text-sm sm:text-base leading-relaxed">
+          <p className="bg-[#0e1626] p-4 rounded-2xl border border-[#24354c] text-slate-200">
             We look at the size of your roof and how much rain fell to work out how much water landed on it. Then we check if your tank is big enough to hold that water. Whatever doesn&apos;t fit in your tank is counted as water you lost.
           </p>
 
           {/* Simple step-by-step in plain language */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-3.5 rounded-xl bg-sky-50/70 border border-sky-100">
-              <span className="text-xs font-bold text-sky-800 uppercase tracking-wider block mb-1">
+            <div className="p-3.5 rounded-xl bg-sky-950/40 border border-sky-800/50">
+              <span className="text-xs font-bold text-sky-400 uppercase tracking-wider block mb-1">
                 Step 1 • Roof Area
               </span>
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-slate-300">
                 {result.roofArea} m² {result.roofs && result.roofs.length > 1 ? `across ${result.roofs.length} roofs ` : ''}caught the rain.
               </p>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-teal-50/70 border border-teal-100">
-              <span className="text-xs font-bold text-teal-800 uppercase tracking-wider block mb-1">
+            <div className="p-3.5 rounded-xl bg-teal-950/40 border border-teal-800/50">
+              <span className="text-xs font-bold text-teal-400 uppercase tracking-wider block mb-1">
                 Step 2 • Water Falling
               </span>
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-slate-300">
                 {result.potentialWater.toLocaleString()} litres of rain landed on your roof.
               </p>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-100">
-              <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider block mb-1">
+            <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-800/50">
+              <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider block mb-1">
                 Step 3 • Tank Check
               </span>
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-slate-300">
                 Your {result.tankCapacity.toLocaleString()}L tank saved {result.actuallyHarvested.toLocaleString()} litres.
               </p>
             </div>
@@ -82,45 +82,45 @@ export const EducationalSection: React.FC<EducationalSectionProps> = ({ result }
               type="button"
               id="math-details-toggle"
               onClick={() => setShowFormulas(!showFormulas)}
-              className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-600 hover:text-teal-800 transition-colors"
+              className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-400 hover:text-teal-400 transition-colors cursor-pointer"
             >
               <span>{showFormulas ? '− Hide the math calculation details' : '+ Want to see the exact calculation steps?'}</span>
             </button>
 
             {showFormulas && (
               <div className="mt-3 space-y-3">
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs sm:text-sm space-y-2 text-slate-600 font-mono">
-                  <div>• <strong>Roof Area:</strong> {result.roofArea} m² {result.roofs && result.roofs.length > 1 ? `(Combined: ${result.roofs.map(r => `${r.name} = ${r.area}m²`).join(', ')})` : '(Length × Width)'}</div>
-                  <div>• <strong>Total Rain:</strong> {result.potentialWater.toLocaleString()} litres (1mm rain over 1m² = 1 litre)</div>
-                  <div>• <strong>Actual Collectable Rain:</strong> {result.harvestableWater.toLocaleString()} litres ({result.efficiency}% efficiency after small filter/gutter losses)</div>
-                  <div>• <strong>Saved in Tank:</strong> {result.actuallyHarvested.toLocaleString()} litres (the smaller of your tank size and collected rain)</div>
-                  <div>• <strong>Water Wasted:</strong> {result.wastedWater.toLocaleString()} litres (water that overflowed your tank)</div>
+                <div className="p-4 rounded-2xl bg-[#0e1626] border border-[#24354c] text-xs sm:text-sm space-y-2 text-slate-300 font-mono">
+                  <div>• <strong className="text-white">Roof Area:</strong> {result.roofArea} m² {result.roofs && result.roofs.length > 1 ? `(Combined: ${result.roofs.map(r => `${r.name} = ${r.area}m²`).join(', ')})` : '(Length × Width)'}</div>
+                  <div>• <strong className="text-white">Total Rain:</strong> {result.potentialWater.toLocaleString()} litres (1mm rain over 1m² = 1 litre)</div>
+                  <div>• <strong className="text-white">Actual Collectable Rain:</strong> {result.harvestableWater.toLocaleString()} litres ({result.efficiency}% efficiency after small filter/gutter losses)</div>
+                  <div>• <strong className="text-white">Saved in Tank:</strong> {result.actuallyHarvested.toLocaleString()} litres (the smaller of your tank size and collected rain)</div>
+                  <div>• <strong className="text-white">Water Wasted:</strong> {result.wastedWater.toLocaleString()} litres (water that overflowed your tank)</div>
                   {result.supplyDays !== undefined && (
-                    <div>• <strong>Days Water Lasts:</strong> {result.supplyDays} days ({result.actuallyHarvested.toLocaleString()}L ÷ {result.dailyRequirement}L per day)</div>
+                    <div>• <strong className="text-white">Days Water Lasts:</strong> {result.supplyDays} days ({result.actuallyHarvested.toLocaleString()}L ÷ {result.dailyRequirement}L per day)</div>
                   )}
                 </div>
 
                 {/* Everyday Water Scale Reference */}
-                <div className="p-4 rounded-2xl bg-teal-50/60 border border-teal-200/70 text-xs sm:text-sm">
-                  <div className="font-bold text-teal-950 mb-2 flex items-center gap-1.5">
+                <div className="p-4 rounded-2xl bg-[#0e1626] border border-teal-500/20 text-xs sm:text-sm">
+                  <div className="font-bold text-teal-300 mb-2 flex items-center gap-1.5">
                     <span>📏 Everyday Water Volume Reference:</span>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-slate-700">
-                    <div className="p-2 rounded-xl bg-white/80 border border-teal-100">
-                      <span className="font-semibold text-slate-900 block">🥛 1 Glass</span>
-                      <span className="text-slate-500">≈ 0.25 Litres</span>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-slate-200">
+                    <div className="p-2 rounded-xl bg-[#131d2e] border border-[#24354c]">
+                      <span className="font-semibold text-white block">🥛 1 Glass</span>
+                      <span className="text-slate-400">≈ 0.25 Litres</span>
                     </div>
-                    <div className="p-2 rounded-xl bg-white/80 border border-teal-100">
-                      <span className="font-semibold text-slate-900 block">🪣 1 Bucket</span>
-                      <span className="text-slate-500">≈ 15 Litres</span>
+                    <div className="p-2 rounded-xl bg-[#131d2e] border border-[#24354c]">
+                      <span className="font-semibold text-white block">🪣 1 Bucket</span>
+                      <span className="text-slate-400">≈ 15 Litres</span>
                     </div>
-                    <div className="p-2 rounded-xl bg-white/80 border border-teal-100">
-                      <span className="font-semibold text-slate-900 block">🛁 1 Bathtub</span>
-                      <span className="text-slate-500">≈ 150 Litres</span>
+                    <div className="p-2 rounded-xl bg-[#131d2e] border border-[#24354c]">
+                      <span className="font-semibold text-white block">🛁 1 Bathtub</span>
+                      <span className="text-slate-400">≈ 150 Litres</span>
                     </div>
-                    <div className="p-2 rounded-xl bg-white/80 border border-teal-100">
-                      <span className="font-semibold text-slate-900 block">🚛 1 Water Tanker</span>
-                      <span className="text-slate-500">≈ 1,000 Litres</span>
+                    <div className="p-2 rounded-xl bg-[#131d2e] border border-[#24354c]">
+                      <span className="font-semibold text-white block">🚛 1 Water Tanker</span>
+                      <span className="text-slate-400">≈ 1,000 Litres</span>
                     </div>
                   </div>
                 </div>

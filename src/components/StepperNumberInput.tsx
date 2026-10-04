@@ -127,8 +127,8 @@ export const StepperNumberInput: React.FC<StepperNumberInputProps> = ({
           {label && (
             <label 
               htmlFor={id} 
-              className={`font-bold text-slate-900 dark:text-white flex items-center gap-2 cursor-pointer ${
-                compact ? 'text-xs sm:text-sm' : 'text-sm sm:text-base'
+              className={`font-bold text-slate-100 flex items-center gap-2 cursor-pointer ${
+                compact ? 'text-sm' : 'text-base'
               }`}
             >
               {icon && <span className="text-lg leading-none">{icon}</span>}
@@ -138,7 +138,7 @@ export const StepperNumberInput: React.FC<StepperNumberInputProps> = ({
           <div className="flex items-center gap-2 ml-auto">
             {headerAction}
             {unit && (
-              <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 rounded-full">
+              <span className="text-xs font-semibold text-slate-200 bg-[#1e293b] border border-[#2a3b55] px-2.5 py-0.5 rounded-full">
                 {unit}
               </span>
             )}
@@ -147,7 +147,7 @@ export const StepperNumberInput: React.FC<StepperNumberInputProps> = ({
       )}
 
       {/* Stepper & Input Container: [ − ] [ input ] [ + ] */}
-      <div className={`flex items-stretch rounded-2xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 shadow-2xs focus-within:ring-2 focus-within:ring-teal-600/30 focus-within:border-teal-700 dark:focus-within:border-teal-400 transition-all overflow-hidden ${
+      <div className={`flex items-stretch rounded-2xl bg-[#0e1626] border border-[#24354c] shadow-inner focus-within:ring-2 focus-within:ring-teal-400 focus-within:border-teal-400 transition-all overflow-hidden ${
         compact ? 'min-h-[46px]' : 'min-h-[52px]'
       }`}>
         {/* Large Minus Button (min 44px tap target, hold to repeat) */}
@@ -162,7 +162,7 @@ export const StepperNumberInput: React.FC<StepperNumberInputProps> = ({
           onTouchStart={() => startHold(-1)}
           onTouchEnd={stopTimer}
           onTouchCancel={stopTimer}
-          className="w-12 sm:w-14 min-h-[44px] flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-650 dark:active:bg-slate-600 text-slate-900 dark:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors select-none border-r border-slate-300 dark:border-slate-600 shrink-0 cursor-pointer text-2xl font-bold leading-none"
+          className="w-12 sm:w-14 min-h-[44px] flex items-center justify-center bg-[#1e293b] hover:bg-[#28374d] active:bg-[#334460] text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors select-none border-r border-[#24354c] shrink-0 cursor-pointer text-2xl font-bold leading-none"
         >
           <span className="select-none leading-none font-bold block" aria-hidden="true">
             −
@@ -199,7 +199,7 @@ export const StepperNumberInput: React.FC<StepperNumberInputProps> = ({
             }
             if (onBlur) onBlur();
           }}
-          className={`w-full text-center font-['Outfit',sans-serif] font-bold text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 focus:outline-none bg-transparent px-2 py-2.5 ${
+          className={`w-full text-center font-['Outfit',sans-serif] font-bold text-white placeholder:text-slate-400 focus:outline-none bg-transparent px-2 py-2.5 ${
             compact ? 'text-lg sm:text-xl' : 'text-xl sm:text-2xl'
           }`}
         />
@@ -216,7 +216,7 @@ export const StepperNumberInput: React.FC<StepperNumberInputProps> = ({
           onTouchStart={() => startHold(1)}
           onTouchEnd={stopTimer}
           onTouchCancel={stopTimer}
-          className="w-12 sm:w-14 min-h-[44px] flex items-center justify-center bg-slate-100 hover:bg-slate-200 active:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-650 dark:active:bg-slate-600 text-slate-900 dark:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors select-none border-l border-slate-300 dark:border-slate-600 shrink-0 cursor-pointer text-2xl font-bold leading-none"
+          className="w-12 sm:w-14 min-h-[44px] flex items-center justify-center bg-[#1e293b] hover:bg-[#28374d] active:bg-[#334460] text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors select-none border-l border-[#24354c] shrink-0 cursor-pointer text-2xl font-bold leading-none"
         >
           <span className="select-none leading-none font-bold block" aria-hidden="true">
             +
@@ -226,8 +226,8 @@ export const StepperNumberInput: React.FC<StepperNumberInputProps> = ({
 
       {/* Warning when hitting max */}
       {isAtMax && maxWarning && (
-        <p className="text-xs text-amber-700 dark:text-amber-400 flex items-center gap-1.5 mt-1 font-medium">
-          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+        <p className="text-xs text-amber-300 flex items-center gap-1.5 mt-1 font-medium">
+          <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-400" />
           <span>{maxWarning}</span>
         </p>
       )}
@@ -235,7 +235,7 @@ export const StepperNumberInput: React.FC<StepperNumberInputProps> = ({
       {/* Quick preset chips if available */}
       {quickChips && quickChips.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 pt-1">
-          <span className="text-[11px] text-slate-500 dark:text-slate-400 mr-1">Common:</span>
+          <span className="text-[11px] text-slate-400 mr-1">Common:</span>
           {quickChips.map((chip) => (
             <button
               key={chip.label}
@@ -243,8 +243,8 @@ export const StepperNumberInput: React.FC<StepperNumberInputProps> = ({
               onClick={() => onChange(chip.value)}
               className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-all cursor-pointer ${
                 value === chip.value
-                  ? 'bg-teal-850 dark:bg-teal-600 text-white border-teal-850 dark:border-teal-500 shadow-2xs font-semibold'
-                  : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-750'
+                  ? 'bg-teal-600 text-white border-teal-500 shadow-sm font-semibold'
+                  : 'bg-[#1e293b] text-slate-200 border-[#24354c] hover:bg-[#28374d]'
               }`}
             >
               {chip.label}
@@ -255,12 +255,12 @@ export const StepperNumberInput: React.FC<StepperNumberInputProps> = ({
 
       {/* Helper text or Friendly Error Message */}
       {error ? (
-        <p className="text-sm text-rose-600 dark:text-rose-400 flex items-center gap-1.5 mt-1 font-medium">
-          <AlertCircle className="w-4 h-4 shrink-0" />
+        <p className="text-sm text-rose-300 flex items-center gap-1.5 mt-1 font-medium">
+          <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
           <span>{error}</span>
         </p>
       ) : helperText ? (
-        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+        <p className="text-xs text-slate-300 mt-1 font-medium">
           {helperText}
         </p>
       ) : null}

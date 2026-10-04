@@ -134,17 +134,17 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
     <div className="space-y-6">
       
       {/* Step Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200/80 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#1e293b]">
         <div>
-          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950 text-teal-800 dark:text-teal-300 font-bold text-xs uppercase tracking-wider mb-1.5 border border-teal-200 dark:border-teal-800">
+          <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-teal-500/10 text-teal-300 font-bold text-xs uppercase tracking-wider mb-1.5 border border-teal-500/30">
             <span>Step 3 of 3</span>
             <span>•</span>
             <span>SIMULATE &quot;WHAT IF...?&quot;</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold font-['Outfit',sans-serif] text-slate-900 dark:text-white tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-extrabold font-['Outfit',sans-serif] text-white tracking-tight">
             See What Happens If You Change Things
           </h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+          <p className="text-sm text-slate-300 mt-0.5">
             Test a bigger roof, a wetter or drier monsoon, or a larger tank to see live changes in water harvest and overflow.
           </p>
         </div>
@@ -154,9 +154,9 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
             type="button"
             id="step3-reset-baseline-btn"
             onClick={handleResetSliders}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-2xs self-start cursor-pointer min-h-[40px]"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#24354c] bg-[#131d2e] hover:bg-[#182438] text-xs font-semibold text-slate-200 shadow-2xs self-start cursor-pointer min-h-[40px] focus:outline-none focus:ring-2 focus:ring-teal-400"
           >
-            <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+            <RotateCcw className="w-3.5 h-3.5 text-teal-400" />
             <span>Set New Baseline</span>
           </button>
         )}
@@ -164,10 +164,10 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
 
       {/* Notice if Location is not yet selected */}
       {!result.hasLocation && (
-        <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="p-4 sm:p-5 rounded-2xl bg-[#2a1c0d] border border-amber-600/50 text-amber-200 text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <span className="text-xl" role="img" aria-label="pin">📍</span>
-            <span className="font-semibold">
+            <span className="font-semibold text-amber-100">
               Please choose your location above to run an accurate 12-month water simulation with real rainfall data.
             </span>
           </div>
@@ -177,7 +177,7 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
               const el = document.getElementById('location-section-container');
               if (el) el.scrollIntoView({ behavior: 'smooth' });
             }}
-            className="px-4 py-2 rounded-xl bg-amber-200 hover:bg-amber-300 dark:bg-amber-900 font-bold text-xs text-amber-950 dark:text-amber-100 transition cursor-pointer min-h-[40px] shrink-0"
+            className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 font-bold text-xs text-slate-950 transition cursor-pointer min-h-[40px] shrink-0"
           >
             Choose Location
           </button>
@@ -185,20 +185,20 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
       )}
 
       {/* LIVE BEFORE/AFTER COMPARISON CALLOUT */}
-      <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-teal-500/10 via-emerald-500/10 to-sky-500/10 border-2 border-teal-500/30 dark:border-teal-600/40 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 rounded-3xl bg-[#0f232b] border-2 border-teal-500/40 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-teal-800 dark:text-teal-300 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+          <span className="text-xs font-bold uppercase tracking-wider text-teal-300 flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-teal-400" />
             <span>Live Interactive Comparison</span>
           </span>
-          <div className="text-base sm:text-xl font-bold font-['Outfit',sans-serif] text-slate-900 dark:text-white mt-1">
+          <div className="text-base sm:text-xl font-bold font-['Outfit',sans-serif] text-white mt-1">
             <span>Last value: </span>
-            <span className="text-slate-600 dark:text-slate-400 font-semibold">
+            <span className="text-slate-400 font-semibold">
               {formatVolumeFull(previousHarvested)}
             </span>
-            <span className="mx-2 text-teal-600">→</span>
+            <span className="mx-2 text-teal-400">→</span>
             <span>New value: </span>
-            <span className="text-emerald-700 dark:text-emerald-400 font-extrabold">
+            <span className="text-teal-300 font-extrabold">
               {formatVolumeFull(result.harvestableWater)}
             </span>
           </div>
@@ -208,14 +208,14 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
           {diff !== 0 ? (
             <span className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full font-black text-xs sm:text-sm ${
               diff > 0
-                ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800'
-                : 'bg-rose-100 dark:bg-rose-950 text-rose-900 dark:text-rose-200 border border-rose-300 dark:border-rose-800'
+                ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-500/50'
+                : 'bg-rose-950/80 text-rose-300 border border-rose-500/50'
             }`}>
               <span>{diff > 0 ? '▲ +' : '▼ -'}</span>
               <span>{diffFormatted}</span>
             </span>
           ) : (
-            <span className="text-xs font-semibold text-slate-500 bg-white/80 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700">
+            <span className="text-xs font-semibold text-slate-300 bg-[#0e1626] px-3 py-1 rounded-full border border-[#24354c]">
               Adjust sliders below to compare
             </span>
           )}
@@ -223,20 +223,20 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
       </div>
 
       {/* INTERACTIVE CONTROLS: 3 SLIDERS + 1 3-WAY RAINFALL TOGGLE */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-5">
-        <h3 className="font-['Outfit',sans-serif] font-bold text-lg text-slate-900 dark:text-white">
+      <div className="p-5 sm:p-6 rounded-3xl bg-[#131d2e] border border-[#24354c] shadow-xs space-y-5">
+        <h3 className="font-['Outfit',sans-serif] font-bold text-lg text-white">
           Adjust Parameters
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           
           {/* Slider 1: Roof Area */}
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 space-y-2">
+          <div className="p-4 rounded-2xl bg-[#0e1626] border border-[#1e293b] space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
                 <span>🏠 Roof Area</span>
               </label>
-              <span className="font-extrabold text-sm text-teal-800 dark:text-teal-300">
+              <span className="font-extrabold text-sm text-teal-300">
                 {currentRoofDisplay} {isImperial ? 'sq ft' : 'm²'}
               </span>
             </div>
@@ -248,34 +248,34 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
               step={isImperial ? 50 : 5}
               value={currentRoofDisplay}
               onChange={(e) => handleRoofAreaSlider(Number(e.target.value))}
-              className="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg"
+              className="w-full accent-teal-400 cursor-pointer h-2 bg-[#182438] rounded-lg"
             />
-            <div className="flex justify-between text-[10px] text-slate-400">
+            <div className="flex justify-between text-[10px] text-slate-400 font-medium">
               <span>{minRoof} {isImperial ? 'sq ft' : 'm²'}</span>
               <span>{maxRoof} {isImperial ? 'sq ft' : 'm²'}</span>
             </div>
           </div>
 
           {/* Control 2: 3-Way Rainfall Toggle (Dry -30% | Normal | Wet +30%) */}
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 space-y-2">
+          <div className="p-4 rounded-2xl bg-[#0e1626] border border-[#1e293b] space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
                 <span>🌧️ Monsoon Rain Pattern</span>
               </label>
-              <span className="font-extrabold text-xs text-teal-800 dark:text-teal-300">
+              <span className="font-extrabold text-xs text-teal-300">
                 {result.scaledAnnualRainfallMm} mm
               </span>
             </div>
 
-            <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-200/80 dark:bg-slate-900 border border-slate-300 dark:border-slate-700">
+            <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-[#131d2e] border border-[#24354c]">
               <button
                 type="button"
                 id="step3-scenario-dry"
                 onClick={() => handleScenarioChange('dry')}
-                className={`py-2 px-1 text-center rounded-lg text-xs font-bold transition cursor-pointer min-h-[40px] ${
+                className={`py-2 px-1 text-center rounded-lg text-xs font-bold transition cursor-pointer min-h-[40px] focus:outline-none focus:ring-2 focus:ring-teal-400 ${
                   inputs.rainfallScenario === 'dry'
                     ? 'bg-amber-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    : 'text-slate-300 hover:text-white hover:bg-[#1e293b]'
                 }`}
               >
                 Dry (−30%)
@@ -284,10 +284,10 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
                 type="button"
                 id="step3-scenario-normal"
                 onClick={() => handleScenarioChange('normal')}
-                className={`py-2 px-1 text-center rounded-lg text-xs font-bold transition cursor-pointer min-h-[40px] ${
+                className={`py-2 px-1 text-center rounded-lg text-xs font-bold transition cursor-pointer min-h-[40px] focus:outline-none focus:ring-2 focus:ring-teal-400 ${
                   !inputs.rainfallScenario || inputs.rainfallScenario === 'normal'
-                    ? 'bg-teal-800 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    ? 'bg-teal-700 text-white shadow-xs'
+                    : 'text-slate-300 hover:text-white hover:bg-[#1e293b]'
                 }`}
               >
                 Normal
@@ -296,28 +296,28 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
                 type="button"
                 id="step3-scenario-wet"
                 onClick={() => handleScenarioChange('wet')}
-                className={`py-2 px-1 text-center rounded-lg text-xs font-bold transition cursor-pointer min-h-[40px] ${
+                className={`py-2 px-1 text-center rounded-lg text-xs font-bold transition cursor-pointer min-h-[40px] focus:outline-none focus:ring-2 focus:ring-teal-400 ${
                   inputs.rainfallScenario === 'wet'
                     ? 'bg-sky-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    : 'text-slate-300 hover:text-white hover:bg-[#1e293b]'
                 }`}
               >
                 Wet (+30%)
               </button>
             </div>
 
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+            <p className="text-[10px] text-slate-400">
               Scales typical 3-year rainfall ({result.annualRainfallMm} mm baseline) across all 12 months.
             </p>
           </div>
 
           {/* Slider 3: Tank Size */}
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 space-y-2">
+          <div className="p-4 rounded-2xl bg-[#0e1626] border border-[#1e293b] space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
                 <span>🛢️ Storage Tank Size</span>
               </label>
-              <span className="font-extrabold text-sm text-teal-800 dark:text-teal-300">
+              <span className="font-extrabold text-sm text-teal-300">
                 {formatVolume(tankCapacityL)}
               </span>
             </div>
@@ -329,21 +329,21 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
               step={isImperial ? 100 : 500}
               value={currentTankDisplay}
               onChange={(e) => handleTankSlider(Number(e.target.value))}
-              className="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg"
+              className="w-full accent-teal-400 cursor-pointer h-2 bg-[#182438] rounded-lg"
             />
-            <div className="flex justify-between text-[10px] text-slate-400">
+            <div className="flex justify-between text-[10px] text-slate-400 font-medium">
               <span>{formatVolume(minTank)}</span>
               <span>{formatVolume(maxTank)}</span>
             </div>
           </div>
 
           {/* Slider 4: Household Size */}
-          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700 space-y-2">
+          <div className="p-4 rounded-2xl bg-[#0e1626] border border-[#1e293b] space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
                 <span>👥 Household Members</span>
               </label>
-              <span className="font-extrabold text-sm text-teal-800 dark:text-teal-300">
+              <span className="font-extrabold text-sm text-teal-300">
                 {currentHousehold} {currentHousehold === 1 ? 'person' : 'people'}
               </span>
             </div>
@@ -355,9 +355,9 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
               step={1}
               value={currentHousehold}
               onChange={(e) => handleHouseholdSlider(Number(e.target.value))}
-              className="w-full accent-teal-600 cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg"
+              className="w-full accent-teal-400 cursor-pointer h-2 bg-[#182438] rounded-lg"
             />
-            <div className="flex justify-between text-[10px] text-slate-400">
+            <div className="flex justify-between text-[10px] text-slate-400 font-medium">
               <span>1 person</span>
               <span>15 people</span>
             </div>
@@ -373,16 +373,16 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
             initial={{ opacity: 0, y: -6 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            className="p-4 sm:p-5 rounded-3xl bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 flex items-start gap-3 shadow-xs"
+            className="p-4 sm:p-5 rounded-3xl bg-[#2a1c0d] border-2 border-amber-600/70 text-amber-200 flex items-start gap-3 shadow-xs"
           >
             <span className="text-2xl shrink-0" role="img" aria-label="heavy rain">🌧️</span>
             <div>
-              <h4 className="font-bold text-sm sm:text-base text-amber-950 dark:text-amber-100">
+              <h4 className="font-bold text-sm sm:text-base text-amber-100">
                 Heavy rain, your tank may overflow
               </h4>
-              <p className="text-xs sm:text-sm mt-0.5 leading-relaxed">
+              <p className="text-xs sm:text-sm mt-0.5 leading-relaxed text-amber-200/90">
                 During {sim.heavyRainMonths.join(', ')}, rain comes faster than your {formatVolume(tankCapacityL)} tank can hold. About{' '}
-                <strong className="font-extrabold">{formatVolume(sim.totalAnnualOverflowL)}</strong> will spill over.
+                <strong className="font-extrabold text-amber-100">{formatVolume(sim.totalAnnualOverflowL)}</strong> will spill over.
                 Consider a second tank or piping overflow to recharge a borewell or garden pit!
               </p>
             </div>
@@ -394,18 +394,18 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
         
         {/* TANK ANIMATION GAUGE CARD */}
-        <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between items-center text-center">
+        <div className="p-5 sm:p-6 rounded-3xl bg-[#131d2e] border border-[#24354c] shadow-xs flex flex-col justify-between items-center text-center">
           <div className="w-full">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block mb-1">
               Peak Tank Fill Gauge
             </span>
-            <h4 className="font-['Outfit',sans-serif] font-bold text-base text-slate-900 dark:text-white">
+            <h4 className="font-['Outfit',sans-serif] font-bold text-base text-white">
               {sim ? `Peak Month: ${sim.peakFillMonth}` : 'Storage Level'}
             </h4>
           </div>
 
           {/* Animated Water Cylinder */}
-          <div className="my-6 relative w-36 h-48 rounded-3xl border-4 border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 overflow-hidden shadow-inner flex flex-col justify-end">
+          <div className="my-6 relative w-36 h-48 rounded-3xl border-4 border-[#24354c] bg-[#0e1626] overflow-hidden shadow-inner flex flex-col justify-end">
             {/* Water Fill Layer with Motion */}
             <motion.div
               initial={{ height: 0 }}
@@ -418,7 +418,7 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
             </motion.div>
 
             {/* Gauge Marks */}
-            <div className="absolute inset-0 flex flex-col justify-between p-2 pointer-events-none text-[9px] font-bold text-slate-400/80">
+            <div className="absolute inset-0 flex flex-col justify-between p-2 pointer-events-none text-[9px] font-bold text-slate-400">
               <span className="text-right">100% (Full)</span>
               <span className="text-right">75%</span>
               <span className="text-right">50%</span>
@@ -428,16 +428,16 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
 
             {/* Big Center Percentage */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <span className="text-3xl font-black font-['Outfit',sans-serif] text-slate-900 dark:text-white drop-shadow-sm">
+              <span className="text-3xl font-black font-['Outfit',sans-serif] text-white drop-shadow-md">
                 {currentFillPct}%
               </span>
             </div>
           </div>
 
-          <div className="w-full text-xs text-slate-500 dark:text-slate-400">
-            <span>Capacity: <strong className="text-slate-800 dark:text-slate-200">{formatVolume(tankCapacityL)}</strong></span>
+          <div className="w-full text-xs text-slate-400">
+            <span>Capacity: <strong className="text-slate-200">{formatVolume(tankCapacityL)}</strong></span>
             {sim && sim.totalAnnualOverflowL > 0 && (
-              <span className="block text-amber-700 dark:text-amber-400 font-semibold mt-1">
+              <span className="block text-amber-400 font-semibold mt-1">
                 Overflow: ~{formatVolume(sim.totalAnnualOverflowL)} / yr
               </span>
             )}
@@ -445,17 +445,17 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
         </div>
 
         {/* MONTHLY BAR CHART: Collected vs Used vs Overflow */}
-        <div className="lg:col-span-2 p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-2 p-5 sm:p-6 rounded-3xl bg-[#131d2e] border border-[#24354c] shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
                 12-Month Monsoon Cycle
               </span>
-              <span className="text-xs font-semibold text-slate-500">
+              <span className="text-xs font-semibold text-slate-400">
                 Rain vs Household Consumption
               </span>
             </div>
-            <h4 className="font-['Outfit',sans-serif] font-bold text-base sm:text-lg text-slate-900 dark:text-white">
+            <h4 className="font-['Outfit',sans-serif] font-bold text-base sm:text-lg text-white">
               Monthly Collected vs Used vs Overflow
             </h4>
           </div>
@@ -466,14 +466,14 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
                 data={chartData}
                 margin={{ top: 10, right: 10, left: -15, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#334155' : '#f1f5f9'} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" />
                 <XAxis 
                   dataKey="name" 
-                  tick={{ fontSize: 11, fill: isDark ? '#94a3b8' : '#64748b' }} 
-                  axisLine={{ stroke: isDark ? '#475569' : '#cbd5e1' }}
+                  tick={{ fontSize: 11, fill: '#94a3b8' }} 
+                  axisLine={{ stroke: '#24354c' }}
                 />
                 <YAxis 
-                  tick={{ fontSize: 10, fill: isDark ? '#94a3b8' : '#64748b' }}
+                  tick={{ fontSize: 10, fill: '#94a3b8' }}
                   axisLine={false}
                   tickLine={false}
                   tickFormatter={(val) => `${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
@@ -481,31 +481,34 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
                 <Tooltip
                   formatter={(val: any) => [formatVolumeFull(Number(val) || 0), '']}
                   contentStyle={{
-                    backgroundColor: isDark ? '#0f172a' : '#ffffff',
-                    borderColor: isDark ? '#334155' : '#e2e8f0',
+                    backgroundColor: '#0e1626',
+                    borderColor: '#24354c',
+                    color: '#f8fafc',
                     borderRadius: '16px',
                     fontSize: '12px',
-                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.4)',
                   }}
+                  itemStyle={{ color: '#f8fafc' }}
+                  labelStyle={{ color: '#cbd5e1', fontWeight: 600 }}
                 />
                 <Legend 
                   verticalAlign="top" 
                   align="right" 
                   iconType="circle"
-                  wrapperStyle={{ fontSize: '11px', paddingBottom: '8px' }}
+                  wrapperStyle={{ fontSize: '11px', paddingBottom: '8px', color: '#cbd5e1' }}
                 />
                 <Bar dataKey="inflow" name="Rain Collected" fill="#0d9488" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="demand" name="Water Used" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="demand" name="Water Used" fill="#38bdf8" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="overflow" name="Spill Overflow" fill="#f59e0b" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          <div className="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">
+          <div className="mt-2 text-center text-xs text-slate-400">
             {sim && (
               <span>
-                Total collected: <strong className="text-teal-800 dark:text-teal-300">{formatVolume(sim.totalAnnualInflowL)}</strong> • 
-                Total household demand: <strong className="text-slate-700 dark:text-slate-300">{formatVolume(sim.totalAnnualDemandL)}</strong>
+                Total collected: <strong className="text-teal-300">{formatVolume(sim.totalAnnualInflowL)}</strong> • 
+                Total household demand: <strong className="text-slate-200">{formatVolume(sim.totalAnnualDemandL)}</strong>
               </span>
             )}
           </div>
@@ -519,7 +522,7 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
           type="button"
           id="step3-prev-to-plan-btn"
           onClick={onPrev}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold text-xs sm:text-sm transition cursor-pointer min-h-[48px]"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-[#131d2e] hover:bg-[#182438] text-slate-200 border border-[#24354c] font-bold text-xs sm:text-sm transition cursor-pointer min-h-[48px] focus:outline-none focus:ring-2 focus:ring-teal-400"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Step 2 (Plan)</span>
@@ -529,7 +532,7 @@ export const Step3Simulate: React.FC<Step3SimulateProps> = ({
           type="button"
           id="step3-view-report-btn"
           onClick={onViewReport}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-teal-800 hover:bg-teal-900 active:bg-teal-950 text-white font-bold text-sm sm:text-base shadow-lg shadow-teal-900/15 transition cursor-pointer min-h-[48px]"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm sm:text-base shadow-lg shadow-teal-900/30 transition cursor-pointer min-h-[48px] focus:outline-none focus:ring-2 focus:ring-teal-400"
         >
           <FileText className="w-4 h-4" />
           <span>View My RainWise Plan Report</span>

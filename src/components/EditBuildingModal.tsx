@@ -21,8 +21,8 @@ export const EditBuildingModal: React.FC<EditBuildingModalProps> = ({
 }) => {
   if (!isOpen || !building) return null;
 
-  const [nickname, setNickname] = useState(building.nickname);
-  const [locationLabel, setLocationLabel] = useState(building.locationLabel || '');
+  const [nickname, setNickname] = useState(building.name || building.nickname || '');
+  const [locationLabel, setLocationLabel] = useState(building.location?.name || building.locationLabel || '');
   const [tankCapacity, setTankCapacity] = useState(building.tankCapacity || '1000');
   const [efficiency, setEfficiency] = useState(building.efficiency || '80');
   const [dailyRequirement, setDailyRequirement] = useState(building.dailyRequirement || '');
@@ -51,7 +51,8 @@ export const EditBuildingModal: React.FC<EditBuildingModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!nickname.trim()) {
+    const cleanName = nickname.trim();
+    if (!cleanName) {
       setError('Nickname cannot be empty.');
       return;
     }
@@ -69,13 +70,17 @@ export const EditBuildingModal: React.FC<EditBuildingModalProps> = ({
       }
 
       const updated = await saveUserBuilding(
-        building.userId,
+        building.userId || 'local_user',
         {
-          nickname: nickname.trim(),
+          name: cleanName,
+          nickname: cleanName,
+          buildingTypeKey: building.buildingTypeKey,
+          customTypeName: building.customTypeName,
           locationLabel: locationLabel.trim() || undefined,
           roofs: building.roofs,
           tanks: updatedTanks,
           noTankYet: building.noTankYet,
+          people: building.people,
           householdSize: building.householdSize || '4',
           tankCapacity: tankCapacity.trim() || '1000',
           efficiency: efficiency.trim() || '80',
@@ -94,23 +99,23 @@ export const EditBuildingModal: React.FC<EditBuildingModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+          className="relative w-full max-w-md bg-[#131d2e] rounded-3xl shadow-xl border border-[#24354c] overflow-hidden"
         >
-          <div className="p-6 pb-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="p-6 pb-4 border-b border-[#1e293b] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-xl">✏️</span>
-              <h3 className="text-lg font-bold font-['Outfit',sans-serif] text-slate-900 dark:text-white">
+              <h3 className="text-lg font-bold font-['Outfit',sans-serif] text-white">
                 Edit Building Details
               </h3>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              className="p-1.5 rounded-full hover:bg-[#1e293b] text-slate-400 hover:text-white cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -118,7 +123,7 @@ export const EditBuildingModal: React.FC<EditBuildingModalProps> = ({
 
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-bold text-slate-200 mb-1">
                 Building Nickname
               </label>
               <input
@@ -126,20 +131,20 @@ export const EditBuildingModal: React.FC<EditBuildingModalProps> = ({
                 required
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-700"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#24354c] bg-[#0e1626] text-slate-100 placeholder:text-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                <label className="block text-xs font-semibold text-slate-300">
                   City / Area
                 </label>
                 <button
                   type="button"
                   onClick={handleDetectLocation}
                   disabled={isDetecting}
-                  className="text-xs text-teal-800 dark:text-teal-400 hover:text-teal-950 flex items-center gap-1 font-bold cursor-pointer"
+                  className="text-xs text-teal-400 hover:text-teal-300 flex items-center gap-1 font-bold cursor-pointer"
                 >
                   <MapPin className="w-3 h-3" />
                   <span>{isDetecting ? 'Detecting...' : 'Use My Location'}</span>
@@ -150,7 +155,7 @@ export const EditBuildingModal: React.FC<EditBuildingModalProps> = ({
                 placeholder="e.g. Coimbatore"
                 value={locationLabel}
                 onChange={(e) => setLocationLabel(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-700"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-[#24354c] bg-[#0e1626] text-slate-100 placeholder:text-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
               />
             </div>
 
@@ -183,7 +188,7 @@ export const EditBuildingModal: React.FC<EditBuildingModalProps> = ({
             </div>
 
             {error && (
-              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
+              <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{error}</span>
               </div>
@@ -193,14 +198,14 @@ export const EditBuildingModal: React.FC<EditBuildingModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-800 cursor-pointer min-h-[44px]"
+                className="px-4 py-2 text-sm font-semibold text-slate-400 hover:text-white cursor-pointer min-h-[44px]"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSaving}
-                className="px-5 py-2.5 rounded-xl bg-teal-800 hover:bg-teal-900 text-white font-bold text-sm shadow-sm transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60 min-h-[44px]"
+                className="px-5 py-2.5 rounded-xl bg-teal-400 hover:bg-teal-300 active:bg-teal-500 text-slate-950 font-bold text-sm shadow-sm transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60 min-h-[44px]"
               >
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 <span>Save Changes</span>

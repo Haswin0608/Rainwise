@@ -11,14 +11,14 @@ export const TipsSection: React.FC<TipsSectionProps> = ({ onOpenModal }) => {
     <section className="w-full text-left my-8">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950 border border-teal-200 dark:border-teal-800 flex items-center justify-center text-teal-700 dark:text-teal-300">
+          <div className="w-8 h-8 rounded-xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-300">
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-lg sm:text-xl font-bold font-['Outfit',sans-serif] text-slate-900 dark:text-white">
+            <h3 className="text-lg sm:text-xl font-bold font-['Outfit',sans-serif] text-white">
               Practical Rainwater Tips
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-slate-400">
               Short, practical advice to catch more clean water
             </p>
           </div>
@@ -28,7 +28,7 @@ export const TipsSection: React.FC<TipsSectionProps> = ({ onOpenModal }) => {
           <button
             type="button"
             onClick={() => onOpenModal()}
-            className="text-xs font-bold text-teal-800 dark:text-teal-300 hover:text-teal-950 dark:hover:text-teal-100 flex items-center gap-1 cursor-pointer"
+            className="text-xs font-bold text-teal-300 hover:text-teal-200 flex items-center gap-1 cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-400 rounded-lg px-1.5 py-0.5"
           >
             <span>View All</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -42,17 +42,17 @@ export const TipsSection: React.FC<TipsSectionProps> = ({ onOpenModal }) => {
           <div
             key={tip.id}
             onClick={() => onOpenModal && onOpenModal(tip.id)}
-            className="min-w-[260px] sm:min-w-0 snap-start p-4.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xs hover:shadow-sm hover:border-teal-300 dark:hover:border-teal-700 transition-all flex flex-col justify-between cursor-pointer group"
+            className="min-w-[260px] sm:min-w-0 snap-start p-4.5 rounded-2xl bg-[#131d2e] border border-[#24354c] shadow-2xs hover:border-teal-400/80 transition-all flex flex-col justify-between cursor-pointer group"
           >
             <div className="flex items-start gap-3">
-              <div className="text-2xl sm:text-3xl shrink-0 p-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 group-hover:scale-105 transition-transform">
+              <div className="text-2xl sm:text-3xl shrink-0 p-2 rounded-xl bg-[#0e1626] border border-[#1e293b] group-hover:scale-105 transition-transform">
                 {tip.icon}
               </div>
               <div>
-                <h4 className="font-['Outfit',sans-serif] font-bold text-sm text-slate-900 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">
+                <h4 className="font-['Outfit',sans-serif] font-bold text-sm text-white group-hover:text-teal-300 transition-colors">
                   {tip.title}
                 </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                <p className="text-xs text-slate-300 mt-1 leading-relaxed">
                   {tip.text}
                 </p>
               </div>

@@ -14,7 +14,7 @@ export const ROOF_TYPES: RoofTypeOption[] = [
   { key: 'metal_sheet', label: 'Metal / GI / Tin Sheet', coefficient: 0.90, description: 'Corrugated iron or color-coated sheet', icon: '🏗️' },
   { key: 'asbestos', label: 'Asbestos / Fiber Sheet', coefficient: 0.80, description: 'Cement or composite fiber sheets', icon: '🏚️' },
   { key: 'thatch', label: 'Thatch / Palm Leaf', coefficient: 0.60, description: 'Traditional rural thatch or straw', icon: '🛖' },
-  { key: 'custom', label: 'Custom Roof Type', coefficient: 0.80, description: 'Enter your own runoff coefficient', icon: '⚙️' },
+  { key: 'custom', label: 'Custom Roof Type', coefficient: 0.70, description: 'Enter your own runoff efficiency', icon: '⚙️' },
 ];
 
 export interface RoofItem {
@@ -357,16 +357,17 @@ export interface CalculationResult {
   weatherInfo?: WeatherTrackInfo;
   householdPlan?: HouseholdPlan;
   simulation?: SimulationResult;
+  waterSummary?: FullWaterSummary;
   isLoadingArchive?: boolean;
   archiveError?: string | null;
 }
 
-export type PageView = 'planner' | 'home' | 'calculator' | 'results';
+export type PageView = 'home' | 'stage1_setup' | 'stage2_calculate' | 'stage3_save' | 'stage4_result' | 'my_buildings' | 'results_view';
 export type ToolStep = 'calculate' | 'plan' | 'simulate' | 'report';
 
 /**
  * ══════════════════════════════════════════════════════════════════════
- * SMART BUILDING PLANNER DATA MODELS
+ * RAINWISE BUILDING TYPES
  * ══════════════════════════════════════════════════════════════════════
  */
 export type BuildingTypeKey = 
@@ -378,125 +379,48 @@ export type BuildingTypeKey =
   | 'hotel' 
   | 'commercial' 
   | 'factory' 
-  | 'public';
+  | 'public'
+  | 'custom';
 
-export type BuildingStatus = 'new' | 'existing';
-
-export interface BuildingUsageItem {
-  task: string;
-  sharePercent: number; // e.g. 40
-  icon: string;
-  description: string;
-}
-
-export interface BuildingProfile {
+export interface BuildingTypeOption {
   key: BuildingTypeKey;
   name: string;
   icon: string;
-  shortDesc: string;
-  occupancyQuestion: string;
-  occupancyPrimaryLabel: string;
-  occupancyPrimaryUnit: string;
-  occupancyPrimaryDefault: number;
-  hasSecondaryInput?: boolean;
-  secondaryLabel?: string;
-  secondaryUnit?: string;
-  secondaryDefault?: number;
-  secondaryHelper?: string;
-  dailyNonDrinkingUsePerPerson: number; // Litres per person/bed/guest/worker/visitor per day
-  workingDaysPerWeek: number; // 5, 6, or 7
-  storageMultiplierDays: { min: number; ideal: number }; // Days of storage buffer
-  usageBreakdown: BuildingUsageItem[];
-  focusAreas: string[];
-  priorityTips: string[];
-  safetyNote?: string;
 }
 
-export interface BuildingPlannerAnswers {
-  buildingType: BuildingTypeKey;
-  buildingStatus: BuildingStatus;
-  primaryOccupancy: number;
-  secondaryOccupancy?: number;
-  roofAreaM2: number;
-  roofUnit: 'metric' | 'imperial';
-  roofLength?: string;
-  roofWidth?: string;
-  isCalculatedRoof?: boolean;
-  roofType: RoofTypeKey;
-  locationName?: string;
-  latitude?: number;
-  longitude?: number;
-  tankCapacityL?: number;
-  isTankUserSpecified?: boolean;
-  notes?: string;
+export const BUILDING_TYPE_OPTIONS: BuildingTypeOption[] = [
+  { key: 'house', name: 'House', icon: '🏠' },
+  { key: 'apartment', name: 'Apartment', icon: '🏘️' },
+  { key: 'office', name: 'Office', icon: '🏢' },
+  { key: 'school', name: 'School/College', icon: '🏫' },
+  { key: 'hospital', name: 'Hospital', icon: '🏥' },
+  { key: 'hotel', name: 'Hotel', icon: '🏨' },
+  { key: 'commercial', name: 'Shopping/Commercial', icon: '🛍️' },
+  { key: 'factory', name: 'Factory', icon: '🏭' },
+  { key: 'public', name: 'Public/Community', icon: '🌳' },
+  { key: 'custom', name: 'Custom', icon: '✏️' },
+];
+
+export function getBuildingTypeDisplay(typeKey?: BuildingTypeKey, customName?: string): { name: string; icon: string } {
+  const found = BUILDING_TYPE_OPTIONS.find((b) => b.key === typeKey) || BUILDING_TYPE_OPTIONS[0];
+  if (typeKey === 'custom' && customName && customName.trim()) {
+    return {
+      icon: '✏️',
+      name: customName.trim(),
+    };
+  }
+  return {
+    icon: found.icon,
+    name: found.name,
+  };
 }
 
-export interface RecommendedSystemPart {
-  id: string;
-  icon: string;
+export interface BuildingDraft {
+  id?: string;
   name: string;
-  explanation: string;
-  isSpecialHighlight: boolean;
-}
-
-export interface GeneratedBuildingPlan {
-  buildingProfile: BuildingProfile;
-  buildingStatus: BuildingStatus;
-  occupancySummaryText: string;
-  headlineText: string;
-  headlineBuckets: number;
-  headlineLitres: number;
-  
-  // Rain Collection
-  roofAreaM2: number;
-  roofTypeLabel: string;
-  runoffCoefficient: number;
-  annualRainfallMm: number;
-  annualCollectedLitres: number;
-  monthlyCollectedLitres: number[];
-  
-  // Water Demand & Coverage
-  dailyDemandLitres: number;
-  annualDemandLitres: number;
-  coveragePercentage: number; // capped at 100%
-  workingDaysPerYear: number;
-  
-  // Storage Tank Sizing
-  minStorageLitres: number;
-  recommendedStorageLitres: number;
-  largeStorageLitres: number;
-  userTankLitres?: number;
-  tankVerdict: 'good' | 'overflow' | 'large' | 'suggested';
-  tankVerdictLabel: string;
-  tankVerdictMessage: string;
-  
-  // Heavy Rain 7-day Alert
-  weeklyRainfallMm: number;
-  weeklyHarvestLitres: number;
-  hasHeavyRainOverflowRisk: boolean;
-  heavyRainNotice: string;
-  
-  // Possible Uses
-  usesBreakdown: Array<{
-    task: string;
-    icon: string;
-    sharePercent: number;
-    litresPerYear: number;
-    bucketsPerYear: number;
-  }>;
-  
-  // Recommended Checklist
-  systemParts: RecommendedSystemPart[];
-  
-  // Economic impact
-  yearlyWaterReusedLitres: number;
-  yearlyBillSavingsRs: number;
-  approxInstallationCostRs: number;
-  paybackYears: number | null;
-  
-  // Tips & Rules
-  priorityTips: string[];
-  statutoryNote: string;
+  buildingTypeKey: BuildingTypeKey;
+  customTypeName?: string;
+  isEditingExisting?: boolean;
 }
 
 export interface RoofError {
@@ -522,25 +446,78 @@ export interface PresetScenario {
   inputs: Partial<CalculatorInputs>;
 }
 
+export interface PeriodWaterSummary {
+  period: 'week' | 'month' | 'year';
+  periodLabel: string;
+  monthName?: string;
+  daysInPeriod: number;
+  rainfallMm: number;
+  rainOnRoof: number;  // (L) = sum over roofs of area(m²) * rain(mm)
+  caught: number;      // (L) = sum over roofs of area(m²) * rain(mm) * coefficient
+  lostOnRoof: number;  // (L) = rainOnRoof - caught
+  kept: number;        // (L) = water stored and used via simulation
+  spilled: number;     // (L) = caught water that did not fit in tanks
+  wasted: number;      // (L) = lostOnRoof + spilled
+  keptPercent: number; // % = Math.round((kept / rainOnRoof) * 100) or 0
+  wastedPercent: number; // % = Math.max(0, 100 - keptPercent)
+  
+  // Bucket versions (no decimals for buckets)
+  rainOnRoofBuckets: number;
+  caughtBuckets: number;
+  lostOnRoofBuckets: number;
+  keptBuckets: number;
+  spilledBuckets: number;
+  wastedBuckets: number;
+}
+
+export interface FullWaterSummary {
+  week: PeriodWaterSummary;
+  month: PeriodWaterSummary;
+  year: PeriodWaterSummary;
+  monthlyBreakdown?: PeriodWaterSummary[];
+  hasLocation: boolean;
+  hasRoofArea: boolean;
+  bucketSizeL: number;
+  unlimitedDemandTip?: boolean;
+  noTankTip?: boolean;
+  invariantError?: boolean;
+}
+
+export interface WaterSummarySnapshot {
+  calculatedAt: string;
+  summary: FullWaterSummary;
+}
+
 export interface SavedBuilding {
   id: string;
-  userId: string;
-  nickname: string;
-  locationLabel?: string;
-  version?: number;
-  roofs: (RoofItem | RoofSection)[];
-  tanks?: StorageTankItem[];
+  name: string;
+  buildingTypeKey: BuildingTypeKey;
+  customTypeName?: string;
+  location?: {
+    name: string;
+    latitude?: number;
+    longitude?: number;
+  };
+  roofs: RoofItem[];
+  tanks: StorageTankItem[];
   noTankYet?: boolean;
-  // Backward compatibility fields for v1:
-  roofAreaMode?: 'direct' | 'sections';
-  directRoofArea?: string;
-  roofType?: RoofTypeKey;
-  tankCapacity: string;
-  efficiency: string;
-  dailyRequirement?: string;
-  householdSize?: string;
+  people?: number; // occupancy count
+  householdDailyLPerPerson?: number; // default 40 L / day
   createdAt: string;
   updatedAt: string;
+  version: number;
+  summarySnapshot?: WaterSummarySnapshot;
+
+  // Legacy fields for backward compatibility / migration
+  userId?: string;
+  nickname?: string;
+  locationLabel?: string;
+  directRoofArea?: string;
+  roofType?: RoofTypeKey;
+  tankCapacity?: string;
+  efficiency?: string;
+  householdSize?: string;
+  dailyRequirement?: string;
 }
 
 export interface AuthUser {

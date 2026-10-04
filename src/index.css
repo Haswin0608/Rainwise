@@ -2,18 +2,54 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+:root {
+  color-scheme: dark;
+  --bg-page: #0b1120;         /* Deep dark navy canvas */
+  --surface-card: #131d2e;    /* Standard card background */
+  --surface-card-subtle: #182438; /* Inner card / section background */
+  --surface-input: #0e1626;   /* Input field background */
+  --surface-raised: #1e293b;  /* Elevated modal / drawer background */
+  --border: #24354c;          /* Border on dark background */
+  --border-subtle: #1e293b;   /* Subtle divider border */
+  --border-focus: #14b8a6;    /* Teal focus ring */
+  
+  --text-primary: #f8fafc;    /* Crisp primary heading / value text (>14:1) */
+  --text-secondary: #cbd5e1;  /* High readability secondary text (>8:1) */
+  --text-muted: #94a3b8;      /* Secondary label / description text (>5:1) */
+  --text-dim: #64748b;        /* Placeholder / subtle indicator (>4.5:1) */
+  
+  --accent: #0d9488;          /* Teal-600 */
+  --accent-text: #2dd4bf;     /* Teal-400 (>8:1 contrast on dark) */
+  --danger: #f43f5e;          /* Rose-500 */
+  --warning: #f59e0b;         /* Amber-500 */
+  --success: #10b981;         /* Emerald-500 */
+}
+
 @layer base {
   html {
-    transition: background-color 0.2s ease, color 0.2s ease;
+    background-color: #0b1120;
+    color: #f8fafc;
+    color-scheme: dark;
   }
   body {
-    background-color: #f8fafc; /* soft off-white slate-50 */
-    color: #1e293b; /* slate-800 */
-    transition: background-color 0.2s ease, color 0.2s ease;
+    background-color: #0b1120;
+    color: #f8fafc;
+    color-scheme: dark;
   }
-  html.dark body {
-    background-color: #0b1120; /* deep slate-950/navy */
-    color: #f1f5f9; /* slate-100 */
+
+  /* Native select dropdown options dark styling */
+  select {
+    color-scheme: dark;
+  }
+  select option {
+    background-color: #131d2e;
+    color: #f8fafc;
+  }
+
+  /* Ensure placeholder text is always readable (at least 4.5:1) */
+  input::placeholder, textarea::placeholder {
+    color: #94a3b8;
+    opacity: 1;
   }
 }
 

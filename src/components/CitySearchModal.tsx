@@ -65,7 +65,7 @@ export const CitySearchModal: React.FC<CitySearchModalProps> = ({
   return (
     <AnimatePresence>
       <div 
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs"
         role="dialog"
         aria-modal="true"
         aria-labelledby="city-search-title"
@@ -75,19 +75,19 @@ export const CitySearchModal: React.FC<CitySearchModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 10 }}
           transition={{ duration: 0.2 }}
-          className="w-full max-w-lg bg-white rounded-3xl border border-slate-200 shadow-2xl p-6 sm:p-7 space-y-5 overflow-hidden"
+          className="w-full max-w-lg bg-[#131d2e] rounded-3xl border border-[#24354c] shadow-2xl p-6 sm:p-7 space-y-5 overflow-hidden"
         >
           {/* Header */}
-          <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
+          <div className="flex items-start justify-between gap-3 border-b border-[#1e293b] pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center text-xl shrink-0">
+              <div className="w-11 h-11 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-xl shrink-0">
                 📍
               </div>
               <div>
-                <h3 id="city-search-title" className="text-xl font-bold font-['Outfit',sans-serif] text-slate-900">
+                <h3 id="city-search-title" className="text-xl font-bold font-['Outfit',sans-serif] text-white">
                   Find Your City or Town
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
                   Type your location to fetch today&apos;s real rainfall from Open-Meteo
                 </p>
               </div>
@@ -97,7 +97,7 @@ export const CitySearchModal: React.FC<CitySearchModalProps> = ({
               type="button"
               id="city-modal-close-btn"
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-[#1e293b] transition-colors cursor-pointer"
               aria-label="Close"
             >
               <X className="w-5 h-5" />
@@ -114,7 +114,7 @@ export const CitySearchModal: React.FC<CitySearchModalProps> = ({
                 placeholder="e.g. Salem, Pune, Bengaluru, Nairobi, London..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full pl-11 pr-24 py-3.5 rounded-2xl border border-slate-300 focus:border-teal-700 focus:ring-3 focus:ring-teal-700/20 text-slate-900 font-medium placeholder:text-slate-400 text-base outline-none transition-all"
+                className="w-full pl-11 pr-24 py-3.5 rounded-2xl border border-[#24354c] bg-[#0e1626] focus:border-teal-400 focus:ring-2 focus:ring-teal-400 text-slate-100 font-medium placeholder:text-slate-500 text-base outline-none transition-all"
               />
               <Search className="w-5 h-5 text-slate-400 absolute left-4 pointer-events-none" />
 
@@ -122,7 +122,7 @@ export const CitySearchModal: React.FC<CitySearchModalProps> = ({
                 type="submit"
                 id="city-search-submit-btn"
                 disabled={isSearching || !query.trim()}
-                className="absolute right-2 px-4 py-2 rounded-xl bg-teal-800 hover:bg-teal-900 disabled:opacity-50 text-white text-sm font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                className="absolute right-2 px-4 py-2 rounded-xl bg-teal-400 hover:bg-teal-300 disabled:opacity-50 text-slate-950 text-sm font-bold transition-colors cursor-pointer flex items-center gap-1.5"
               >
                 {isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Find'}
               </button>
@@ -131,14 +131,14 @@ export const CitySearchModal: React.FC<CitySearchModalProps> = ({
 
           {/* Quick suggestions */}
           <div className="space-y-1.5">
-            <span className="text-xs text-slate-500 font-semibold">Popular towns & cities:</span>
+            <span className="text-xs text-slate-400 font-semibold">Popular towns & cities:</span>
             <div className="flex flex-wrap gap-1.5">
               {['Salem', 'Coimbatore', 'Pune', 'Bengaluru', 'Delhi', 'Austin', 'Nairobi'].map((city) => (
                 <button
                   key={city}
                   type="button"
                   onClick={() => handleQuickPick(city)}
-                  className="text-xs px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-teal-50 hover:text-teal-900 hover:border-teal-300 border border-slate-200 text-slate-700 font-medium transition-colors cursor-pointer"
+                  className="text-xs px-2.5 py-1 rounded-lg bg-[#0e1626] hover:bg-[#1e293b] hover:text-teal-300 border border-[#24354c] text-slate-300 font-medium transition-colors cursor-pointer"
                 >
                   {city}
                 </button>
@@ -149,25 +149,25 @@ export const CitySearchModal: React.FC<CitySearchModalProps> = ({
           {/* Results List */}
           {results.length > 0 && (
             <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-              <span className="text-xs text-slate-500 font-semibold">Select your location:</span>
-              <div className="divide-y divide-slate-100 rounded-2xl border border-slate-200 bg-slate-50/60 overflow-hidden">
+              <span className="text-xs text-slate-400 font-semibold">Select your location:</span>
+              <div className="divide-y divide-[#1e293b] rounded-2xl border border-[#24354c] bg-[#0e1626] overflow-hidden">
                 {results.map((c, idx) => (
                   <button
                     key={`${c.latitude}-${c.longitude}-${idx}`}
                     type="button"
                     onClick={() => onSelectCity(c)}
-                    className="w-full text-left p-3 hover:bg-teal-50 transition-colors flex items-center justify-between gap-2 text-slate-800 cursor-pointer"
+                    className="w-full text-left p-3 hover:bg-[#1a273a] transition-colors flex items-center justify-between gap-2 text-slate-200 cursor-pointer"
                   >
                     <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-teal-700 shrink-0" />
-                      <span className="font-bold text-sm sm:text-base text-slate-900">{c.name}</span>
+                      <MapPin className="w-4 h-4 text-teal-400 shrink-0" />
+                      <span className="font-bold text-sm sm:text-base text-white">{c.name}</span>
                       {(c.admin1 || c.country) && (
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-slate-400">
                           ({[c.admin1, c.country].filter(Boolean).join(', ')})
                         </span>
                       )}
                     </div>
-                    <span className="text-xs font-semibold text-teal-800 shrink-0 bg-white border border-teal-200 px-2 py-0.5 rounded-md">
+                    <span className="text-xs font-semibold text-teal-300 shrink-0 bg-teal-500/10 border border-teal-500/30 px-2 py-0.5 rounded-md">
                       Pick
                     </span>
                   </button>
@@ -178,8 +178,8 @@ export const CitySearchModal: React.FC<CitySearchModalProps> = ({
 
           {/* Error or Empty Message */}
           {hasSearched && !isSearching && results.length === 0 && (
-            <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs sm:text-sm flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-2xl bg-amber-950/40 border border-amber-800/60 text-amber-200 text-xs sm:text-sm flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
               <span>
                 {searchError || `No matching locations found for "${query}". You can check your spelling or enter your rainfall manually.`}
               </span>
@@ -187,8 +187,8 @@ export const CitySearchModal: React.FC<CitySearchModalProps> = ({
           )}
 
           {/* Footer with Manual Option */}
-          <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <span className="text-xs text-slate-500">
+          <div className="pt-3 border-t border-[#1e293b] flex flex-col sm:flex-row items-center justify-between gap-3">
+            <span className="text-xs text-slate-400">
               Rain gauge at home? Manual entry is always accurate.
             </span>
 
@@ -196,7 +196,7 @@ export const CitySearchModal: React.FC<CitySearchModalProps> = ({
               type="button"
               id="city-modal-enter-manually-btn"
               onClick={onEnterManually}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-colors cursor-pointer text-center"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-[#24354c] bg-[#0e1626] hover:bg-[#1e293b] text-slate-200 font-semibold text-sm transition-colors cursor-pointer text-center"
             >
               Enter Rainfall Manually
             </button>

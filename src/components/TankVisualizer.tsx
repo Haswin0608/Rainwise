@@ -15,20 +15,20 @@ export const TankVisualizer: React.FC<TankVisualizerProps> = ({ result }) => {
   const isFull = fillPercent >= 100;
 
   return (
-    <div className="w-full bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs">
+    <div className="w-full bg-[#131d2e] rounded-2xl border border-[#24354c] p-5 sm:p-6 shadow-2xs">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-['Outfit',sans-serif] font-bold text-slate-900 text-base sm:text-lg">
+          <h3 className="font-['Outfit',sans-serif] font-bold text-white text-base sm:text-lg">
             Storage Tank Capacity Status
           </h3>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-400">
             Physical reservoir fill level and overflow discharge analysis
           </p>
         </div>
         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
           isOverflowing 
-            ? 'bg-amber-100 text-amber-800 border border-amber-200' 
-            : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+            ? 'bg-amber-950/60 text-amber-300 border border-amber-800' 
+            : 'bg-emerald-950/60 text-emerald-300 border border-emerald-800'
         }`}>
           {isOverflowing ? 'Overflow Warning' : 'Within Tank Capacity'}
         </span>
@@ -36,18 +36,18 @@ export const TankVisualizer: React.FC<TankVisualizerProps> = ({ result }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
         {/* Visual Tank Graphic */}
-        <div className="md:col-span-5 flex flex-col items-center justify-center p-4 bg-slate-50 rounded-2xl border border-slate-200/70 relative">
+        <div className="md:col-span-5 flex flex-col items-center justify-center p-4 bg-[#0e1626] rounded-2xl border border-[#24354c] relative">
           
           {/* Overflow animation banner if overflowing */}
           {isOverflowing && (
-            <div className="absolute top-2 right-2 flex items-center gap-1 text-[11px] font-semibold text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-md border border-amber-200 animate-pulse">
-              <ShieldAlert className="w-3.5 h-3.5 text-amber-700" />
+            <div className="absolute top-2 right-2 flex items-center gap-1 text-[11px] font-semibold text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded-md border border-amber-800 animate-pulse">
+              <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
               <span>+{wastedWater.toLocaleString()}L Overflow</span>
             </div>
           )}
 
           {/* Tank Cylinder */}
-          <div className="w-36 h-48 sm:w-40 sm:h-52 rounded-2xl border-4 border-slate-700 bg-slate-100 relative overflow-hidden flex flex-col justify-end shadow-inner my-2">
+          <div className="w-36 h-48 sm:w-40 sm:h-52 rounded-2xl border-4 border-slate-600 bg-[#131d2e] relative overflow-hidden flex flex-col justify-end shadow-inner my-2">
             {/* Water Fill Level */}
             <div 
               className={`w-full transition-all duration-1000 ease-out relative ${
@@ -80,10 +80,10 @@ export const TankVisualizer: React.FC<TankVisualizerProps> = ({ result }) => {
           </div>
 
           <div className="text-center mt-2">
-            <span className="text-xs font-semibold text-slate-800 block">
+            <span className="text-xs font-semibold text-slate-200 block">
               {actuallyHarvested.toLocaleString()}L of {tankCapacity.toLocaleString()}L
             </span>
-            <span className="text-[11px] text-slate-500">
+            <span className="text-[11px] text-slate-400">
               {tankCapacity - actuallyHarvested > 0 
                 ? `${(tankCapacity - actuallyHarvested).toLocaleString()}L remaining headroom`
                 : '100% capacity reached'}
@@ -95,22 +95,22 @@ export const TankVisualizer: React.FC<TankVisualizerProps> = ({ result }) => {
         <div className="md:col-span-7 space-y-3">
           <div className={`p-4 rounded-xl border ${
             isOverflowing 
-              ? 'bg-amber-50/70 border-amber-200/80 text-amber-950' 
-              : 'bg-emerald-50/70 border-emerald-200/80 text-emerald-950'
+              ? 'bg-amber-950/40 border-amber-800/60 text-amber-200' 
+              : 'bg-emerald-950/40 border-emerald-800/60 text-emerald-200'
           }`}>
             <div className="flex items-start gap-2.5">
               {isOverflowing ? (
-                <ShieldAlert className="w-5 h-5 text-amber-700 mt-0.5 flex-shrink-0" />
+                <ShieldAlert className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
               ) : (
-                <CheckCircle2 className="w-5 h-5 text-emerald-700 mt-0.5 flex-shrink-0" />
+                <CheckCircle2 className="w-5 h-5 text-emerald-400 mt-0.5 flex-shrink-0" />
               )}
               <div>
-                <h4 className="font-bold text-sm">
+                <h4 className="font-bold text-sm text-white">
                   {isOverflowing 
                     ? `Storage Bottleneck: ${wastedWater.toLocaleString()}L Lost` 
                     : 'Optimal Storage Match'}
                 </h4>
-                <p className="text-xs mt-1 leading-relaxed text-slate-700">
+                <p className="text-xs mt-1 leading-relaxed text-slate-300">
                   {isOverflowing
                     ? `Your roof generated ${harvestableWater.toLocaleString()}L of collectable rainwater, but your ${tankCapacity.toLocaleString()}L reservoir capped capture at ${actuallyHarvested.toLocaleString()}L. The excess ${wastedWater.toLocaleString()}L overflowed.`
                     : `Your ${tankCapacity.toLocaleString()}L tank was able to contain 100% of the ${harvestableWater.toLocaleString()}L collected from this rainfall event with zero loss.`}
@@ -120,13 +120,13 @@ export const TankVisualizer: React.FC<TankVisualizerProps> = ({ result }) => {
           </div>
 
           {/* Quick recommendations */}
-          <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200/70 text-xs text-slate-600 space-y-1.5">
-            <span className="font-semibold text-slate-900 block text-xs">
+          <div className="p-3.5 bg-[#0e1626] rounded-xl border border-[#24354c] text-xs text-slate-300 space-y-1.5">
+            <span className="font-semibold text-white block text-xs">
               System Optimization Insight:
             </span>
             {isOverflowing ? (
               <p>
-                To harvest the overflow water during similar storm events, consider expanding your tank capacity to at least <strong className="text-slate-900">{harvestableWater.toLocaleString()}L</strong> or installing a linked overflow retention cistern.
+                To harvest the overflow water during similar storm events, consider expanding your tank capacity to at least <strong className="text-teal-300">{harvestableWater.toLocaleString()}L</strong> or installing a linked overflow retention cistern.
               </p>
             ) : (
               <p>

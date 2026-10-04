@@ -98,29 +98,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden"
+          className="relative w-full max-w-md bg-[#131d2e] rounded-3xl shadow-xl border border-[#24354c] overflow-hidden"
         >
           {/* Header */}
-          <div className="p-6 pb-4 border-b border-slate-100 flex items-start justify-between">
+          <div className="p-6 pb-4 border-b border-[#1e293b] flex items-start justify-between">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-2xl">🌧️</span>
-                <h3 className="text-xl font-bold font-['Outfit',sans-serif] text-slate-900">
+                <h3 className="text-xl font-bold font-['Outfit',sans-serif] text-white">
                   {customTitle || (mode === 'signin' ? 'Welcome Back to RainWise' : 'Create Your Free Account')}
                 </h3>
               </div>
-              <p className="text-xs sm:text-sm text-slate-600">
+              <p className="text-xs sm:text-sm text-slate-300">
                 {customSubtitle || 'Save your farm or house measurements so you never have to re-enter them.'}
               </p>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+              className="p-1.5 rounded-full hover:bg-[#1e293b] text-slate-400 hover:text-white transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -134,10 +134,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               id="auth-google-btn"
               onClick={handleGoogleSignIn}
               disabled={googleLoading || loading}
-              className="w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 active:bg-slate-100 text-slate-700 font-semibold text-sm sm:text-base shadow-2xs transition-all cursor-pointer disabled:opacity-60 min-h-[48px]"
+              className="w-full flex items-center justify-center gap-3 py-3.5 px-4 rounded-xl border border-[#24354c] bg-[#0e1626] hover:bg-[#1e293b] active:bg-[#24354c] text-slate-200 font-semibold text-sm sm:text-base shadow-2xs transition-all cursor-pointer disabled:opacity-60 min-h-[48px]"
             >
               {googleLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin text-teal-700" />
+                <Loader2 className="w-5 h-5 animate-spin text-teal-400" />
               ) : (
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
                   <path
@@ -163,19 +163,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
             {/* Divider */}
             <div className="relative flex items-center justify-center">
-              <div className="w-full border-t border-slate-200"></div>
-              <span className="absolute px-3 bg-white text-xs text-slate-400 font-medium">
+              <div className="w-full border-t border-[#1e293b]"></div>
+              <span className="absolute px-3 bg-[#131d2e] text-xs text-slate-400 font-medium">
                 or with email
               </span>
             </div>
 
             {/* Mode Switcher Tabs */}
-            <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl">
+            <div className="grid grid-cols-2 p-1 bg-[#0e1626] border border-[#24354c] rounded-xl">
               <button
                 type="button"
                 onClick={() => { setMode('signin'); setError(null); }}
                 className={`py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer ${
-                  mode === 'signin' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
+                  mode === 'signin' ? 'bg-[#1e293b] text-teal-400 shadow-2xs' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 Sign In
@@ -184,7 +184,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 type="button"
                 onClick={() => { setMode('signup'); setError(null); }}
                 className={`py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer ${
-                  mode === 'signup' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
+                  mode === 'signup' ? 'bg-[#1e293b] text-teal-400 shadow-2xs' : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
                 Create Account
@@ -193,7 +193,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
             {/* Error Message */}
             {error && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs sm:text-sm flex items-start gap-2">
+              <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs sm:text-sm flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span>{error}</span>
               </div>
@@ -203,7 +203,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <form onSubmit={handleEmailSubmit} className="space-y-3.5">
               {mode === 'signup' && (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">
                     Your Name (optional)
                   </label>
                   <div className="relative">
@@ -213,14 +213,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       placeholder="e.g. Ramesh Kumar"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-700"
+                      className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-[#24354c] bg-[#0e1626] text-slate-100 placeholder:text-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
                     />
                   </div>
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
                   Email Address
                 </label>
                 <div className="relative">
@@ -231,13 +231,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     placeholder="name@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-700"
+                    className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-[#24354c] bg-[#0e1626] text-slate-100 placeholder:text-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
                   Password
                 </label>
                 <div className="relative">
@@ -249,7 +249,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     placeholder="At least 6 characters"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-700"
+                    className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-[#24354c] bg-[#0e1626] text-slate-100 placeholder:text-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
                   />
                 </div>
               </div>
@@ -258,7 +258,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 type="submit"
                 id="auth-submit-btn"
                 disabled={loading || googleLoading}
-                className="w-full py-3.5 px-4 rounded-xl bg-teal-800 hover:bg-teal-900 active:bg-teal-950 text-white font-bold text-sm sm:text-base shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 min-h-[48px]"
+                className="w-full py-3.5 px-4 rounded-xl bg-teal-400 hover:bg-teal-300 active:bg-teal-500 text-slate-950 font-bold text-sm sm:text-base shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 min-h-[48px]"
               >
                 {loading ? (
                   <>
@@ -272,7 +272,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </form>
 
             {/* Guest fallback option */}
-            <div className="pt-2 border-t border-slate-100 text-center">
+            <div className="pt-2 border-t border-[#1e293b] text-center">
               <button
                 type="button"
                 id="auth-continue-guest-btn"
@@ -280,7 +280,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   if (onContinueAsGuest) onContinueAsGuest();
                   onClose();
                 }}
-                className="text-xs sm:text-sm font-semibold text-slate-500 hover:text-slate-800 underline transition-colors cursor-pointer py-1"
+                className="text-xs sm:text-sm font-semibold text-slate-400 hover:text-teal-400 underline transition-colors cursor-pointer py-1"
               >
                 Continue as Guest without saving
               </button>

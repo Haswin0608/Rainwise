@@ -127,11 +127,11 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[90vh]"
+          className="relative w-full max-w-lg bg-[#131d2e] rounded-3xl shadow-2xl border border-[#24354c] overflow-hidden flex flex-col max-h-[90vh]"
         >
           {/* Top Bar with Skip & Close */}
-          <div className="flex items-center justify-between px-5 pt-4 pb-2 z-10">
-            <span className="text-xs font-bold tracking-wider uppercase text-slate-400 dark:text-slate-500">
+          <div className="flex items-center justify-between px-5 pt-4 pb-2 z-10 border-b border-[#1e293b]">
+            <span className="text-xs font-bold tracking-wider uppercase text-slate-400">
               RainWise Walkthrough
             </span>
 
@@ -140,7 +140,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                 type="button"
                 id="tutorial-skip-btn"
                 onClick={handleSkip}
-                className="text-xs font-semibold px-2.5 py-1 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                className="text-xs font-semibold px-2.5 py-1 rounded-lg text-slate-400 hover:text-white hover:bg-[#1e293b] transition cursor-pointer"
               >
                 Skip
               </button>
@@ -149,7 +149,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                 id="tutorial-close-btn"
                 onClick={handleSkip}
                 aria-label="Close tutorial"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#1e293b] transition cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -168,31 +168,31 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                 className="flex flex-col items-center text-center space-y-4 my-2"
               >
                 {/* Illustration Badge */}
-                <div className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${currentStep.bgGradient} flex items-center justify-center text-5xl shadow-lg shadow-teal-900/15 transform hover:scale-105 transition-transform duration-200 select-none`}>
+                <div className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${currentStep.bgGradient} flex items-center justify-center text-5xl shadow-lg shadow-teal-950/40 transform hover:scale-105 transition-transform duration-200 select-none`}>
                   <span>{currentStep.emoji}</span>
                 </div>
 
                 {/* Step badge */}
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300">
-                  <Sparkles className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0e1626] border border-[#24354c] text-xs font-bold text-teal-400">
+                  <Sparkles className="w-3.5 h-3.5 text-teal-400" />
                   <span>{currentStep.badge}</span>
                 </div>
 
                 {/* Title */}
                 <h3 
                   id="tutorial-title" 
-                  className="text-2xl sm:text-3xl font-extrabold font-['Outfit',sans-serif] text-slate-900 dark:text-white tracking-tight"
+                  className="text-2xl sm:text-3xl font-extrabold font-['Outfit',sans-serif] text-white tracking-tight"
                 >
                   {currentStep.title}
                 </h3>
 
                 {/* Core Friendly One-Sentence */}
-                <p className="text-base sm:text-lg font-medium text-slate-800 dark:text-slate-100 leading-relaxed px-2">
+                <p className="text-base sm:text-lg font-medium text-slate-200 leading-relaxed px-2">
                   &ldquo;{currentStep.sentence}&rdquo;
                 </p>
 
                 {/* Supporting Plain-Language Tip */}
-                <div className="w-full p-3.5 rounded-2xl bg-teal-50/70 dark:bg-slate-800/80 border border-teal-200/60 dark:border-slate-700 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-normal text-left flex items-start gap-2.5">
+                <div className="w-full p-3.5 rounded-2xl bg-[#0e1626] border border-[#24354c] text-xs sm:text-sm text-slate-300 leading-normal text-left flex items-start gap-2.5">
                   <span className="text-base shrink-0">💡</span>
                   <p>{currentStep.tip}</p>
                 </div>
@@ -201,7 +201,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
           </div>
 
           {/* Bottom Controls: Progress Dots & Next / Back Buttons */}
-          <div className="px-6 py-4 bg-slate-50 dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+          <div className="px-6 py-4 bg-[#0e1626] border-t border-[#1e293b] flex items-center justify-between gap-3">
             {/* Progress Dots: ● ○ ○ ○ ○ ○ */}
             <div className="flex items-center gap-1.5">
               {TUTORIAL_STEPS.map((_, index) => (
@@ -212,8 +212,8 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                   aria-label={`Go to step ${index + 1}`}
                   className={`transition-all duration-200 rounded-full cursor-pointer ${
                     index === currentStepIndex
-                      ? 'w-6 h-2 bg-teal-600 dark:bg-teal-400'
-                      : 'w-2 h-2 bg-slate-300 dark:bg-slate-600 hover:bg-slate-400'
+                      ? 'w-6 h-2 bg-teal-400'
+                      : 'w-2 h-2 bg-slate-700 hover:bg-slate-500'
                   }`}
                 />
               ))}
@@ -226,7 +226,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                   type="button"
                   id="tutorial-back-btn"
                   onClick={handlePrev}
-                  className="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-1 cursor-pointer"
+                  className="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 hover:bg-[#1e293b] transition flex items-center gap-1 cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
                   <span>Back</span>
@@ -237,7 +237,7 @@ export const TutorialModal: React.FC<TutorialModalProps> = ({
                 type="button"
                 id="tutorial-next-btn"
                 onClick={handleNext}
-                className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-teal-700 hover:bg-teal-800 active:bg-teal-900 shadow-md shadow-teal-800/20 transition flex items-center gap-1.5 cursor-pointer min-h-[40px]"
+                className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-slate-950 bg-teal-400 hover:bg-teal-300 active:bg-teal-500 shadow-md shadow-teal-950/30 transition flex items-center gap-1.5 cursor-pointer min-h-[40px]"
               >
                 {isLastStep ? (
                   <>

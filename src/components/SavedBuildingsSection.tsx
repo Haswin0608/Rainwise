@@ -52,15 +52,15 @@ export const SavedBuildingsSection: React.FC<SavedBuildingsSectionProps> = ({
   return (
     <div className="w-full max-w-4xl mx-auto mt-6 mb-10 text-left">
       {/* Section Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-slate-200/80 dark:border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 border-b border-[#1e293b] pb-4">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-2xl">🏠</span>
-            <h2 className="text-2xl sm:text-3xl font-bold font-['Outfit',sans-serif] text-slate-900 dark:text-white">
+            <h2 className="text-2xl sm:text-3xl font-bold font-['Outfit',sans-serif] text-white">
               Your Saved Buildings
             </h2>
           </div>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-400 mt-1">
             Tap any building to calculate today&apos;s rain without measuring again.
           </p>
         </div>
@@ -70,31 +70,31 @@ export const SavedBuildingsSection: React.FC<SavedBuildingsSectionProps> = ({
           type="button"
           id="saved-buildings-new-btn"
           onClick={onNewBlankBuilding}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-50 dark:bg-teal-950/60 hover:bg-teal-100 dark:hover:bg-teal-900 text-teal-900 dark:text-teal-200 border border-teal-200 dark:border-teal-800 font-bold text-sm transition-all shadow-2xs cursor-pointer min-h-[42px] self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 border border-teal-500/30 font-bold text-sm transition-all shadow-2xs cursor-pointer min-h-[42px] self-start sm:self-auto"
         >
-          <Plus className="w-4 h-4 text-teal-700 dark:text-teal-400" />
+          <Plus className="w-4 h-4 text-teal-400" />
           <span>+ Calculate a New Building</span>
         </button>
       </div>
 
       {isLoading ? (
-        <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs">
-          <Loader2 className="w-8 h-8 animate-spin text-teal-700 dark:text-teal-400 mx-auto mb-2" />
-          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Loading your saved buildings...</p>
+        <div className="p-8 text-center bg-[#131d2e] rounded-3xl border border-[#24354c] shadow-2xs">
+          <Loader2 className="w-8 h-8 animate-spin text-teal-400 mx-auto mb-2" />
+          <p className="text-sm text-slate-400 font-medium">Loading your saved buildings...</p>
         </div>
       ) : buildings.length === 0 ? (
-        <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 shadow-2xs">
+        <div className="p-8 text-center bg-[#131d2e] rounded-3xl border border-dashed border-[#24354c] shadow-2xs">
           <div className="text-4xl mb-3">🏡</div>
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white font-['Outfit',sans-serif]">
+          <h3 className="text-lg font-bold text-white font-['Outfit',sans-serif]">
             No saved buildings yet
           </h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto mt-1 mb-5">
+          <p className="text-sm text-slate-400 max-w-md mx-auto mt-1 mb-5">
             Fill in your roof measurements on the calculator, then tap &quot;💾 Save This Building&quot; to keep it here for next time.
           </p>
           <button
             type="button"
             onClick={onNewBlankBuilding}
-            className="px-5 py-2.5 rounded-xl bg-teal-800 hover:bg-teal-900 dark:bg-teal-700 dark:hover:bg-teal-800 text-white font-bold text-sm shadow-sm transition-all cursor-pointer"
+            className="px-5 py-2.5 rounded-xl bg-teal-400 hover:bg-teal-300 active:bg-teal-500 text-slate-950 font-bold text-sm shadow-sm transition-all cursor-pointer"
           >
             Start First Building
           </button>
@@ -114,7 +114,7 @@ export const SavedBuildingsSection: React.FC<SavedBuildingsSectionProps> = ({
                 key={building.id}
                 id={`saved-building-card-${building.id}`}
                 onClick={() => onSelectBuilding(building)}
-                className="group relative p-5 rounded-2xl bg-white dark:bg-slate-900 hover:bg-slate-50/90 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-slate-800 hover:border-teal-600 dark:hover:border-teal-500 shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+                className="group relative p-5 rounded-2xl bg-[#131d2e] hover:bg-[#1a273a] border border-[#24354c] hover:border-teal-500 shadow-2xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
               >
                 {/* Card Top */}
                 <div>
@@ -122,12 +122,12 @@ export const SavedBuildingsSection: React.FC<SavedBuildingsSectionProps> = ({
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">🏡</span>
                       <div>
-                        <h3 className="text-lg font-bold font-['Outfit',sans-serif] text-slate-900 dark:text-white group-hover:text-teal-900 dark:group-hover:text-teal-300 transition-colors">
+                        <h3 className="text-lg font-bold font-['Outfit',sans-serif] text-white group-hover:text-teal-300 transition-colors">
                           {building.nickname}
                         </h3>
                         {building.locationLabel && (
-                          <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            <MapPin className="w-3 h-3 text-teal-600 dark:text-teal-400" />
+                          <div className="flex items-center gap-1 text-xs text-slate-400 mt-0.5">
+                            <MapPin className="w-3 h-3 text-teal-400" />
                             <span>{building.locationLabel}</span>
                           </div>
                         )}
@@ -143,7 +143,7 @@ export const SavedBuildingsSection: React.FC<SavedBuildingsSectionProps> = ({
                           e.stopPropagation();
                           onEditBuilding(building);
                         }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#1e293b] transition-colors cursor-pointer"
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
@@ -155,7 +155,7 @@ export const SavedBuildingsSection: React.FC<SavedBuildingsSectionProps> = ({
                           e.stopPropagation();
                           setDeleteConfirmId(isConfirmingDelete ? null : building.id);
                         }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/50 transition-colors cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -170,17 +170,17 @@ export const SavedBuildingsSection: React.FC<SavedBuildingsSectionProps> = ({
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
                         onClick={(e) => e.stopPropagation()}
-                        className="my-2 p-3 rounded-xl bg-rose-50 dark:bg-rose-950/70 border border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-200 text-xs flex flex-col sm:flex-row items-center justify-between gap-2"
+                        className="my-2 p-3 rounded-xl bg-rose-950/70 border border-rose-800 text-rose-200 text-xs flex flex-col sm:flex-row items-center justify-between gap-2"
                       >
                         <div className="flex items-center gap-1.5">
-                          <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+                          <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
                           <span>Delete &quot;{building.nickname}&quot;?</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() => setDeleteConfirmId(null)}
-                            className="px-2 py-1 rounded bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-semibold cursor-pointer"
+                            className="px-2 py-1 rounded bg-[#0e1626] text-slate-300 border border-[#24354c] font-semibold cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -188,7 +188,7 @@ export const SavedBuildingsSection: React.FC<SavedBuildingsSectionProps> = ({
                             type="button"
                             disabled={deletingId === building.id}
                             onClick={(e) => handleDelete(building.id, e)}
-                            className="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-700 text-white font-bold cursor-pointer disabled:opacity-50"
+                            className="px-2.5 py-1 rounded bg-rose-600 hover:bg-rose-500 text-white font-bold cursor-pointer disabled:opacity-50"
                           >
                             {deletingId === building.id ? 'Deleting...' : 'Delete'}
                           </button>
@@ -198,22 +198,22 @@ export const SavedBuildingsSection: React.FC<SavedBuildingsSectionProps> = ({
                   </AnimatePresence>
 
                   {/* Badges Grid */}
-                  <div className="grid grid-cols-2 gap-2 mt-3 text-xs text-slate-700 dark:text-slate-300">
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-750 flex items-center gap-2">
-                      <Layers className="w-3.5 h-3.5 text-teal-700 dark:text-teal-400 shrink-0" />
+                  <div className="grid grid-cols-2 gap-2 mt-3 text-xs text-slate-300">
+                    <div className="p-2 rounded-xl bg-[#0e1626] border border-[#24354c] flex items-center gap-2">
+                      <Layers className="w-3.5 h-3.5 text-teal-400 shrink-0" />
                       <span>
-                        <strong>{formatArea(totalArea)}</strong> ({normalizedRoofs.length} {normalizedRoofs.length === 1 ? 'roof' : 'roofs'})
+                        <strong className="text-white">{formatArea(totalArea)}</strong> ({normalizedRoofs.length} {normalizedRoofs.length === 1 ? 'roof' : 'roofs'})
                       </span>
                     </div>
 
-                    <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-750 flex items-center gap-2">
-                      <Container className="w-3.5 h-3.5 text-sky-700 dark:text-sky-400 shrink-0" />
+                    <div className="p-2 rounded-xl bg-[#0e1626] border border-[#24354c] flex items-center gap-2">
+                      <Container className="w-3.5 h-3.5 text-sky-400 shrink-0" />
                       <span>
                         {noTankYet ? (
-                          <strong>No tank</strong>
+                          <strong className="text-white">No tank</strong>
                         ) : (
                           <>
-                            <strong>{formatVolume(totalTankL)}</strong> ({normalizedTanks.length} {normalizedTanks.length === 1 ? 'tank' : 'tanks'})
+                            <strong className="text-white">{formatVolume(totalTankL)}</strong> ({normalizedTanks.length} {normalizedTanks.length === 1 ? 'tank' : 'tanks'})
                           </>
                         )}
                       </span>
@@ -222,9 +222,9 @@ export const SavedBuildingsSection: React.FC<SavedBuildingsSectionProps> = ({
                 </div>
 
                 {/* Card Bottom CTA */}
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-teal-800 dark:text-teal-300 group-hover:text-teal-950 dark:group-hover:text-teal-200">
+                <div className="mt-4 pt-3 border-t border-[#1e293b] flex items-center justify-between text-xs font-bold text-teal-400 group-hover:text-teal-300">
                   <span>Calculate Today&apos;s Rain</span>
-                  <div className="flex items-center gap-1 text-teal-700 dark:text-teal-400 group-hover:translate-x-1 transition-transform">
+                  <div className="flex items-center gap-1 text-teal-400 group-hover:translate-x-1 transition-transform">
                     <span>Load</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </div>
