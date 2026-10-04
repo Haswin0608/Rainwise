@@ -44,7 +44,7 @@ export const WaterSummaryCard: React.FC<WaterSummaryCardProps> = ({
               <HelpExplainButton termKey="saved_vs_wasted" />
             </h2>
             <p className="text-xs text-slate-300">
-              Live rainwater collection and loss estimates across all three timeframes.
+              How much rain you keep and waste: this week, this month and this year.
             </p>
           </div>
         </div>
@@ -115,7 +115,7 @@ export const WaterSummaryCard: React.FC<WaterSummaryCardProps> = ({
                         🌧️ Rain on Roof
                       </span>
                       <strong className="text-base sm:text-xl font-black text-white font-['Outfit',sans-serif] block mt-0.5">
-                        {data.rainOnRoofBuckets.toLocaleString()} <span className="text-xs font-normal text-slate-400">bkt</span>
+                        {data.rainOnRoofBuckets.toLocaleString()} <span className="text-xs font-normal text-slate-400">{data.rainOnRoofBuckets === 1 ? 'bucket' : 'buckets'}</span>
                       </strong>
                       <span className="text-[10px] text-slate-400 font-mono block">
                         {formatVolume(data.rainOnRoof)}
@@ -128,7 +128,7 @@ export const WaterSummaryCard: React.FC<WaterSummaryCardProps> = ({
                         🟢 Saved
                       </span>
                       <strong className="text-base sm:text-xl font-black text-teal-300 font-['Outfit',sans-serif] block mt-0.5">
-                        {data.keptBuckets.toLocaleString()} <span className="text-xs font-normal text-teal-500">bkt</span>
+                        {data.keptBuckets.toLocaleString()} <span className="text-xs font-normal text-teal-500">{data.keptBuckets === 1 ? 'bucket' : 'buckets'}</span>
                       </strong>
                       <span className="text-[10px] text-teal-400/80 font-mono block">
                         {formatVolume(data.kept)}
@@ -141,7 +141,7 @@ export const WaterSummaryCard: React.FC<WaterSummaryCardProps> = ({
                         🟠 Wasted
                       </span>
                       <strong className="text-base sm:text-xl font-black text-orange-400 font-['Outfit',sans-serif] block mt-0.5">
-                        {data.wastedBuckets.toLocaleString()} <span className="text-xs font-normal text-orange-500">bkt</span>
+                        {data.wastedBuckets.toLocaleString()} <span className="text-xs font-normal text-orange-500">{data.wastedBuckets === 1 ? 'bucket' : 'buckets'}</span>
                       </strong>
                       <span className="text-[10px] text-orange-400/80 font-mono block">
                         {formatVolume(data.wasted)}

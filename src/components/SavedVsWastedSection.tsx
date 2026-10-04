@@ -312,14 +312,14 @@ export const SavedVsWastedSection: React.FC<SavedVsWastedSectionProps> = ({
                   <div className="p-3 rounded-xl bg-[#131d2e] border border-[#24354c] flex flex-row items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="text-base shrink-0 select-none">🍂</span>
-                      <span className="text-slate-300 font-semibold truncate">Lost on the roof</span>
+                      <span className="text-slate-300 font-semibold truncate">Lost on the roof (soaks in)</span>
                     </div>
                     <div className="text-right shrink-0">
                       <strong className="text-amber-300 font-mono text-sm block">
                         {activePeriodSummary.lostOnRoof.toLocaleString()} L
                       </strong>
                       <span className="text-[10px] text-amber-400/80 font-normal block">
-                        ~{activePeriodSummary.lostOnRoofBuckets.toLocaleString()} buckets
+                        ~{activePeriodSummary.lostOnRoofBuckets.toLocaleString()} {activePeriodSummary.lostOnRoofBuckets === 1 ? 'bucket' : 'buckets'}
                       </span>
                     </div>
                   </div>
@@ -335,23 +335,23 @@ export const SavedVsWastedSection: React.FC<SavedVsWastedSectionProps> = ({
                         {activePeriodSummary.kept.toLocaleString()} L
                       </strong>
                       <span className="text-[10px] text-teal-400/80 font-normal block">
-                        ~{activePeriodSummary.keptBuckets.toLocaleString()} buckets
+                        ~{activePeriodSummary.keptBuckets.toLocaleString()} {activePeriodSummary.keptBuckets === 1 ? 'bucket' : 'buckets'}
                       </span>
                     </div>
                   </div>
 
-                  {/* Row 5: Spilled Over */}
+                  {/* Row 5: Spilled */}
                   <div className="p-3 rounded-xl bg-[#131d2e] border border-orange-500/40 flex flex-row items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="text-base shrink-0 select-none">🌊</span>
-                      <span className="text-orange-300 font-bold truncate">Spilled over (tank full)</span>
+                      <span className="text-orange-300 font-bold truncate">Spilled (tank was full)</span>
                     </div>
                     <div className="text-right shrink-0">
                       <strong className="text-orange-400 font-mono text-sm block">
                         {activePeriodSummary.spilled.toLocaleString()} L
                       </strong>
                       <span className="text-[10px] text-orange-400/80 font-normal block">
-                        ~{activePeriodSummary.spilledBuckets.toLocaleString()} buckets
+                        ~{activePeriodSummary.spilledBuckets.toLocaleString()} {activePeriodSummary.spilledBuckets === 1 ? 'bucket' : 'buckets'}
                       </span>
                     </div>
                   </div>
@@ -367,7 +367,7 @@ export const SavedVsWastedSection: React.FC<SavedVsWastedSectionProps> = ({
                         {activePeriodSummary.wasted.toLocaleString()} L
                       </strong>
                       <span className="text-[10px] text-rose-400/80 font-normal block">
-                        ~{activePeriodSummary.wastedBuckets.toLocaleString()} buckets
+                        ~{activePeriodSummary.wastedBuckets.toLocaleString()} {activePeriodSummary.wastedBuckets === 1 ? 'bucket' : 'buckets'}
                       </span>
                     </div>
                   </div>
@@ -594,7 +594,7 @@ export const SavedVsWastedSection: React.FC<SavedVsWastedSectionProps> = ({
             <div className="p-3 rounded-xl bg-[#131d2e] border border-[#24354c]">
               <span className="text-slate-400 block font-medium">🌧️ Rain on Roof</span>
               <strong className="text-base font-black text-white font-['Outfit',sans-serif] block mt-0.5">
-                {selectedMonthData.rainOnRoofBuckets.toLocaleString()} bkt
+                {selectedMonthData.rainOnRoofBuckets.toLocaleString()} {selectedMonthData.rainOnRoofBuckets === 1 ? 'bucket' : 'buckets'}
               </strong>
               <span className="text-[10px] text-slate-400 font-mono">
                 {formatVolume(selectedMonthData.rainOnRoof)}
@@ -604,7 +604,7 @@ export const SavedVsWastedSection: React.FC<SavedVsWastedSectionProps> = ({
             <div className="p-3 rounded-xl bg-[#131d2e] border border-teal-500/30">
               <span className="text-teal-400 block font-bold">🟢 Saved Water</span>
               <strong className="text-base font-black text-teal-300 font-['Outfit',sans-serif] block mt-0.5">
-                {selectedMonthData.keptBuckets.toLocaleString()} bkt
+                {selectedMonthData.keptBuckets.toLocaleString()} {selectedMonthData.keptBuckets === 1 ? 'bucket' : 'buckets'}
               </strong>
               <span className="text-[10px] text-teal-400/80 font-mono">
                 {formatVolume(selectedMonthData.kept)}
@@ -612,9 +612,9 @@ export const SavedVsWastedSection: React.FC<SavedVsWastedSectionProps> = ({
             </div>
 
             <div className="p-3 rounded-xl bg-[#131d2e] border border-amber-500/30">
-              <span className="text-amber-400 block font-bold">Roof Loss</span>
+              <span className="text-amber-400 block font-bold">Lost on roof</span>
               <strong className="text-base font-black text-amber-300 font-['Outfit',sans-serif] block mt-0.5">
-                {selectedMonthData.lostOnRoofBuckets.toLocaleString()} bkt
+                {selectedMonthData.lostOnRoofBuckets.toLocaleString()} {selectedMonthData.lostOnRoofBuckets === 1 ? 'bucket' : 'buckets'}
               </strong>
               <span className="text-[10px] text-amber-400/80 font-mono">
                 {formatVolume(selectedMonthData.lostOnRoof)}
@@ -622,9 +622,9 @@ export const SavedVsWastedSection: React.FC<SavedVsWastedSectionProps> = ({
             </div>
 
             <div className="p-3 rounded-xl bg-[#131d2e] border border-orange-500/30">
-              <span className="text-orange-400 block font-bold">Tank Spillover</span>
+              <span className="text-orange-400 block font-bold">Spilled</span>
               <strong className="text-base font-black text-orange-400 font-['Outfit',sans-serif] block mt-0.5">
-                {selectedMonthData.spilledBuckets.toLocaleString()} bkt
+                {selectedMonthData.spilledBuckets.toLocaleString()} {selectedMonthData.spilledBuckets === 1 ? 'bucket' : 'buckets'}
               </strong>
               <span className="text-[10px] text-orange-400/80 font-mono">
                 {formatVolume(selectedMonthData.spilled)}

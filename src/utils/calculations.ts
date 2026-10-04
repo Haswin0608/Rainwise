@@ -769,6 +769,8 @@ export function calcWaterSummary(
   const weekKeptPct = weekRainOnRoof > 0 ? Math.min(100, Math.round((weekKept / weekRainOnRoof) * 100)) : 0;
   const weekWastedPct = weekRainOnRoof > 0 ? Math.max(0, 100 - weekKeptPct) : 0;
 
+  const weekBuckets = getPeriodBucketSummary(weekKept, weekSpilled, weekLostOnRoof, bucketSizeL);
+
   const week: PeriodWaterSummary = {
     period: 'week',
     periodLabel: 'This week',
@@ -782,12 +784,12 @@ export function calcWaterSummary(
     wasted: weekWasted,
     keptPercent: weekKeptPct,
     wastedPercent: weekWastedPct,
-    rainOnRoofBuckets: toBuckets(weekRainOnRoof, bucketSizeL),
-    caughtBuckets: toBuckets(weekCaught, bucketSizeL),
-    lostOnRoofBuckets: toBuckets(weekLostOnRoof, bucketSizeL),
-    keptBuckets: toBuckets(weekKept, bucketSizeL),
-    spilledBuckets: toBuckets(weekSpilled, bucketSizeL),
-    wastedBuckets: toBuckets(weekWasted, bucketSizeL),
+    rainOnRoofBuckets: weekBuckets.rainOnRoofBuckets,
+    caughtBuckets: weekBuckets.caughtBuckets,
+    lostOnRoofBuckets: weekBuckets.lostOnRoofBuckets,
+    keptBuckets: weekBuckets.keptBuckets,
+    spilledBuckets: weekBuckets.spilledBuckets,
+    wastedBuckets: weekBuckets.wastedBuckets,
   };
 
   // Compute 12-Month breakdown sequentially
@@ -836,6 +838,7 @@ export function calcWaterSummary(
     const mWasted = mLostOnRoof + mSpilled;
     const mKeptPct = mRainOnRoof > 0 ? Math.min(100, Math.round((mKept / mRainOnRoof) * 100)) : 0;
     const mWastedPct = mRainOnRoof > 0 ? Math.max(0, 100 - mKeptPct) : 0;
+    const mBuckets = getPeriodBucketSummary(mKept, mSpilled, mLostOnRoof, bucketSizeL);
 
     monthlyBreakdown.push({
       period: 'month',
@@ -851,12 +854,12 @@ export function calcWaterSummary(
       wasted: mWasted,
       keptPercent: mKeptPct,
       wastedPercent: mWastedPct,
-      rainOnRoofBuckets: toBuckets(mRainOnRoof, bucketSizeL),
-      caughtBuckets: toBuckets(mCaught, bucketSizeL),
-      lostOnRoofBuckets: toBuckets(mLostOnRoof, bucketSizeL),
-      keptBuckets: toBuckets(mKept, bucketSizeL),
-      spilledBuckets: toBuckets(mSpilled, bucketSizeL),
-      wastedBuckets: toBuckets(mWasted, bucketSizeL),
+      rainOnRoofBuckets: mBuckets.rainOnRoofBuckets,
+      caughtBuckets: mBuckets.caughtBuckets,
+      lostOnRoofBuckets: mBuckets.lostOnRoofBuckets,
+      keptBuckets: mBuckets.keptBuckets,
+      spilledBuckets: mBuckets.spilledBuckets,
+      wastedBuckets: mBuckets.wastedBuckets,
     });
   }
 
@@ -880,6 +883,8 @@ export function calcWaterSummary(
     invariantError = true;
   }
 
+  const yearBuckets = getPeriodBucketSummary(yearKept, yearSpilled, yearLostOnRoof, bucketSizeL);
+
   const year: PeriodWaterSummary = {
     period: 'year',
     periodLabel: 'Typical year',
@@ -893,12 +898,12 @@ export function calcWaterSummary(
     wasted: yearWasted,
     keptPercent: yearKeptPct,
     wastedPercent: yearWastedPct,
-    rainOnRoofBuckets: toBuckets(yearRainOnRoof, bucketSizeL),
-    caughtBuckets: toBuckets(yearCaught, bucketSizeL),
-    lostOnRoofBuckets: toBuckets(yearLostOnRoof, bucketSizeL),
-    keptBuckets: toBuckets(yearKept, bucketSizeL),
-    spilledBuckets: toBuckets(yearSpilled, bucketSizeL),
-    wastedBuckets: toBuckets(yearWasted, bucketSizeL),
+    rainOnRoofBuckets: yearBuckets.rainOnRoofBuckets,
+    caughtBuckets: yearBuckets.caughtBuckets,
+    lostOnRoofBuckets: yearBuckets.lostOnRoofBuckets,
+    keptBuckets: yearBuckets.keptBuckets,
+    spilledBuckets: yearBuckets.spilledBuckets,
+    wastedBuckets: yearBuckets.wastedBuckets,
   };
 
   return {
@@ -1452,6 +1457,53 @@ export function calcSavedWasted(
  * "IN EVERYDAY TERMS" CONVERSION HELPERS
  * ══════════════════════════════════════════════════════════════════════
  */
+
+/**
+ * Single helper function for rounding buckets so numbers always add up:
+ * - Saved buckets = round(kept / bucketSize)
+ * - Wasted buckets = round((spilled + lostOnRoof) / bucketSize)
+ * - Rain on roof buckets = Saved buckets + Wasted buckets (always adds up)
+ * - Spilled buckets = round(spilled / bucketSize)
+ * - Lost on roof buckets = Wasted buckets - Spilled buckets (always adds up)
+ */
+export function getPeriodBucketSummary(
+  kept: number,
+  spilled: number,
+  lostOnRoof: number,
+  bucketSizeL: number = 15
+) {
+  const keptBuckets = Math.round(kept / bucketSizeL);
+  const wastedBuckets = Math.round((spilled + lostOnRoof) / bucketSizeL);
+  const rainOnRoofBuckets = keptBuckets + wastedBuckets;
+  const spilledBuckets = Math.round(spilled / bucketSizeL);
+  const lostOnRoofBuckets = Math.max(0, wastedBuckets - spilledBuckets);
+  const caughtBuckets = keptBuckets + spilledBuckets;
+
+  return {
+    keptBuckets,
+    wastedBuckets,
+    rainOnRoofBuckets,
+    spilledBuckets,
+    lostOnRoofBuckets,
+    caughtBuckets,
+  };
+}
+
+/**
+ * Converts amount in litres to formatted buckets string based on 15L conversion,
+ * using Math.round individually and ensuring proper singular/plural text.
+ */
+export function formatBuckets(
+  amountInLitres: number,
+  bucketSizeL: number = 15
+): string {
+  if (!amountInLitres || amountInLitres <= 0) return '0 buckets';
+  const rounded = Math.round(amountInLitres / (bucketSizeL || 15));
+  if (rounded === 1) {
+    return '1 bucket';
+  }
+  return `${rounded.toLocaleString()} buckets`;
+}
 
 /**
  * Converts litres to buckets (default 1 bucket ≈ 15 L).

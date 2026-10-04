@@ -319,7 +319,7 @@ export const BuildingCardWaterImpact: React.FC<BuildingCardWaterImpactProps> = (
             🟢 Saved
           </span>
           <strong className="text-base sm:text-lg font-black text-teal-300 font-['Outfit',sans-serif] block mt-0.5">
-            {savedBuckets.toLocaleString()} <span className="text-xs font-normal text-slate-400"><span className="hidden sm:inline">buckets</span><span className="sm:hidden">bkt</span></span>
+            {savedBuckets.toLocaleString()} <span className="text-xs font-normal text-slate-400">{savedBuckets === 1 ? 'bucket' : 'buckets'}</span>
           </strong>
           <span className="text-[10px] text-slate-400 font-mono block">
             ({formatVolume(savedLitres)})
@@ -338,7 +338,7 @@ export const BuildingCardWaterImpact: React.FC<BuildingCardWaterImpactProps> = (
             🟠 Wasted
           </span>
           <strong className="text-base sm:text-lg font-black text-orange-400 font-['Outfit',sans-serif] block mt-0.5">
-            {wastedBuckets.toLocaleString()} <span className="text-xs font-normal text-slate-400"><span className="hidden sm:inline">buckets</span><span className="sm:hidden">bkt</span></span>
+            {wastedBuckets.toLocaleString()} <span className="text-xs font-normal text-slate-400">{wastedBuckets === 1 ? 'bucket' : 'buckets'}</span>
           </strong>
           <span className="text-[10px] text-slate-400 font-mono block">
             ({formatVolume(wastedLitres)})

@@ -384,7 +384,7 @@ export const BuildingDetailModal: React.FC<BuildingDetailModalProps> = ({
                 <strong className="text-sky-300 font-mono text-sm">{activePeriodSummary.caught.toLocaleString()} L</strong>
               </div>
               <div className="p-2.5 rounded-xl bg-[#131d2e]">
-                <span className="text-slate-400 block text-[11px]">Lost on Roof:</span>
+                <span className="text-slate-400 block text-[11px]">Lost on the roof (soaks in):</span>
                 <strong className="text-amber-300 font-mono text-sm">{activePeriodSummary.lostOnRoof.toLocaleString()} L</strong>
               </div>
               <div className="p-2.5 rounded-xl bg-[#131d2e]">
@@ -392,7 +392,7 @@ export const BuildingDetailModal: React.FC<BuildingDetailModalProps> = ({
                 <strong className="text-teal-300 font-mono text-sm">{activePeriodSummary.kept.toLocaleString()} L</strong>
               </div>
               <div className="p-2.5 rounded-xl bg-[#131d2e]">
-                <span className="text-slate-400 block text-[11px]">Spilled Over:</span>
+                <span className="text-slate-400 block text-[11px]">Spilled (tank was full):</span>
                 <strong className="text-orange-400 font-mono text-sm">{activePeriodSummary.spilled.toLocaleString()} L</strong>
               </div>
               <div className="p-2.5 rounded-xl bg-[#131d2e]">
