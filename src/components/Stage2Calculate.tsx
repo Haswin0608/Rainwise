@@ -99,14 +99,17 @@ export const Stage2Calculate: React.FC<Stage2CalculateProps> = ({
   // Check validation for "Finish" button
   const hasLocation = Boolean(result.hasLocation || (inputs.locationName && inputs.locationName.trim().length > 0));
   const hasValidRoofArea = totalRoofArea > 0 && roofs.some((r) => (parseFloat(r.area) || 0) > 0);
+  const isRainfallLoading = Boolean(inputs.isLoadingArchive || (hasLocation && (!inputs.typicalMonthlyRainfallMm || inputs.typicalMonthlyRainfallMm.length === 0)));
 
-  const isFinishEnabled = hasLocation && hasValidRoofArea;
+  const isFinishEnabled = hasLocation && hasValidRoofArea && !isRainfallLoading;
 
   let finishDisabledReason = '';
   if (!hasLocation) {
     finishDisabledReason = 'Please select or search your location to fetch local rainfall data.';
   } else if (!hasValidRoofArea) {
     finishDisabledReason = 'Please enter a roof area greater than 0.';
+  } else if (isRainfallLoading) {
+    finishDisabledReason = 'Loading rainfall data for your location...';
   }
 
   // Unit toggle handler

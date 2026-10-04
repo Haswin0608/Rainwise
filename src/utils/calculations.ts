@@ -21,7 +21,8 @@ import {
   RoofItem,
   StorageTankItem,
   FullWaterSummary,
-  PeriodWaterSummary
+  PeriodWaterSummary,
+  SavedBuilding
 } from '../types';
 import { 
   UnitSystem, 
@@ -1593,4 +1594,33 @@ export function getSavedWastedHeadlineSummary(
       : `Most loss is natural absorption on your roof.`,
     isGood: false,
   };
+}
+
+/**
+ * Helper to compute water summary for a SavedBuilding
+ * Reads roofs, tanks, occupancy, location, and stored rainfall from the building
+ */
+export function getBuildingWaterSummary(
+  building: SavedBuilding,
+  unit: UnitSystem = 'metric',
+  assumptions: PlanningAssumptions = DEFAULT_ASSUMPTIONS
+): FullWaterSummary {
+  const normalizedRoofs = normalizeRoofs(building.roofs, building.directRoofArea, building.roofType);
+  const { tanks: normalizedTanks, noTankYet } = normalizeTanks(building.tanks, building.tankCapacity, building.noTankYet);
+
+  const inputs: CalculatorInputs = {
+    ...DEFAULT_INPUTS,
+    roofs: normalizedRoofs,
+    tanks: normalizedTanks,
+    noTankYet: Boolean(noTankYet),
+    householdSize: String(building.people || 4),
+    locationName: building.location?.name || building.locationLabel || '',
+    latitude: building.location?.latitude,
+    longitude: building.location?.longitude,
+    typicalMonthlyRainfallMm: building.monthlyRainfallMm,
+    weeklyRainfallMm: building.weeklyRainfallMm,
+    assumptions,
+  };
+
+  return calcWaterSummary(inputs, unit, assumptions);
 }

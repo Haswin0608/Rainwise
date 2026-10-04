@@ -275,70 +275,106 @@ export const SavedVsWastedSection: React.FC<SavedVsWastedSectionProps> = ({
                 exit={{ opacity: 0, height: 0 }}
                 className="mt-3 p-4 sm:p-5 rounded-2xl bg-[#0b1120] border border-[#24354c] text-xs text-slate-300 space-y-3"
               >
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  <div className="p-2.5 rounded-xl bg-[#131d2e]">
-                    <span className="text-slate-400 block text-[11px]">Total rain on roof:</span>
-                    <strong className="text-white font-mono text-sm block mt-0.5">
-                      {activePeriodSummary.rainOnRoof.toLocaleString()} L
-                    </strong>
-                    <span className="text-[10px] text-slate-400 font-normal">
-                      (~{activePeriodSummary.rainOnRoofBuckets.toLocaleString()} buckets)
-                    </span>
+                <div className="space-y-2">
+                  {/* Row 1: Total Rain */}
+                  <div className="p-3 rounded-xl bg-[#131d2e] border border-[#24354c] flex flex-row items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-base shrink-0 select-none">🌧️</span>
+                      <span className="text-slate-300 font-semibold truncate">Total rain on roof</span>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <strong className="text-white font-mono text-sm block">
+                        {activePeriodSummary.rainOnRoof.toLocaleString()} L
+                      </strong>
+                      <span className="text-[10px] text-slate-400 font-normal block">
+                        ~{activePeriodSummary.rainOnRoofBuckets.toLocaleString()} buckets
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-[#131d2e]">
-                    <span className="text-slate-400 block text-[11px]">Caught by the roof:</span>
-                    <strong className="text-sky-300 font-mono text-sm block mt-0.5">
-                      {activePeriodSummary.caught.toLocaleString()} L
-                    </strong>
-                    <span className="text-[10px] text-slate-400 font-normal">
-                      (~{activePeriodSummary.caughtBuckets.toLocaleString()} buckets)
-                    </span>
+                  {/* Row 2: Caught by Roof */}
+                  <div className="p-3 rounded-xl bg-[#131d2e] border border-[#24354c] flex flex-row items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-base shrink-0 select-none">🏠</span>
+                      <span className="text-slate-300 font-semibold truncate">Caught by the roof</span>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <strong className="text-sky-300 font-mono text-sm block">
+                        {activePeriodSummary.caught.toLocaleString()} L
+                      </strong>
+                      <span className="text-[10px] text-sky-400/80 font-normal block">
+                        ~{activePeriodSummary.caughtBuckets.toLocaleString()} buckets
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-[#131d2e]">
-                    <span className="text-slate-400 block text-[11px]">Lost on the roof:</span>
-                    <strong className="text-amber-300 font-mono text-sm block mt-0.5">
-                      {activePeriodSummary.lostOnRoof.toLocaleString()} L
-                    </strong>
-                    <span className="text-[10px] text-slate-400 font-normal">
-                      (~{activePeriodSummary.lostOnRoofBuckets.toLocaleString()} buckets)
-                    </span>
+                  {/* Row 3: Lost on Roof */}
+                  <div className="p-3 rounded-xl bg-[#131d2e] border border-[#24354c] flex flex-row items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-base shrink-0 select-none">🍂</span>
+                      <span className="text-slate-300 font-semibold truncate">Lost on the roof</span>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <strong className="text-amber-300 font-mono text-sm block">
+                        {activePeriodSummary.lostOnRoof.toLocaleString()} L
+                      </strong>
+                      <span className="text-[10px] text-amber-400/80 font-normal block">
+                        ~{activePeriodSummary.lostOnRoofBuckets.toLocaleString()} buckets
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-[#131d2e]">
-                    <span className="text-teal-400 font-semibold block text-[11px]">Kept in the tank:</span>
-                    <strong className="text-teal-300 font-mono text-sm block mt-0.5">
-                      {activePeriodSummary.kept.toLocaleString()} L
-                    </strong>
-                    <span className="text-[10px] text-teal-400/80 font-normal">
-                      (~{activePeriodSummary.keptBuckets.toLocaleString()} buckets)
-                    </span>
+                  {/* Row 4: Kept in Tank */}
+                  <div className="p-3 rounded-xl bg-[#131d2e] border border-teal-500/40 flex flex-row items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-base shrink-0 select-none">🟢</span>
+                      <span className="text-teal-300 font-bold truncate">Kept in the tank</span>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <strong className="text-teal-300 font-mono text-sm block">
+                        {activePeriodSummary.kept.toLocaleString()} L
+                      </strong>
+                      <span className="text-[10px] text-teal-400/80 font-normal block">
+                        ~{activePeriodSummary.keptBuckets.toLocaleString()} buckets
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-[#131d2e]">
-                    <span className="text-orange-400 font-semibold block text-[11px]">Spilled over (tank full):</span>
-                    <strong className="text-orange-400 font-mono text-sm block mt-0.5">
-                      {activePeriodSummary.spilled.toLocaleString()} L
-                    </strong>
-                    <span className="text-[10px] text-orange-400/80 font-normal">
-                      (~{activePeriodSummary.spilledBuckets.toLocaleString()} buckets)
-                    </span>
+                  {/* Row 5: Spilled Over */}
+                  <div className="p-3 rounded-xl bg-[#131d2e] border border-orange-500/40 flex flex-row items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-base shrink-0 select-none">🌊</span>
+                      <span className="text-orange-300 font-bold truncate">Spilled over (tank full)</span>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <strong className="text-orange-400 font-mono text-sm block">
+                        {activePeriodSummary.spilled.toLocaleString()} L
+                      </strong>
+                      <span className="text-[10px] text-orange-400/80 font-normal block">
+                        ~{activePeriodSummary.spilledBuckets.toLocaleString()} buckets
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-[#131d2e]">
-                    <span className="text-rose-400 font-semibold block text-[11px]">Wasted in total:</span>
-                    <strong className="text-rose-300 font-mono text-sm block mt-0.5">
-                      {activePeriodSummary.wasted.toLocaleString()} L
-                    </strong>
-                    <span className="text-[10px] text-rose-400/80 font-normal">
-                      (~{activePeriodSummary.wastedBuckets.toLocaleString()} buckets)
-                    </span>
+                  {/* Row 6: Wasted in Total */}
+                  <div className="p-3 rounded-xl bg-[#131d2e] border border-rose-500/40 flex flex-row items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-base shrink-0 select-none">🟠</span>
+                      <span className="text-rose-300 font-bold truncate">Wasted in total</span>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <strong className="text-rose-300 font-mono text-sm block">
+                        {activePeriodSummary.wasted.toLocaleString()} L
+                      </strong>
+                      <span className="text-[10px] text-rose-400/80 font-normal block">
+                        ~{activePeriodSummary.wastedBuckets.toLocaleString()} buckets
+                      </span>
+                    </div>
                   </div>
                 </div>
 
                 <p className="text-[11px] text-slate-400 italic pt-1 border-t border-[#1e293b]">
-                  Invariant Check: Kept ({activePeriodSummary.kept} L) + Spilled ({activePeriodSummary.spilled} L) + Lost on Roof ({activePeriodSummary.lostOnRoof} L) = Total Rain on Roof ({activePeriodSummary.rainOnRoof} L).
+                  Invariant Check: Kept ({activePeriodSummary.kept.toLocaleString()} L) + Spilled ({activePeriodSummary.spilled.toLocaleString()} L) + Lost on Roof ({activePeriodSummary.lostOnRoof.toLocaleString()} L) = Total Rain on Roof ({activePeriodSummary.rainOnRoof.toLocaleString()} L).
                 </p>
               </motion.div>
             )}

@@ -506,6 +506,9 @@ export interface SavedBuilding {
   createdAt: string;
   updatedAt: string;
   version: number;
+  monthlyRainfallMm?: number[];
+  weeklyRainfallMm?: number;
+  rainfallFetchedAt?: string;
   summarySnapshot?: WaterSummarySnapshot;
 
   // Legacy fields for backward compatibility / migration

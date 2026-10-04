@@ -1,5 +1,5 @@
 import { SavedBuilding, BuildingDraft, BuildingTypeKey, RoofItem, StorageTankItem } from '../types';
-import { normalizeRoofs, normalizeTanks } from './calculations';
+import { normalizeRoofs, normalizeTanks, getBuildingWaterSummary } from './calculations';
 
 const STORAGE_KEY = 'rainwise_saved_buildings_v2';
 const DRAFT_STORAGE_KEY = 'rainwise_building_draft_v2';
@@ -68,6 +68,50 @@ export function migrateBuilding(raw: any): SavedBuilding {
 }
 
 /**
+ * Scans saved buildings and silently fixes any bad zero snapshots or missing rainfall fields
+ */
+export function sanitizeAndMigrateBuildings(buildings: SavedBuilding[]): SavedBuilding[] {
+  let hasUpdated = false;
+
+  const sanitized = buildings.map((building) => {
+    const roofs = normalizeRoofs(building.roofs, building.directRoofArea, building.roofType);
+    const totalRoofArea = roofs.reduce((acc, r) => acc + (parseFloat(r.area) || 0), 0);
+
+    if (totalRoofArea <= 0) return building;
+
+    const snapshot = building.summarySnapshot?.summary;
+    const isSnapshotBad =
+      !snapshot ||
+      (snapshot.year.kept + snapshot.year.wasted === 0 && snapshot.week.kept + snapshot.week.wasted === 0) ||
+      (snapshot.year.rainOnRoof === 0 && Boolean(building.location?.name));
+
+    if (isSnapshotBad) {
+      const freshSummary = getBuildingWaterSummary(building, 'metric');
+      if (freshSummary.year.rainOnRoof > 0 || freshSummary.year.kept + freshSummary.year.wasted > 0) {
+        hasUpdated = true;
+        return {
+          ...building,
+          monthlyRainfallMm: building.monthlyRainfallMm || freshSummary.monthlyBreakdown?.map((m) => m.rainfallMm),
+          weeklyRainfallMm: building.weeklyRainfallMm || freshSummary.week.rainfallMm,
+          rainfallFetchedAt: building.rainfallFetchedAt || new Date().toISOString(),
+          summarySnapshot: {
+            calculatedAt: new Date().toISOString(),
+            summary: freshSummary,
+          },
+        };
+      }
+    }
+    return building;
+  });
+
+  if (hasUpdated) {
+    persistBuildings(sanitized);
+  }
+
+  return sanitized;
+}
+
+/**
  * Loads all saved buildings from localStorage with error handling and automatic migration
  */
 export function loadSavedBuildings(): SavedBuilding[] {
@@ -90,7 +134,7 @@ export function loadSavedBuildings(): SavedBuilding[] {
     if (!Array.isArray(rawList)) return [];
 
     const migrated = rawList.map(migrateBuilding);
-    return migrated;
+    return sanitizeAndMigrateBuildings(migrated);
   } catch (err) {
     console.error('Failed to load saved buildings from localStorage:', err);
     return [];

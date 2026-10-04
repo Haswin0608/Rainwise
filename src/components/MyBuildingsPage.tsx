@@ -24,6 +24,8 @@ import {
 import { SavedBuilding, getBuildingTypeDisplay } from '../types';
 import { normalizeRoofs, normalizeTanks, calcWaterSummary, toBuckets, DEFAULT_INPUTS } from '../utils/calculations';
 import { useAppSettings } from '../context/AppSettingsContext';
+import { BuildingCardWaterImpact } from './BuildingCardWaterImpact';
+import { saveBuildingToStorage } from '../utils/buildingStorage';
 
 interface MyBuildingsPageProps {
   buildings: SavedBuilding[];
@@ -35,6 +37,7 @@ interface MyBuildingsPageProps {
   onCreateNewBuilding: () => void;
   onImportBuildings?: (importedList: SavedBuilding[]) => void;
   onBackToHome?: () => void;
+  onUpdateBuilding?: (building: SavedBuilding) => void;
 }
 
 type SortOption = 'newest' | 'oldest' | 'name' | 'area';
@@ -49,6 +52,7 @@ export const MyBuildingsPage: React.FC<MyBuildingsPageProps> = ({
   onCreateNewBuilding,
   onImportBuildings,
   onBackToHome,
+  onUpdateBuilding,
 }) => {
   const { unit, formatArea, formatVolume } = useAppSettings();
   const [searchTerm, setSearchTerm] = useState('');
@@ -496,27 +500,11 @@ export const MyBuildingsPage: React.FC<MyBuildingsPageProps> = ({
                       </div>
                     </div>
 
-                    <div className="col-span-2 p-2.5 rounded-xl bg-[#0b1120] border border-[#24354c] space-y-1.5">
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 border-b border-[#1e293b] pb-1">
-                        <span className="font-semibold text-slate-300">Yearly Water Impact</span>
-                        <span>Saved {savedDateStr}</span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <span className="text-[10px] text-teal-400 font-bold block">🟢 Saved</span>
-                          <span className="font-bold text-teal-300">
-                            {savedB.toLocaleString()} <span className="text-[10px] font-normal text-slate-400">bkt</span>
-                          </span>
-                        </div>
-
-                        <div>
-                          <span className="text-[10px] text-orange-400 font-bold block">🟠 Wasted</span>
-                          <span className="font-bold text-orange-400">
-                            {wastedB.toLocaleString()} <span className="text-[10px] font-normal text-slate-400">bkt</span>
-                          </span>
-                        </div>
-                      </div>
+                    <div className="col-span-2">
+                      <BuildingCardWaterImpact
+                        building={building}
+                        unit={unit}
+                      />
                     </div>
                   </div>
                 </div>

@@ -12,6 +12,7 @@ import {
 } from './types';
 import { 
   calculateHarvesting, 
+  calcWaterSummary,
   DEFAULT_ASSUMPTIONS, 
   DEFAULT_INPUTS, 
   normalizeRoofs, 
@@ -179,6 +180,10 @@ function RainWiseApp() {
   const saveBuilding = async () => {
     try {
       const now = new Date().toISOString();
+      const monthlyRainfallMm = inputs.typicalMonthlyRainfallMm || inputs.historicalRainfall?.typicalMonthlyRainfallMm || inputs.weatherInfo?.historical?.typicalMonthlyRainfallMm;
+      const weeklyRainfallMm = inputs.weeklyRainfallMm ?? inputs.weatherInfo?.weeklyRainfallMm ?? inputs.weatherInfo?.fullWeather?.weeklyPrecipitationSumMm ?? 0;
+      const computedSummary = calcWaterSummary(inputs, unit, inputs.assumptions || DEFAULT_ASSUMPTIONS);
+
       const newBuilding: SavedBuilding = {
         id: draft.id || `bldg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         name: draft.name.trim(),
@@ -197,6 +202,13 @@ function RainWiseApp() {
         createdAt: now,
         updatedAt: now,
         version: 2,
+        monthlyRainfallMm,
+        weeklyRainfallMm,
+        rainfallFetchedAt: now,
+        summarySnapshot: {
+          calculatedAt: now,
+          summary: computedSummary,
+        },
         nickname: draft.name.trim(),
         locationLabel: inputs.locationName,
       };
@@ -246,6 +258,10 @@ function RainWiseApp() {
     try {
       const existing = savedBuildings.find((b) => b.id === activeBuildingId);
       const now = new Date().toISOString();
+      const monthlyRainfallMm = inputs.typicalMonthlyRainfallMm || inputs.historicalRainfall?.typicalMonthlyRainfallMm || inputs.weatherInfo?.historical?.typicalMonthlyRainfallMm || existing?.monthlyRainfallMm;
+      const weeklyRainfallMm = inputs.weeklyRainfallMm ?? inputs.weatherInfo?.weeklyRainfallMm ?? inputs.weatherInfo?.fullWeather?.weeklyPrecipitationSumMm ?? existing?.weeklyRainfallMm ?? 0;
+      const computedSummary = calcWaterSummary(inputs, unit, inputs.assumptions || DEFAULT_ASSUMPTIONS);
+
       const updated: SavedBuilding = {
         id: activeBuildingId,
         name: draft.name.trim(),
@@ -264,6 +280,13 @@ function RainWiseApp() {
         createdAt: existing?.createdAt || now,
         updatedAt: now,
         version: 2,
+        monthlyRainfallMm,
+        weeklyRainfallMm,
+        rainfallFetchedAt: now,
+        summarySnapshot: {
+          calculatedAt: now,
+          summary: computedSummary,
+        },
         nickname: draft.name.trim(),
         locationLabel: inputs.locationName,
       };
@@ -657,6 +680,7 @@ function RainWiseApp() {
                 onRestoreBuilding={restoreBuilding}
                 onCreateNewBuilding={() => startNewBuilding()}
                 onImportBuildings={importBuildings}
+                onUpdateBuilding={() => setSavedBuildings(loadSavedBuildings())}
                 onBackToHome={() => {
                   setCurrentPage('home');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
